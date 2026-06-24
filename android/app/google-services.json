@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "915451905241",
+    "project_id": "jaramarket-user",
+    "storage_bucket": "jaramarket-user.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:915451905241:android:9ea414b610a96ba24beac8",
+        "android_client_info": {
+          "package_name": "com.jaramarket.customer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "915451905241-bm4iespv811qjvlqb7qdib2fttrgtvet.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jaramarket.customer",
+            "certificate_hash": "89bc653682531ddf641c3de8f7fa0655dd1b6cda"
+          }
+        },
+        {
+          "client_id": "915451905241-s4d5m4bqg764u142n9biopk0rl6ats8j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBunotjL1sQUJXWSUIiDRFFeSeUsOiNsIQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "915451905241-s4d5m4bqg764u142n9biopk0rl6ats8j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "915451905241-d7rd39jm18lrjpqekunvd6ro0ciftfu0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.jaramarket.customer"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

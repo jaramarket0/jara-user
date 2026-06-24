@@ -1,0 +1,3 @@
+[submodule "apis"]
+	path = apis
+	url = https://github.com/JaraMarket/Jara-Market-Laravel.git

@@ -1,0 +1,3301 @@
+{
+  "info": {
+    "_postman_id": "d5f6ca36-609d-484f-8c73-80e343bfb6ae",
+    "name": "JaraMarket",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "23714504",
+    "_collection_link": "https://go.postman.co/collection/23714504-d5f6ca36-609d-484f-8c73-80e343bfb6ae?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Pin",
+          "item": [
+            {
+              "name": "Set Pin",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"pin\": \"1234\",\n  \"confirm_pin\":\"1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{local}}/pin/set",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "pin",
+                    "set"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Verify",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"pin\": \"2954\",\n  \"remember\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{local}}/pin/verify",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "pin",
+                    "verify"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Validate",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-PIN-TOKEN",
+                    "value": "{{pinToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{local}}/pin/validate",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "pin",
+                    "validate"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "clear",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{local}}/pin/clear",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "pin",
+                    "clear"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Request Reset",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{local}}/pin/request-reset",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "pin",
+                    "request-reset"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reset",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"token\":\"H4soBM\",\n    \"pin\": 2954,\n    \"confirm_pin\":2954\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{local}}/pin/reset",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "pin",
+                    "reset"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "firstname",
+                  "value": "Ime",
+                  "type": "text",
+                  "uuid": "10a7a344-ce15-48e9-b575-21846fd1d943"
+                },
+                {
+                  "key": "lastname",
+                  "value": "Iteh",
+                  "type": "text",
+                  "uuid": "39c6ae45-c43a-4366-bb63-587c01e0b833"
+                },
+                {
+                  "key": "email",
+                  "value": "iteleh97@gmail.com",
+                  "type": "text",
+                  "uuid": "bd9ec448-292d-4787-b7a0-bf9fd4ac6421"
+                },
+                {
+                  "key": "password",
+                  "value": "Mbi@2026",
+                  "type": "text",
+                  "uuid": "16743f53-b0b9-433b-9259-9e216594cd96"
+                },
+                {
+                  "key": "referral_code",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "a804a60f-c032-4627-9c11-fed2d9c6d3ec"
+                },
+                {
+                  "key": "phone_number",
+                  "value": "07068628888",
+                  "type": "text",
+                  "uuid": "fee5b7ec-57fe-46a2-851e-72cde845b983"
+                },
+                {
+                  "key": "role",
+                  "value": "customer",
+                  "type": "text",
+                  "uuid": "c0dea916-5af6-4136-a247-e9a341518822"
+                },
+                {
+                  "key": "country_id",
+                  "value": "4",
+                  "type": "text",
+                  "uuid": "634aa401-df01-4cee-bc29-65acca64da14"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{staging}}/register",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "register"
+              ]
+            },
+            "description": "register customer. i.e people who will place order"
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipient\": \"iteleh97@gmail.com\",\n  \"password\": \"Mbi@2026!\",\n  \"password_confirmation\": \"Mbi@2026!\"\n}"
+            },
+            "url": {
+              "raw": "{{local}}/reset-password",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "reset-password"
+              ]
+            },
+            "description": "register customer. i.e people who will place order"
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"iteleh97@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{local}}/forgot-password",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "forgot-password"
+              ]
+            },
+            "description": "register customer. i.e people who will place order"
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Otp",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "otp",
+                  "value": "9888",
+                  "type": "text",
+                  "uuid": "0dbe93c0-555c-4b84-8207-1bad6b26a906"
+                },
+                {
+                  "key": "email",
+                  "value": "iteleh98@gmail.com",
+                  "type": "text",
+                  "uuid": "f475a09e-9bc8-4d72-a2c2-df5f3f9bbff0"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{staging}}/validate-otp",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "validate-otp"
+              ]
+            },
+            "description": "validate and update customer data otp after customer attempt to register."
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Email",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"otp\": 2243,\n    \"email\": \"iteleh97@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{staging}}/validate-email",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "validate-email"
+              ]
+            },
+            "description": "validate and update customer data otp after customer attempt to register."
+          },
+          "response": []
+        },
+        {
+          "name": "Resend Otp",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "email",
+                  "value": "iteleh97@gmail.com",
+                  "type": "text",
+                  "uuid": "f475a09e-9bc8-4d72-a2c2-df5f3f9bbff0"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{local}}/resend-otp",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "resend-otp"
+              ]
+            },
+            "description": "validate and update customer data otp after customer attempt to register."
+          },
+          "response": []
+        },
+        {
+          "name": "login",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "email",
+                  "value": "iteleh97@gmail.com",
+                  "type": "text",
+                  "uuid": "563a1141-3e24-4763-ac1f-fd764c8f0fae"
+                },
+                {
+                  "key": "password",
+                  "value": "Mbi@2026",
+                  "type": "text",
+                  "uuid": "c3bd7ecc-01c7-47a4-9f13-dfc02b542cff"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{staging}}/login",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "customer login"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "latitude",
+                  "value": "6.2345000",
+                  "type": "text",
+                  "uuid": "5bb0f4af-3e56-4720-bd60-161fd34c91d6"
+                },
+                {
+                  "key": "longitude",
+                  "value": "3.3321000",
+                  "type": "text",
+                  "uuid": "e92c49a2-01e4-4f3a-9f25-5b16dcd1b1c3"
+                },
+                {
+                  "key": "business_name",
+                  "value": "Geitel Solution",
+                  "type": "text",
+                  "uuid": "7094f5bb-4e11-45ef-a290-4848dcbeb463"
+                },
+                {
+                  "key": "business_address",
+                  "value": "Uyo",
+                  "type": "text",
+                  "uuid": "40448982-039f-42bc-92a0-4b5e4d742f20"
+                },
+                {
+                  "key": "profile_picture",
+                  "type": "file",
+                  "uuid": "e7af48e7-66cd-46a2-a844-55e5698ab5b0",
+                  "src": "/home/iteleh/Pictures/Screenshots/Screenshot from 2025-05-26 22-43-20.png"
+                },
+                {
+                  "key": "shop_size",
+                  "value": "just_me",
+                  "description": "just_me,2-5,6-10,11+",
+                  "type": "text",
+                  "uuid": "77ddce1b-98b6-4e14-8e2b-c300e763de65"
+                },
+                {
+                  "key": "",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "352403f7-1228-42f0-bc20-ad8d9649ecae",
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{staging}}/profile-update/:email",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "profile-update",
+                ":email"
+              ],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "iteleh97@gmail.com"
+                }
+              ]
+            },
+            "description": "edit customers' data/profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Store Vendor Categories",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"category_ids\": [4,5,6]\n}"
+            },
+            "url": {
+              "raw": "{{staging}}/update-vendor-categories/:email",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "update-vendor-categories",
+                ":email"
+              ],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "iteleh97@gmail.com"
+                }
+              ]
+            },
+            "description": "edit customers' data/profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Vendors Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{staging}}/vendors/categories",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "vendors",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Customer",
+      "item": [
+        {
+          "name": "User Profile",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "2b8ffe11-402a-4fdc-a840-8f874f16e7a8",
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{staging}}/fetch-user",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "fetch-user"
+              ]
+            },
+            "description": "view customer data"
+          },
+          "response": []
+        },
+        {
+          "name": "My Referrals",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "2b8ffe11-402a-4fdc-a840-8f874f16e7a8",
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{staging}}/my-referrals",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "my-referrals"
+              ]
+            },
+            "description": "view customer data"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Wallet",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "2b8ffe11-402a-4fdc-a840-8f874f16e7a8",
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{staging}}/fetch-wallet",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "fetch-wallet"
+              ]
+            },
+            "description": "view customer data"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"current_password\": \"Mbi@2025\",\n    \"password\": \"Mbi@2025\",\n    \"password_confirmation\": \"Mbi@2025\"\n}"
+            },
+            "url": {
+              "raw": "{{staging}}/user/change-password",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "user",
+                "change-password"
+              ]
+            },
+            "description": "edit customers' data/profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "email",
+                  "value": "iteleh97@gmail.com",
+                  "type": "text",
+                  "uuid": "563a1141-3e24-4763-ac1f-fd764c8f0fae"
+                },
+                {
+                  "key": "password",
+                  "value": "Mbi@2025",
+                  "type": "text",
+                  "uuid": "c3bd7ecc-01c7-47a4-9f13-dfc02b542cff"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{staging}}/logout",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            },
+            "description": "customer login"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "firstname",
+                  "value": "Ndueso",
+                  "type": "text",
+                  "uuid": "95260749-fe06-47d8-9d5a-e2da52041ead"
+                },
+                {
+                  "key": "lastname",
+                  "value": "Walter",
+                  "type": "text",
+                  "uuid": "3472b96f-4772-49e4-b3f8-38ea8d5dbcec"
+                },
+                {
+                  "key": "phone_number",
+                  "value": "07068628887",
+                  "type": "text",
+                  "uuid": "78439eae-2db7-4c73-bb65-5dd8c18bc5d6"
+                },
+                {
+                  "key": "country_id",
+                  "value": "4",
+                  "type": "text",
+                  "uuid": "c1e06067-db60-42e7-bd11-2bbedb84827c"
+                },
+                {
+                  "key": "latitude",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "5bb0f4af-3e56-4720-bd60-161fd34c91d6"
+                },
+                {
+                  "key": "longitude",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "e92c49a2-01e4-4f3a-9f25-5b16dcd1b1c3"
+                },
+                {
+                  "key": "business_name",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "7094f5bb-4e11-45ef-a290-4848dcbeb463"
+                },
+                {
+                  "key": "business_address",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "40448982-039f-42bc-92a0-4b5e4d742f20"
+                },
+                {
+                  "key": "profile_picture",
+                  "type": "file",
+                  "uuid": "e7af48e7-66cd-46a2-a844-55e5698ab5b0",
+                  "value": null
+                },
+                {
+                  "key": "shop_size",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "77ddce1b-98b6-4e14-8e2b-c300e763de65"
+                },
+                {
+                  "key": "bank_id",
+                  "value": "132",
+                  "type": "text",
+                  "uuid": "d42f466c-2704-4419-bbf3-b7ef9044b274"
+                },
+                {
+                  "key": "account_number",
+                  "value": "7068628887",
+                  "type": "text",
+                  "uuid": "60f31064-8c66-4907-a10a-6313cf385796"
+                },
+                {
+                  "key": "account_name",
+                  "value": "Ime Sunday Iteh",
+                  "type": "text",
+                  "uuid": "fa52852c-6eeb-4727-8c26-c5f7c61917e3"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{local}}/update-profile",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "update-profile"
+              ]
+            },
+            "description": "edit customers' data/profile"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Fetch categories all products",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{staging}}/fetch/categories-all-products?state_id=1",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "fetch",
+                "categories-all-products"
+              ],
+              "query": [
+                {
+                  "key": "state_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "display all food category"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch categories limit products",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{staging}}/fetch/categories-limit-products?state_id=1",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "fetch",
+                "categories-limit-products"
+              ],
+              "query": [
+                {
+                  "key": "state_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "display all food category"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Ingredients",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{staging}}/fetch/ingredients?state_id=1",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "fetch",
+                "ingredients"
+              ],
+              "query": [
+                {
+                  "key": "state_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "display all food category"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Uom",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{staging}}/fetch/uom",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "fetch",
+                "uom"
+              ]
+            },
+            "description": "display all food category"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch food",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{staging}}/fetch/product?state_id=1",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "fetch",
+                "product"
+              ],
+              "query": [
+                {
+                  "key": "state_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "display all foods with images ,price etc ."
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch a food",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/fetch/product/:id?state_id=1",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "fetch",
+                "product",
+                ":id"
+              ],
+              "query": [
+                {
+                  "key": "state_id",
+                  "value": "1"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "display all foods with images ,price etc ."
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch food by name",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local}}/fetch/product?search=atama?state_id=1",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "fetch",
+                "product"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "atama?state_id=1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Favorites",
+      "item": [
+        {
+          "name": "Store Favourite",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"product_id\": 3\n}"
+            },
+            "url": {
+              "raw": "{{local}}/favorites",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "favorites"
+              ]
+            },
+            "description": "register customer. i.e people who will place order"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Favorites",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/favorites",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "favorites"
+              ]
+            },
+            "description": "display all foods with images ,price etc ."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete favorite",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/favorites/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "favorites",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "display all foods with images ,price etc ."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Initialize Pyament",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/ecmascript",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"amount\": 5000.00,\n    \"currency\": \"NGN\",\n    \"callback_url\": \"http://127.0.0.1:8000\",\n    \"metadata\": {\n        \"notes\": \"This is a sample payment\"\n    },\n    \"payment_gateway\": \"paystack\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{staging}}/payments/initialize-transaction",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "payments",
+                "initialize-transaction"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Charge Successful",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"charge.success\",\n    \"data\": {\n        \"id\": 1,\n        \"domain\": \"test\",\n        \"status\": \"success\",\n        \"reference\": \"JARA_7177358395931748650039\",\n        \"amount\": 5000,\n        \"message\": null,\n        \"gateway_response\": \"Approved by Financial Institution\",\n        \"paid_at\": \"2025-05-30T21:10:19.000Z\",\n        \"created_at\": \"2025-05-30T21:09:56.000Z\",\n        \"channel\": \"card\",\n        \"currency\": \"NGN\",\n        \"ip_address\": \"127.0.0.1\",\n        \"metadata\": {\n            \"notes\": \"great\"\n        },\n        \"log\": {\n            \"time_spent\": 16,\n            \"attempts\": 1,\n            \"authentication\": \"pin\",\n            \"errors\": 0,\n            \"success\": false,\n            \"mobile\": false,\n            \"input\": [],\n            \"channel\": null,\n            \"history\": [\n                {\n                    \"type\": \"input\",\n                    \"message\": \"Filled these fields: card number, card expiry, card cvv\",\n                    \"time\": 15\n                },\n                {\n                    \"type\": \"action\",\n                    \"message\": \"Attempted to pay\",\n                    \"time\": 15\n                },\n                {\n                    \"type\": \"auth\",\n                    \"message\": \"Authentication Required: pin\",\n                    \"time\": 16\n                }\n            ]\n        },\n        \"fees\": null,\n        \"customer\": {\n            \"id\":  1,\n            \"first_name\": \"Ime\",\n            \"last_name\": \"Iteh\",\n            \"email\": \"iteleh97@gmail.com\",\n            \"customer_code\": \"CUS_0r1ou24fc1wrsex\",\n            \"phone\": null,\n            \"metadata\": null,\n            \"risk_action\": \"default\"\n        },\n        \"authorization\": {\n            \"authorization_code\": \"AUTH_0ozsafcpdf\",\n            \"bin\": \"413XXX\",\n            \"last4\": \"4081\",\n            \"exp_month\": \"01\",\n            \"exp_year\": \"2028\",\n            \"channel\": \"dedicated_nuban\",\n            \"card_type\": \"transfer\",\n            \"bank\": \"First City Monument Bank\",\n            \"country_code\": \"NG\",\n            \"brand\": \"Managed Account\",\n            \"reusable\": false,\n            \"signature\": null,\n            \"sender_bank\": \"First City Monument Bank\",\n            \"sender_bank_account_number\": \"XXXXXX0011\",\n            \"sender_country\": \"NG\",\n            \"sender_name\": \"RANDALL AKANBI HORTON\",\n            \"narration\": \"NIP: RHODA CHURCH -1123344343/44343231232\",\n            \"receiver_bank_account_number\": \"9930000902\",\n            \"receiver_bank\": \"Wema Bank\"\n        },\n        \"plan\": {}\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/webhook/paystack",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "webhook",
+                "paystack"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Transaction",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"charge.success\",\n    \"data\": {\n        \"id\": 1,\n        \"domain\": \"test\",\n        \"status\": \"success\",\n        \"reference\": \"JARA_9928440984421748640325\",\n        \"amount\": 5000,\n        \"message\": null,\n        \"gateway_response\": \"Approved by Financial Institution\",\n        \"paid_at\": \"2025-05-30T21:10:19.000Z\",\n        \"created_at\": \"2025-05-30T21:09:56.000Z\",\n        \"channel\": \"card\",\n        \"currency\": \"NGN\",\n        \"ip_address\": \"127.0.0.1\",\n        \"metadata\": {\n            \"notes\": \"great\"\n        },\n        \"log\": {\n            \"time_spent\": 16,\n            \"attempts\": 1,\n            \"authentication\": \"pin\",\n            \"errors\": 0,\n            \"success\": false,\n            \"mobile\": false,\n            \"input\": [],\n            \"channel\": null,\n            \"history\": [\n                {\n                    \"type\": \"input\",\n                    \"message\": \"Filled these fields: card number, card expiry, card cvv\",\n                    \"time\": 15\n                },\n                {\n                    \"type\": \"action\",\n                    \"message\": \"Attempted to pay\",\n                    \"time\": 15\n                },\n                {\n                    \"type\": \"auth\",\n                    \"message\": \"Authentication Required: pin\",\n                    \"time\": 16\n                }\n            ]\n        },\n        \"fees\": null,\n        \"customer\": {\n            \"id\":  1,\n            \"first_name\": \"Ime\",\n            \"last_name\": \"Iteh\",\n            \"email\": \"iteleh97@gmail.com\",\n            \"customer_code\": \"CUS_0r1ou24fc1wrsex\",\n            \"phone\": null,\n            \"metadata\": null,\n            \"risk_action\": \"default\"\n        },\n        \"authorization\": {\n            \"authorization_code\": \"AUTH_0ozsafcpdf\",\n            \"bin\": \"413XXX\",\n            \"last4\": \"4081\",\n            \"exp_month\": \"01\",\n            \"exp_year\": \"2028\",\n            \"channel\": \"dedicated_nuban\",\n            \"card_type\": \"transfer\",\n            \"bank\": \"First City Monument Bank\",\n            \"country_code\": \"NG\",\n            \"brand\": \"Managed Account\",\n            \"reusable\": false,\n            \"signature\": null,\n            \"sender_bank\": \"First City Monument Bank\",\n            \"sender_bank_account_number\": \"XXXXXX0011\",\n            \"sender_country\": \"NG\",\n            \"sender_name\": \"RANDALL AKANBI HORTON\",\n            \"narration\": \"NIP: RHODA CHURCH -1123344343/44343231232\",\n            \"receiver_bank_account_number\": \"9930000902\",\n            \"receiver_bank\": \"Wema Bank\"\n        },\n        \"plan\": {}\n    }\n}"
+            },
+            "url": {
+              "raw": "{{local}}/verify-transaction/:reference",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "verify-transaction",
+                ":reference"
+              ],
+              "variable": [
+                {
+                  "key": "reference",
+                  "value": "JARA_9928440984421748640325"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch all payments",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/ecmascript",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/payments",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "payments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch all Transfers",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/ecmascript",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/transfers",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "transfers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch  payment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/ecmascript",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/payments/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "payments",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Transfer to bank",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"amount\": 15000,\n    \"bank_id\":1,\n    \"currency\": \"NGN\",\n    \"remark\": \"withdraw to bank\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/wallet/transfer-to-bank",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "wallet",
+                "transfer-to-bank"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Transfer Successful",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"transfer.success\",\n  \"data\": {\n    \"amount\": 15000,\n    \"currency\": \"NGN\",\n    \"domain\": \"test\",\n    \"failures\": null,\n    \"id\": 3,\n    \"integration\": {\n      \"id\": 463433,\n      \"is_live\": true,\n      \"business_name\": \"Boom Boom Industries NG\"\n    },\n    \"reason\": \"Have fun...\",\n    \"reference\": \"h48ijxwkokrm76bcztu1\",\n    \"source\": \"balance\",\n    \"source_details\": null,\n    \"status\": \"success\",\n    \"titan_code\": null,\n    \"transfer_code\": \"TRF_11nq8lueoyd6wui1\",\n    \"transferred_at\": null,\n    \"recipient\": {\n      \"active\": true,\n      \"currency\": \"NGN\",\n      \"description\": \"\",\n      \"domain\": \"test\",\n      \"email\": null,\n      \"id\": 2,\n      \"integration\": 463433,\n      \"metadata\": null,\n      \"name\": \"Jack Sparrow\",\n      \"recipient_code\": \"TRF_11nq8lueoyd6wui1\",\n      \"type\": \"nuban\",\n      \"is_deleted\": false,\n      \"details\": {\n        \"account_number\": \"0000000000\",\n        \"account_name\": null,\n        \"bank_code\": \"011\",\n        \"bank_name\": \"First Bank of Nigeria\"\n      },\n      \"created_at\": \"2020-09-03T12:11:25.000Z\",\n      \"updated_at\": \"2020-09-03T12:11:25.000Z\"\n    },\n    \"session\": { \"provider\": null, \"id\": null },\n    \"created_at\": \"2020-10-26T12:28:57.000Z\",\n    \"updated_at\": \"2020-10-26T12:28:57.000Z\"\n  }\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/webhook/paystack",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "webhook",
+                "paystack"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Transfer Failed",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"transfer.failed\",\n  \"data\": {\n    \"amount\": 150000,\n    \"currency\": \"NGN\",\n    \"domain\": \"test\",\n    \"failures\": null,\n    \"id\": 69123462,\n    \"integration\": {\n      \"id\": 100043,\n      \"is_live\": true,\n      \"business_name\": \"Paystack\"\n    },\n    \"reason\": \"Enjoy\",\n    \"reference\": \"1976435206\",\n    \"source\": \"balance\",\n    \"source_details\": null,\n    \"status\": \"failed\",\n    \"titan_code\": null,\n    \"transfer_code\": \"TRF_11nq8lueoyd6wui1\",\n    \"transferred_at\": null,\n    \"recipient\": {\n      \"active\": true,\n      \"currency\": \"NGN\",\n      \"description\": null,\n      \"domain\": \"test\",\n      \"email\": \"test@email.com\",\n      \"id\": 13584206,\n      \"integration\": 100043,\n      \"metadata\": null,\n      \"name\": \"Ted Lasso\",\n      \"recipient_code\": \"RCP_cjcua8itre45gs\",\n      \"type\": \"nuban\",\n      \"is_deleted\": false,\n      \"details\": {\n        \"authorization_code\": null,\n        \"account_number\": \"0123456789\",\n        \"account_name\": \"Ted Lasso\",\n        \"bank_code\": \"011\",\n        \"bank_name\": \"First Bank of Nigeria\"\n      },\n      \"created_at\": \"2021-04-12T15:30:14.000Z\",\n      \"updated_at\": \"2021-04-12T15:30:14.000Z\"\n    },\n    \"session\": {\n      \"provider\": \"nip\",\n      \"id\": \"74849400998877667\"\n    },\n    \"created_at\": \"2021-04-12T15:30:15.000Z\",\n    \"updated_at\": \"2021-04-12T15:41:21.000Z\"\n  }\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/webhook/paystack",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "webhook",
+                "paystack"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "State & Lga",
+      "item": [
+        {
+          "name": "States",
+          "item": [
+            {
+              "name": "Retrieve all states",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{staging}}/states",
+                  "host": [
+                    "{{staging}}"
+                  ],
+                  "path": [
+                    "states"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Filter State by Name",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{local}}/states?name=Adamawa",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "states"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Adamawa"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Find State by Id",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{local}}/states/:id",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "states",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "32"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get State by Country",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{local}}/country/:id/states",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "country",
+                    ":id",
+                    "states"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Lga",
+          "item": [
+            {
+              "name": "Find all Lga",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{local}}/lgas",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "lgas"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Find Lga by name",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{local}}/lgas?name=Aba North",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "lgas"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Aba North"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Find Lga by State",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{local}}/lgas?state=Lagos",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "lgas"
+                  ],
+                  "query": [
+                    {
+                      "key": "state",
+                      "value": "Lagos"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Search Lga",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{local}}/lgas?search=Lagos",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "lgas"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "Lagos"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Find lga by ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{local}}/lgas/:id",
+                  "host": [
+                    "{{local}}"
+                  ],
+                  "path": [
+                    "lgas",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "12"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Country",
+      "item": [
+        {
+          "name": "Get all Countries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/country",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "country"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter country by name",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/country?name=nigeria",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "country"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "nigeria"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search country",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/country?search=nigeria",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "country"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "nigeria"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Delivery Address",
+      "item": [
+        {
+          "name": "Get Addresses",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/addresses",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "addresses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Store Address",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"phone_number\": \"07068628887\",\n    \"contact_address\": \"Akpa Ube closed\",\n    \"state_id\":4,\n    \"lga_id\": 15,\n    \"country_id\": 4,\n    \"is_default\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{staging}}/addresses",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "addresses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"phone_number\": \"07068628887\",\n    \"contact_address\": \"Akpa Ube closed\",\n    \"state_id\":4,\n    \"lga_id\": 19,\n    \"country_id\": 15,\n    \"is_default\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/addresses/:1",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "addresses",
+                ":1"
+              ],
+              "variable": [
+                {
+                  "key": "1",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "order_date",
+                  "value": "2025-09-11",
+                  "type": "text",
+                  "uuid": "5e0eb658-519a-4784-a5e3-67128f48f15c"
+                },
+                {
+                  "key": "shipping_fee",
+                  "value": "0",
+                  "type": "text",
+                  "uuid": "89c48a9b-92af-462d-a4c9-458418384a15"
+                },
+                {
+                  "key": "delivery_type",
+                  "value": "pickup",
+                  "description": "pickup (or walkin)",
+                  "type": "text",
+                  "uuid": "a280eb31-2cd2-40ec-82cc-126fd961bcf7"
+                },
+                {
+                  "key": "address_id",
+                  "value": "1",
+                  "type": "text",
+                  "uuid": "01d2e9fd-15c6-4363-b81f-d9ce4dd5d275"
+                },
+                {
+                  "key": "service_charge",
+                  "value": "1000",
+                  "type": "text",
+                  "uuid": "50cb92e9-9ef2-4e0b-934a-ff9796848cd3"
+                },
+                {
+                  "key": "vat",
+                  "value": "100",
+                  "type": "text",
+                  "uuid": "73233610-e24e-4c6a-b415-e27e145b671b"
+                },
+                {
+                  "key": "total",
+                  "value": "10000",
+                  "type": "text",
+                  "uuid": "7817c57e-a2c4-44e7-aa0f-94cf9a69a490"
+                },
+                {
+                  "key": "remarks",
+                  "value": "this is my order",
+                  "type": "text",
+                  "uuid": "34b4a4b9-a371-489f-8f2e-413b0584f5a9"
+                },
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "uuid": "ad10a351-e857-4ccb-8991-cad49b182ea9",
+                  "value": null
+                },
+                {
+                  "key": "products",
+                  "value": "[{\"product_id\":1,\"quantity\":3,\"price\":4000}]",
+                  "type": "text",
+                  "uuid": "08c0abb2-1c30-4463-bff6-1fa98819e247"
+                },
+                {
+                  "key": "ingredients",
+                  "value": "[{\"ingredient_id\":1,\"quantity\":5,\"unit\":\"kg\",\"price\":3000}]",
+                  "type": "text",
+                  "uuid": "edef9bc1-0f8f-43ba-ae50-2e2598598efe"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{local}}/orders",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get an Order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/orders/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "orders",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "8"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/orders/:order/cancel",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "orders",
+                ":order",
+                "cancel"
+              ],
+              "variable": [
+                {
+                  "key": "order",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get all Orders",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{staging}}/orders",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Vendors",
+      "item": [
+        {
+          "name": "Get an Order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/vendor/orders/:item_id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "vendor",
+                "orders",
+                ":item_id"
+              ],
+              "variable": [
+                {
+                  "key": "item_id",
+                  "value": "18"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch my orders",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/vendor/orders/accepted",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "vendor",
+                "orders",
+                "accepted"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Accept or Reject Order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"accepted\", //rejected\n    \"vendor_id\": 1 // if is admin that is accepted\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/vendor/orders/item/:item_id/decision",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "vendor",
+                "orders",
+                "item",
+                ":item_id",
+                "decision"
+              ],
+              "variable": [
+                {
+                  "key": "item_id",
+                  "value": "16"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get available Orders",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/vendor/orders",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "vendor",
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Supports",
+      "item": [
+        {
+          "name": "Create Ticket",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "message",
+                  "value": "Great — to support file uploads (e.g. PDF, PNG, JPG) in help/support messages, we’ll enhance the setup to:\n\nAccept optional file attachments\n\nStore them securely\n\nReturn file URLs in the resource response",
+                  "type": "text",
+                  "uuid": "cd90c5e0-1f39-4e6f-808d-090b6f75e9a0"
+                },
+                {
+                  "key": "attachment",
+                  "type": "file",
+                  "uuid": "ba42bba3-5133-4502-9133-7a50c7507660",
+                  "src": "/home/iteleh/Downloads/Gideon John CO.jpeg"
+                },
+                {
+                  "key": "subject",
+                  "value": "Double payment",
+                  "type": "text",
+                  "uuid": "353356ac-f40f-4bc4-a913-081912747711"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{staging}}/support",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "support"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tickets",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{staging}}/support",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "support"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get ticket",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{staging}}/support/:id",
+              "host": [
+                "{{staging}}"
+              ],
+              "path": [
+                "support",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Advertisements",
+      "item": [
+        {
+          "name": "Get advertisements",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "2b8ffe11-402a-4fdc-a840-8f874f16e7a8",
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{local}}/advertisements",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "advertisements"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local}}/notifications",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get unread count",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{local}}/notifications/unread-count",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "notifications",
+                "unread-count"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark as read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{local}}/notifications/:id/read",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "notifications",
+                ":id",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "762df53c-97c6-49a6-be0e-a788c6cda2f0"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Banks",
+      "item": [
+        {
+          "name": "Fetch Banks",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "order_date",
+                  "value": "2025-09-11",
+                  "type": "text",
+                  "uuid": "5e0eb658-519a-4784-a5e3-67128f48f15c"
+                },
+                {
+                  "key": "shipping_fee",
+                  "value": "0",
+                  "type": "text",
+                  "uuid": "89c48a9b-92af-462d-a4c9-458418384a15"
+                },
+                {
+                  "key": "delivery_type",
+                  "value": "pickup",
+                  "description": "pickup (or walkin)",
+                  "type": "text",
+                  "uuid": "a280eb31-2cd2-40ec-82cc-126fd961bcf7"
+                },
+                {
+                  "key": "address_id",
+                  "value": "1",
+                  "type": "text",
+                  "uuid": "01d2e9fd-15c6-4363-b81f-d9ce4dd5d275"
+                },
+                {
+                  "key": "service_charge",
+                  "value": "1000",
+                  "type": "text",
+                  "uuid": "50cb92e9-9ef2-4e0b-934a-ff9796848cd3"
+                },
+                {
+                  "key": "vat",
+                  "value": "100",
+                  "type": "text",
+                  "uuid": "73233610-e24e-4c6a-b415-e27e145b671b"
+                },
+                {
+                  "key": "total",
+                  "value": "10000",
+                  "type": "text",
+                  "uuid": "7817c57e-a2c4-44e7-aa0f-94cf9a69a490"
+                },
+                {
+                  "key": "remarks",
+                  "value": "this is my order",
+                  "type": "text",
+                  "uuid": "34b4a4b9-a371-489f-8f2e-413b0584f5a9"
+                },
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "uuid": "ad10a351-e857-4ccb-8991-cad49b182ea9",
+                  "value": null
+                },
+                {
+                  "key": "products",
+                  "value": "[{\"product_id\":1,\"quantity\":3,\"price\":4000}]",
+                  "type": "text",
+                  "uuid": "08c0abb2-1c30-4463-bff6-1fa98819e247"
+                },
+                {
+                  "key": "ingredients",
+                  "value": "[{\"ingredient_id\":1,\"quantity\":5,\"unit\":\"kg\",\"price\":3000}]",
+                  "type": "text",
+                  "uuid": "edef9bc1-0f8f-43ba-ae50-2e2598598efe"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{local}}/banks",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "banks"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by name",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "order_date",
+                  "value": "2025-09-11",
+                  "type": "text",
+                  "uuid": "5e0eb658-519a-4784-a5e3-67128f48f15c"
+                },
+                {
+                  "key": "shipping_fee",
+                  "value": "0",
+                  "type": "text",
+                  "uuid": "89c48a9b-92af-462d-a4c9-458418384a15"
+                },
+                {
+                  "key": "delivery_type",
+                  "value": "pickup",
+                  "description": "pickup (or walkin)",
+                  "type": "text",
+                  "uuid": "a280eb31-2cd2-40ec-82cc-126fd961bcf7"
+                },
+                {
+                  "key": "address_id",
+                  "value": "1",
+                  "type": "text",
+                  "uuid": "01d2e9fd-15c6-4363-b81f-d9ce4dd5d275"
+                },
+                {
+                  "key": "service_charge",
+                  "value": "1000",
+                  "type": "text",
+                  "uuid": "50cb92e9-9ef2-4e0b-934a-ff9796848cd3"
+                },
+                {
+                  "key": "vat",
+                  "value": "100",
+                  "type": "text",
+                  "uuid": "73233610-e24e-4c6a-b415-e27e145b671b"
+                },
+                {
+                  "key": "total",
+                  "value": "10000",
+                  "type": "text",
+                  "uuid": "7817c57e-a2c4-44e7-aa0f-94cf9a69a490"
+                },
+                {
+                  "key": "remarks",
+                  "value": "this is my order",
+                  "type": "text",
+                  "uuid": "34b4a4b9-a371-489f-8f2e-413b0584f5a9"
+                },
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "uuid": "ad10a351-e857-4ccb-8991-cad49b182ea9",
+                  "value": null
+                },
+                {
+                  "key": "products",
+                  "value": "[{\"product_id\":1,\"quantity\":3,\"price\":4000}]",
+                  "type": "text",
+                  "uuid": "08c0abb2-1c30-4463-bff6-1fa98819e247"
+                },
+                {
+                  "key": "ingredients",
+                  "value": "[{\"ingredient_id\":1,\"quantity\":5,\"unit\":\"kg\",\"price\":3000}]",
+                  "type": "text",
+                  "uuid": "edef9bc1-0f8f-43ba-ae50-2e2598598efe"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{local}}/banks?search=opay",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "banks"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "opay"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "local",
+      "value": "http://127.0.0.1:8000/api/jaram"
+    },
+    {
+      "key": "staging",
+      "value": "https://ryda.com.ng/api/jaram"
+    },
+    {
+      "key": "token",
+      "value": "5|ajhvDxBiby5cawX3ecW6bwLV8K8dRkVavSifE3t6b5e3eb7d"
+    }
+  ]
+}

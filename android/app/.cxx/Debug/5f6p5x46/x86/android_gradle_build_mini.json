@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/home/danielekwere/snap/flutter/common/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/danielekwere/Android/Sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/danielekwere/Desktop/flutter projects/jaraMarket/JARA-Market-Customer/android/app/.cxx/Debug/5f6p5x46/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/danielekwere/Android/Sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/danielekwere/Desktop/flutter projects/jaraMarket/JARA-Market-Customer/android/app/.cxx/Debug/5f6p5x46/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

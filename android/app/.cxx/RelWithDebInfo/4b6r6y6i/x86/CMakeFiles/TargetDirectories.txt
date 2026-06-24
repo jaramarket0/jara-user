@@ -1,0 +1,2 @@
+/Users/edidiong/Documents/JARA-Market/android/app/.cxx/RelWithDebInfo/4b6r6y6i/x86/CMakeFiles/edit_cache.dir
+/Users/edidiong/Documents/JARA-Market/android/app/.cxx/RelWithDebInfo/4b6r6y6i/x86/CMakeFiles/rebuild_cache.dir
