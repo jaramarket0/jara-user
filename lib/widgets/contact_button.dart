@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ContactButton extends StatelessWidget {
-  final IconData icon;
+  final FaIconData icon;
   final String label;
   final VoidCallback onTap;
   final Color? color;
@@ -34,7 +35,7 @@ class ContactButton extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(
+            FaIcon(
               icon,
               size: 28,
               color: color ?? Theme.of(context).primaryColor,

@@ -246,7 +246,7 @@ class _FaqScreenState extends State<FaqScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               ContactButton(
-                icon: Icons.email_outlined,
+                icon: FontAwesomeIcons.envelope,
                 label: 'Email Us',
                 onTap: () {
                   Navigator.pushNamed(context, '/contact');

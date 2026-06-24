@@ -85,7 +85,7 @@ class _ContactScreenState extends State<ContactScreen> {
           children: [
             Expanded(
               child: ContactMethodCard(
-                icon: Icons.email_outlined,
+                icon: FontAwesomeIcons.envelope,
                 title: 'Email',
                 subtitle: 'support@jaramarket.com',
                 onTap: () {
@@ -96,7 +96,7 @@ class _ContactScreenState extends State<ContactScreen> {
             const SizedBox(width: 16),
             Expanded(
               child: ContactMethodCard(
-                icon: Icons.phone_outlined,
+                icon: FontAwesomeIcons.phone,
                 title: 'Phone',
                 subtitle: '+234 800 123 4567',
                 onTap: () {
