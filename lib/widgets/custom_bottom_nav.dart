@@ -134,7 +134,12 @@ class CustomBottomNav extends StatelessWidget {
             }),
             label: 'Cart',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long_outlined),
+            activeIcon: Icon(Icons.receipt_long_rounded),
+            label: 'Orders',
+          ),
+          const BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person_2_outlined),
             label: 'Profile',

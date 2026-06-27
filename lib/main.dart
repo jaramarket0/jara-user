@@ -19,7 +19,6 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 // import 'screens/splash/splash_screen.dart';
 // 'https://github.com/DANIEL-EKWERE/jara-customer.git/'
 
-
 // ─── Globals ────────────────────────────────────────────────────────────────
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -97,11 +96,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 }
 
-
 void main() async {
   // Ensure Flutter framework binding is ready before calling asynchronous code
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase with the platform-specific options
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -121,7 +119,7 @@ void main() async {
       'App launched from terminated state: ${initialMessage.messageId}',
     );
   }
-  
+
   final SendTokenService sendTokenService = Get.put(SendTokenService());
   final fcm = FirebaseMessaging.instance;
 
@@ -171,25 +169,25 @@ void main() async {
   // DarwinInitializationSettings replaces the deprecated IOSInitializationSettings
   final DarwinInitializationSettings initializationSettingsIOS =
       DarwinInitializationSettings(
-        requestAlertPermission: false,
-        requestBadgePermission: false,
-        requestSoundPermission: false,
-        notificationCategories: darwinNotificationCategories,
-      );
+    requestAlertPermission: false,
+    requestBadgePermission: false,
+    requestSoundPermission: false,
+    notificationCategories: darwinNotificationCategories,
+  );
 
   final DarwinInitializationSettings initializationSettingsMacOS =
       DarwinInitializationSettings(
-        requestAlertPermission: false,
-        requestBadgePermission: false,
-        requestSoundPermission: false,
-        notificationCategories: darwinNotificationCategories,
-      );
+    requestAlertPermission: false,
+    requestBadgePermission: false,
+    requestSoundPermission: false,
+    notificationCategories: darwinNotificationCategories,
+  );
 
   final LinuxInitializationSettings initializationSettingsLinux =
       LinuxInitializationSettings(
-        defaultActionName: 'Open notification',
-        defaultIcon: AssetsLinuxIcon('icons/app_icon.png'),
-      );
+    defaultActionName: 'Open notification',
+    defaultIcon: AssetsLinuxIcon('icons/app_icon.png'),
+  );
 
   // Single declaration — no duplicate
   final InitializationSettings initializationSettings = InitializationSettings(
@@ -293,8 +291,8 @@ void main() async {
   //   // Logger.init(kReleaseMode ? LogMode.live : LogMode.debug);
   //   // runApp(const MyApp());
   // });
-  
-   // await InAppWebViewController.setWebContentsDebuggingEnabled(true); // Optional
+
+  // await InAppWebViewController.setWebContentsDebuggingEnabled(true); // Optional
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,

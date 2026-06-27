@@ -4,6 +4,7 @@ import 'package:jara_market/config/local_storage.dart';
 import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart';
 import 'package:jara_market/screens/home_screen/controller/home_controller.dart';
 import 'package:jara_market/screens/main_screen/controller/main_controller.dart';
+import 'package:jara_market/screens/orders_screen/orders_screen.dart';
 import '../../widgets/custom_bottom_nav.dart';
 import '../home_screen/home_screen.dart';
 import '../favorites_screen/favorites_screen.dart';
@@ -47,6 +48,8 @@ class _MainScreenState extends State<MainScreen> {
       case 2:
         return const CartScreen();
       case 3:
+        return const OrdersScreen();
+      case 4:
         return const ProfileScreen();
       default:
         return const HomeScreen();

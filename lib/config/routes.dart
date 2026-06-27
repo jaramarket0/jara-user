@@ -60,6 +60,8 @@ import 'package:jara_market/screens/success_screen/bindings/success_bindings.dar
 import 'package:jara_market/screens/success_screen/success_screen.dart';
 import 'package:jara_market/screens/summary_home_screen/bindings/summary_home_bindings.dart';
 import 'package:jara_market/screens/summary_home_screen/summary_home_screen.dart';
+import 'package:jara_market/screens/orders_screen/bindings/orders_bindings.dart';
+import 'package:jara_market/screens/orders_screen/orders_screen.dart';
 import 'package:jara_market/screens/user_orders_screen/bindings/user_orders_bindings.dart';
 import 'package:jara_market/screens/user_orders_screen/user_orders_screen.dart';
 import 'package:jara_market/screens/wallet_screen/bindings/wallet_bindings.dart';
@@ -103,6 +105,7 @@ class AppRoutes {
   static const onboardingScreen = '/onboarding_screen';
   static const successScreen = '/success_screen';
   static const summaryHomeScreen = '/summary_home_screen';
+  static const ordersScreen = '/orders_screen';
   static const userOrdersScreen = '/user_orders_screen';
   static const walletScreen = '/user_orders_screen';
   static const privacyPolicyScreen = '/privacy_policy_screen';
@@ -214,6 +217,10 @@ class AppRoutes {
         name: summaryHomeScreen,
         page: () => const SummaryHomeScreen(),
         bindings: [SummaryHomeBindings()]),
+    GetPage(
+        name: ordersScreen,
+        page: () => const OrdersScreen(),
+        bindings: [OrdersBindings()]),
     GetPage(
         name: walletScreen,
         page: () => const WalletScreen(),

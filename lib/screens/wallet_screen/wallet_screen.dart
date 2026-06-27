@@ -24,8 +24,8 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   void initState() {
     super.initState();
-    // _fetchWalletData();
     controller.fetchWallet();
+    controller.fetchTransactions();
   }
 
   RefreshController refreshController =
@@ -116,75 +116,63 @@ class _WalletScreenState extends State<WalletScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            controller.transactions.isEmpty
-                                ? _buildEmptyState()
-                                : Obx(() {
-                                    return ListView.builder(
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount: controller.transactions.length,
-                                      itemBuilder: (context, index) {
-                                        final transaction =
-                                            controller.transactions[index];
-                                        return controller
-                                                .isTransactionLoading1.value
-                                            ? Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  color: Colors.amber,
-                                                ),
-                                              )
-                                            : Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 10),
-                                                child: ListTile(
-                                                  onTap: () {
-                                                    controller.fetchTransaction(
-                                                        transaction.id);
-                                                  },
-                                                  tileColor: Colors.grey[100],
-                                                  shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                      side: BorderSide(
-                                                          width: 1,
-                                                          color: Color(
-                                                              0xff1919190D))),
-                                                  //BeveledRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                                  leading: Icon(
-                                                    transaction.status ==
-                                                            'success'
-                                                        ? Icons.arrow_upward
-                                                        : Icons.arrow_downward,
-                                                    color: transaction.status ==
-                                                            'success'
-                                                        ? Colors.green
-                                                        : Colors.red,
-                                                  ),
-                                                  title: Text(transaction
-                                                      .gatewayResponse),
-                                                  subtitle: Text(
-                                                      transaction.createdAt),
-                                                  trailing: Text(
-                                                    '${transaction.status == 'success' ? '+' : '-'}${transaction.amount}',
-                                                    style: TextStyle(
-                                                      color:
-                                                          transaction.status ==
-                                                                  'success'
-                                                              ? Colors.green
-                                                              : Colors.red,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
+                            Obx(() {
+                              if (controller.isTransactionLoading.value) {
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                      color: Colors.amber),
+                                );
+                              }
+                              if (controller.transactions.isEmpty) {
+                                return _buildEmptyState();
+                              }
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: controller.transactions.length,
+                                itemBuilder: (context, index) {
+                                  final transaction =
+                                      controller.transactions[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    child: ListTile(
+                                      onTap: () {
+                                        controller
+                                            .fetchTransaction(transaction.id);
                                       },
-                                    );
-                                  })
+                                      tileColor: Colors.grey[100],
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          side: BorderSide(
+                                              width: 1,
+                                              color:
+                                                  const Color(0xff1919190D))),
+                                      leading: Icon(
+                                        transaction.status == 'success'
+                                            ? Icons.arrow_upward
+                                            : Icons.arrow_downward,
+                                        color: transaction.status == 'success'
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                      title: Text(transaction.gatewayResponse),
+                                      subtitle: Text(transaction.createdAt),
+                                      trailing: Text(
+                                        '${transaction.status == 'success' ? '+' : '-'}${transaction.amount}',
+                                        style: TextStyle(
+                                          color: transaction.status == 'success'
+                                              ? Colors.green
+                                              : Colors.red,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            })
                           ],
                         ),
                       ),
