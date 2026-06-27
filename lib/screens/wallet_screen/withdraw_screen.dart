@@ -204,15 +204,17 @@ class WithdrawController extends GetxController {
     myLog.log(
         'Initiating transfer with amount: ${amountCtrl.text}, bank: ${selectedBank.value?.name}, account number: ${accountNumberCtrl.text}, account name: ${accountNameCtrl.text}, narration: ${narrationCtrl.text}, bank id: ${selectedBank.value?.id}, bank code: ${selectedBank.value?.code}');
     try {
-      final res = await _api.transferToBank({
-        'amount': double.tryParse(amountCtrl.text) ?? 0,
-        'bank_id': 1, //selectedBank.value?.id,
-        'bank_code': selectedBank.value?.code,
-        'account_number': accountNumberCtrl.text.trim(),
-        'account_name': accountNameCtrl.text.trim(),
-        'narration': narrationCtrl.text.trim(),
-        'pin_token': pinToken,
-      });
+      final res = await _api.transferToBank(
+        {
+          'amount': double.tryParse(amountCtrl.text) ?? 0,
+          'bank_id': selectedBank.value?.id,
+          'bank_code': selectedBank.value?.code,
+          'account_number': accountNumberCtrl.text.trim(),
+          'account_name': accountNameCtrl.text.trim(),
+          'narration': narrationCtrl.text.trim(),
+        },
+        pinToken: pinToken,
+      );
       final body = jsonDecode(res.body);
       myLog.log('Transfer response: ${res.body}');
       if (res.statusCode == 200 || res.statusCode == 201) {

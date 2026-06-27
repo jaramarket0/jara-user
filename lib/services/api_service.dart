@@ -22,7 +22,7 @@ class ApiService extends GetConnect {
   //var baseUrl = 'https://jaramarket.kenjeffy.com/api/jaram';
   // var baseUrl = 'https://jara-market-laravel-backend-production.up.railway.app/api';
   // var baseUrl = 'http://192.168.45.146:8000/jaram';
-var baseUrl = 'https://jaramarket-backend.onrender.com/api/jaram';
+  var baseUrl = 'https://jaramarket-backend.onrender.com/api/jaram';
 
   static const int maxRetries = 3;
   static const Duration retryDelay = Duration(seconds: 2);
@@ -189,7 +189,7 @@ var baseUrl = 'https://jaramarket-backend.onrender.com/api/jaram';
     return response;
   }
 
-/// send fcm token to backend
+  /// send fcm token to backend
   Future<http.Response> sendFcmToken(Map<String, dynamic> replyData) async {
     final token = await dataBase.getToken();
     final url = Uri.parse('$baseUrl/fcm-token');
@@ -554,18 +554,17 @@ var baseUrl = 'https://jaramarket-backend.onrender.com/api/jaram';
     return response;
   }
 
-  // Fetch food categories
-  Future<http.Response> fetchFoodCategory(String lgaID,String stateID) async {
+  // Fetch food categories (paginated — 5 categories per page)
+  Future<http.Response> fetchFoodCategory(String lgaID, String stateID,
+      {int page = 1}) async {
     if (Get.isSnackbarOpen) {
       return Future.error('Snackbar is open');
     }
     var stateId = stateID == '' || stateID == null
         ? dataBase.getStateAddressId()
         : stateID;
-    //final url = Uri.parse('$baseUrl/fetch-ProductCategory');
-    //final url = Uri.parse('$baseUrl/fetch/categories-limit-products');
-    final url =
-        Uri.parse('$baseUrl/fetch/categories-all-products?lga_id=$lgaID&&state_id=$stateId');
+    final url = Uri.parse(
+        '$baseUrl/fetch/categories-all-products?lga_id=$lgaID&state_id=$stateId&page=$page&per_page=5');
 
     _logRequest('GET', url);
     // final prefs = await SharedPreferences.getInstance();
@@ -1323,8 +1322,7 @@ var baseUrl = 'https://jaramarket-backend.onrender.com/api/jaram';
   //   return response;
   // }
 
-
-Future<Map<String, String>> _authHeaders({String? pinToken}) async {
+  Future<Map<String, String>> _authHeaders({String? pinToken}) async {
     final db = Get.find<DataBase>();
     final token = await db.getToken();
     final headers = <String, String>{
@@ -1372,7 +1370,8 @@ Future<Map<String, String>> _authHeaders({String? pinToken}) async {
 
   Future<http.Response> validatePin(String pinToken) async {
     return http
-        .get(_uri('/pin/validate'), headers: await _authHeaders(pinToken: pinToken))
+        .get(_uri('/pin/validate'),
+            headers: await _authHeaders(pinToken: pinToken))
         .timeout(timeout);
   }
 
@@ -1453,7 +1452,8 @@ Future<Map<String, String>> _authHeaders({String? pinToken}) async {
 
   Future<http.Response> verifyTransaction(String reference) async {
     return http
-        .get(_uri('/verify-transaction/$reference'), headers: await _authHeaders())
+        .get(_uri('/verify-transaction/$reference'),
+            headers: await _authHeaders())
         .timeout(timeout);
   }
 
@@ -1463,11 +1463,12 @@ Future<Map<String, String>> _authHeaders({String? pinToken}) async {
         .timeout(timeout);
   }
 
-  Future<http.Response> transferToBank(Map<String, dynamic> data) async {
+  Future<http.Response> transferToBank(Map<String, dynamic> data,
+      {String? pinToken}) async {
     return http
         .post(
           _uri('/wallet/transfer-to-bank'),
-          headers: await _authHeaders(),
+          headers: await _authHeaders(pinToken: pinToken),
           body: jsonEncode(data),
         )
         .timeout(timeout);
@@ -1560,7 +1561,8 @@ Future<Map<String, String>> _authHeaders({String? pinToken}) async {
 
   // ─── Orders ───────────────────────────────────────────────────────────────
 
-  Future<http.Response> createOrder(Map<String, dynamic> data, {File? audio}) async {
+  Future<http.Response> createOrder(Map<String, dynamic> data,
+      {File? audio}) async {
     if (audio != null) {
       final request = http.MultipartRequest('POST', _uri('/orders'))
         ..headers.addAll(await _authHeadersMultipart());
@@ -1601,7 +1603,6 @@ Future<Map<String, String>> _authHeaders({String? pinToken}) async {
   // ─── Checkout address helper (used by CartController) ────────────────────
 
 //  Future<http.Response> getCheckoutAddress() async => getAddresses();
-
 }
 
 ApiService apiService = ApiService(API_TIMEOUT_DURATION);
@@ -1612,7 +1613,8 @@ String getImageUrl(String? path) {
   if (path == null || path.isEmpty) return '';
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
   final uri = Uri.parse(apiService.baseUrl ?? '');
-  final root = '${uri.scheme}://${uri.host}${(uri.port != 80 && uri.port != 443) ? ':${uri.port}' : ''}';
+  final root =
+      '${uri.scheme}://${uri.host}${(uri.port != 80 && uri.port != 443) ? ':${uri.port}' : ''}';
   return '$root/storage/$path';
 }
 

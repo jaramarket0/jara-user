@@ -1989,6 +1989,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 setState(() {
                                                   state =
                                                       controller1.selectedLGA1!;
+                                                  lgax =
+                                                      controller1.selectedLGA1!;
                                                 });
                                                 controller.fetchFoodCategories(
                                                     controller1.selectedLGAId
@@ -2254,7 +2256,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               onRefresh: _onRefresh,
                               child: ListView.separated(
                                 physics: BouncingScrollPhysics(),
-                                itemCount: controller.category.length + 2,
+                                // +1 for the load-more footer
+                                itemCount: controller.category.length + 3,
                                 separatorBuilder: (context, index) {
                                   if (index == 0) {
                                     return SizedBox(height: 24);
@@ -2410,6 +2413,33 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ],
                                     );
                                   }
+                                  // Last item — load-more footer
+                                  if (sectionIndex ==
+                                      controller.category.length + 2) {
+                                    return Obx(() {
+                                      if (controller.isLoadingMore.value) {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 24),
+                                          child: Center(
+                                              child:
+                                                  CircularProgressIndicator()),
+                                        );
+                                      }
+                                      if (!controller.hasMore) {
+                                        return SizedBox(height: 24);
+                                      }
+                                      // Trigger load when this item becomes visible
+                                      controller.loadMoreCategories();
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 24),
+                                        child: Center(
+                                            child: CircularProgressIndicator()),
+                                      );
+                                    });
+                                  }
+
                                   int categoryIndex;
                                   if (sectionIndex >= 4) {
                                     categoryIndex = sectionIndex - 2;
@@ -2516,10 +2546,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               : SizedBox(
-                  height:
-                      (controller.category[categoryIndex].products!.length / 4)
-                              .ceil() *
-                          70.0,
+                  height: ((controller.category[categoryIndex].products!.length > 8
+                              ? 8
+                              : controller.category[categoryIndex].products!.length) /
+                          4)
+                      .ceil() *
+                      70.0,
                   child: GridView.builder(
                     physics: NeverScrollableScrollPhysics(),
                     itemCount:

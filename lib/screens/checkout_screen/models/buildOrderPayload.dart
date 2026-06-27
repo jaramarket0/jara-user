@@ -52,7 +52,7 @@ Map<String, dynamic> buildOrderPayload({
 
   return {
     "order_date": orderDate,
-    "shipping_fee": shippingFee.toStringAsFixed(0),
+    "shipping_fee": shippingFee,
     "delivery_type": deliveryType,
     "address_id": addressId,
     "service_charge": serviceCharge,
@@ -61,6 +61,6 @@ Map<String, dynamic> buildOrderPayload({
     "vat": vat,
     "total": total,
     "remarks": remarks,
-    "audio_url": audio_url,
+    if (audio_url != null && audio_url.isNotEmpty) "audio_url": audio_url,
   };
 }

@@ -26,6 +26,7 @@ class CheckoutController extends GetxController {
   RxString contactName = ''.obs;
   RxBool isDefault = false.obs;
   RxBool isLoading = false.obs;
+  RxInt selectedAddressId = 0.obs;
   OrderSuccessModel orderSuccessModel = OrderSuccessModel();
   CheckoutModel checkoutModel = CheckoutModel(
     status: false,
@@ -146,7 +147,7 @@ class CheckoutController extends GetxController {
         cartItems: cartController.cartItems,
         ingredient: cartController.ingredientList,
         orderDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        addressId: 1,
+        addressId: selectedAddressId.value,
         deliveryType: 'pickup',
         shippingFee: 2000,
         serviceCharge: 1000,
@@ -159,23 +160,31 @@ class CheckoutController extends GetxController {
       var response = await apiService.createOrder(payload); // Example API call
       if (response.statusCode == 200 || response.statusCode == 201) {
         isLoading.value = false;
-        myLog.log(response.body, name:'Order body');
+        myLog.log(response.body, name: 'Order body');
         orderSuccessModel = orderSuccessModelFromJson(response.body);
-        Get.snackbar('Success', orderSuccessModel.message.toString(),
-            colorText: Colors.white, backgroundColor: Colors.green);
-            Navigator.pushAndRemoveUntil(
-              Get.context!,
-              MaterialPageRoute(builder: (context) => SuccessScreen()), // Replace with your target screen and URL
-              (route) => false,
-            );
+        ScaffoldMessenger.of(Get.context!).showSnackBar(SnackBar(
+          content: Text(orderSuccessModel.message.toString()),
+          backgroundColor: Colors.green,
+        ));
+        Navigator.pushAndRemoveUntil(
+          Get.context!,
+          MaterialPageRoute(builder: (context) => SuccessScreen()),
+          (route) => false,
+        );
       } else {
-        Get.snackbar('Oops, Something Went Wrong', jsonDecode(response.body)['message'],
-            colorText: Colors.white, backgroundColor: Colors.red);
-          //  Navigator.push(Get.context!, CupertinoDialogRoute(builder: (context)=> const SuccessScreen(), context: Get.context!));
+        myLog.log('Order failed ${response.statusCode}: ${response.body}', name: 'CheckoutController');
+        final msg = jsonDecode(response.body)['message'] ?? 'Something went wrong';
+        ScaffoldMessenger.of(Get.context!).showSnackBar(SnackBar(
+          content: Text(msg),
+          backgroundColor: Colors.red,
+        ));
       }
     } catch (e) {
-      Get.snackbar('Error', e.toString(),
-          colorText: Colors.white, backgroundColor: Colors.red);
+      myLog.log('Order exception: $e', name: 'CheckoutController');
+      ScaffoldMessenger.of(Get.context!).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: Colors.red,
+      ));
     } finally {
       isLoading.value = false;
     }

@@ -79,6 +79,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     _initializeRecorder();
     getName();
+    if (widget.orderAddress.containsKey('id') && widget.orderAddress['id'] != null) {
+      controller.selectedAddressId.value = widget.orderAddress['id'] as int;
+    }
   }
 
   Timer? _timer;
@@ -633,6 +636,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   controller.selectedLga.value = result['lga'];
                                   controller.number.value =
                                       result['phone_number'];
+                                  if (result['id'] != null) {
+                                    controller.selectedAddressId.value =
+                                        result['id'] as int;
+                                  }
                                 });
                               }
                             },
@@ -646,14 +653,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ? '${widget.orderAddress['contact_address']},${widget.orderAddress['lga']},${widget.orderAddress['state']},${widget.orderAddress['country']}.'
                               : 'Set Address to recieve your order.',
                           onChangePressed: () async {
-                            print('change address pressed');
-                            result = await Get.toNamed(
+                            final newAddress = await Get.toNamed(
                                 AppRoutes.checkoutAddressChange,
                                 arguments: {
                                   'isFromProfile': widget.orderAddress.isEmpty
                                       ? true
                                       : false,
                                 });
+                            if (newAddress != null && newAddress.isNotEmpty) {
+                              setState(() {
+                                result = newAddress;
+                                controller.selectedAddress.value =
+                                    newAddress['contact_address'] ?? '';
+                                controller.selectedCountry.value =
+                                    newAddress['country'] ?? '';
+                                controller.selectedState.value =
+                                    newAddress['state'] ?? '';
+                                controller.selectedLga.value =
+                                    newAddress['lga'] ?? '';
+                                controller.number.value =
+                                    newAddress['phone_number'] ?? '';
+                                if (newAddress['id'] != null) {
+                                  controller.selectedAddressId.value =
+                                      newAddress['id'] as int;
+                                }
+                              });
+                            }
                           },
                         ),
                 ],

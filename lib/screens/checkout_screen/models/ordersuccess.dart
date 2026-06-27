@@ -1,5 +1,11 @@
 import 'dart:convert';
 
+int? _toInt(dynamic v) {
+  if (v == null) return null;
+  if (v is int) return v;
+  if (v is double) return v.toInt();
+  return int.tryParse(v.toString());
+}
 
 OrderSuccessModel orderSuccessModelFromJson(String str) =>
     OrderSuccessModel.fromJson(jsonDecode(str));
@@ -64,10 +70,10 @@ class OrderData {
     id = json['id'];
     orderDate = json['order_date'];
     deliveryType = json['delivery_type'];
-    shippingFee = json['shipping_fee'];
-    serviceCharge = json['service_charge'];
-    vat = json['vat'];
-    total = json['total'];
+    shippingFee = json['shipping_fee']?.toString();
+    serviceCharge = _toInt(json['service_charge']);
+    vat = _toInt(json['vat']);
+    total = _toInt(json['total']);
     status = json['status'];
     address =
         json['address'] != null ? new Address.fromJson(json['address']) : null;

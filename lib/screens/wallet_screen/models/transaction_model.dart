@@ -213,8 +213,8 @@ class TransactionModel {
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
-      data: (json['data'] as List<dynamic>)
-          .map((e) => TransactionData.fromJson(e))
+      data: (json['data'] as List<dynamic>? ?? [])
+          .map((e) => TransactionData.fromJson(e as Map<String, dynamic>))
           .toList(),
       links: json['links'] != null ? PaginationLinks.fromJson(json['links']) : null,
       meta: json['meta'] != null ? PaginationMeta.fromJson(json['meta']) : null,
@@ -259,15 +259,15 @@ class TransactionData {
 
   factory TransactionData.fromJson(Map<String, dynamic> json) {
     return TransactionData(
-      id: json['id'],
-      txnRef: json['txn_ref'],
-      amount: json['amount'],
-      userName: json['user_name'],
-      transactionMode: json['transaction_mode'],
-      gatewayResponse: json['gateway_response'],
-      provider: json['provider'],
-      status: json['status'],
-      createdAt: json['created_at'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      txnRef: json['txn_ref']?.toString() ?? '',
+      amount: json['amount']?.toString() ?? '0',
+      userName: json['user_name']?.toString() ?? '',
+      transactionMode: json['transaction_mode']?.toString() ?? '',
+      gatewayResponse: json['gateway_response']?.toString() ?? '',
+      provider: json['provider']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'pending',
+      createdAt: json['created_at']?.toString() ?? '',
     );
   }
 

@@ -129,26 +129,34 @@ import 'package:jara_market/services/api_service.dart';
 class Categories {
   String? message;
   List<Category>? data;
+  int? currentPage;
+  int? lastPage;
+  int? total;
 
-  Categories({this.message, this.data});
+  Categories({this.message, this.data, this.currentPage, this.lastPage, this.total});
 
   Categories.fromJson(Map<String, dynamic> json) {
     message = json['message'];
-    if (json['data'] != null) {
-      data = <Category>[];
-      json['data'].forEach((v) {
-        data!.add(new Category.fromJson(v));
-      });
+    // Support both paginated { data: { data: [...], current_page, last_page } }
+    // and flat { data: [...] } responses.
+    final raw = json['data'];
+    List<dynamic> items;
+    if (raw is Map) {
+      items        = raw['data'] as List<dynamic>? ?? [];
+      currentPage  = raw['current_page'] as int?;
+      lastPage     = raw['last_page'] as int?;
+      total        = raw['total'] as int?;
+    } else {
+      items = raw as List<dynamic>? ?? [];
     }
+    data = items.map((v) => Category.fromJson(v as Map<String, dynamic>)).toList();
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['message'] = this.message;
-    if (this.data != null) {
-      data['data'] = this.data!.map((v) => v.toJson()).toList();
-    }
-    return data;
+    return {
+      'message': message,
+      'data': data?.map((v) => v.toJson()).toList(),
+    };
   }
 }
 

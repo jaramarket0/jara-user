@@ -54,7 +54,8 @@ class LoginController extends GetxController {
       if (response.statusCode == 200 || response.statusCode == 201) {
         loginModel = loginModelFromJson(response.body);
         data = loginModel.data;
-        myLog.log('Login Message: ${loginModel.message}', name: 'LoginController');
+        myLog.log('Login Message: ${loginModel.message}',
+            name: 'LoginController');
         // Save token and user data to shared preferences
         await dataBase.saveToken(data.token ?? 'N/A');
         await dataBase
@@ -66,7 +67,8 @@ class LoginController extends GetxController {
         await dataBase.savePhoneNumber(data.phoneNumber ?? 'N/A');
         await dataBase.saveRole(data.role ?? 'N/A');
         await dataBase.saveReferalCode(data.referralCode ?? 'N/A');
-        await dataBase.saveReferalCount(data.referralCount?.toString() ?? 'N/A');
+        await dataBase
+            .saveReferalCount(data.referralCount?.toString() ?? 'N/A');
         await dataBase.saveRefererId(data.referrerId?.toString() ?? 'N/A');
 
         ScaffoldMessenger.of(Get.context!).showSnackBar(
@@ -86,7 +88,8 @@ class LoginController extends GetxController {
       } else {
         ScaffoldMessenger.of(Get.context!).showSnackBar(
           SnackBar(
-            content: Text('Login failed: ${jsonDecode(response.body)['data']}'),
+            content: Text(
+                'Login failed: ${jsonDecode(response.body)['message']}\n description: ${jsonDecode(response.body)['errors']}'),
             backgroundColor: Colors.red,
           ),
         );
