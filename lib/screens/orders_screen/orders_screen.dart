@@ -88,6 +88,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Widget _buildStatusTabs() {
     return Obx(() {
+      // Read observables here (in Obx scope) so GetX tracks them.
+      final selectedStatus = _ctrl.selectedStatus.value;
+      final orders = _ctrl.allOrders.toList();
+
       return SizedBox(
         height: 44,
         child: ListView.separated(
@@ -99,8 +103,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
             final tab = OrdersController.statusTabs[i];
             final key = tab['key']!;
             final label = tab['label']!;
-            final isSelected = _ctrl.selectedStatus.value == key;
-            final count = _ctrl.countForStatus(key);
+            final isSelected = selectedStatus == key;
+            final count = key == 'all'
+                ? orders.length
+                : orders.where((o) => o.status.toLowerCase() == key).length;
 
             return GestureDetector(
               onTap: () => _ctrl.selectStatus(key),

@@ -722,9 +722,7 @@ class ApiService extends GetConnect {
     _logRequest('GET', url);
     final response = await http.get(
       url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+      headers: await _authHeaders(),
     );
     _logResponse(response);
     return response;
@@ -736,9 +734,7 @@ class ApiService extends GetConnect {
     _logRequest('POST', url);
     final response = await http.post(
       url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+      headers: await _authHeaders(),
     );
     _logResponse(response);
     return response;

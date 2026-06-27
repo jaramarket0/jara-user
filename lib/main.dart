@@ -101,9 +101,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase with the platform-specific options
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // await Firebase.initializeApp(
+  //   options: DefaultFirebaseOptions.currentPlatform,
+  // );
 //dPtbMdj7SviGh7BRsytKYU:APA91bFNwQqptPIhLYmQ3RsEzN-clXzvOMSJSTox9JCWzfjyq8bA2Pd7H97VFHx8TMFWU4lG3cupgZsgM6CR34pRERc4ZtWeWSF86JGMFgbYdpuyNJnsiUk
   // Inject the AuthController globally
   Get.put(AuthController());

@@ -540,7 +540,10 @@ class _ItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = item.productName ?? item.ingredientName ?? 'Item';
+    final isIngredient = item.ingredientId != null;
+    final name = isIngredient
+        ? (item.ingredientName ?? item.productName ?? 'Item')
+        : (item.productName ?? item.ingredientName ?? 'Item');
     final amount = double.tryParse(item.amount) ?? 0;
     final price = double.tryParse(item.price) ?? 0;
 
@@ -554,11 +557,20 @@ class _ItemRow extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E0),
+                  color: isIngredient
+                      ? const Color(0xFFE8F5E9)
+                      : const Color(0xFFFFF3E0),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.fastfood_outlined,
-                    size: 20, color: Color(0xFFFFAA00)),
+                child: Icon(
+                  isIngredient
+                      ? Icons.grass_outlined
+                      : Icons.fastfood_outlined,
+                  size: 20,
+                  color: isIngredient
+                      ? const Color(0xFF4CAF50)
+                      : const Color(0xFFFFAA00),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -212,12 +212,33 @@ class TransactionModel {
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
-    return TransactionModel(
-      data: (json['data'] as List<dynamic>? ?? [])
+    final raw = json['data'];
+    List<TransactionData> items = [];
+    PaginationLinks? links;
+    PaginationMeta? meta;
+
+    if (raw is Map<String, dynamic>) {
+      // Laravel paginated response: { data: { data: [...], links: {}, meta: {} } }
+      final list = raw['data'];
+      if (list is List) {
+        items = list
+            .map((e) => TransactionData.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      if (raw['links'] != null) links = PaginationLinks.fromJson(raw['links']);
+      if (raw['meta'] != null) meta = PaginationMeta.fromJson(raw['meta']);
+    } else if (raw is List) {
+      items = raw
           .map((e) => TransactionData.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      links: json['links'] != null ? PaginationLinks.fromJson(json['links']) : null,
-      meta: json['meta'] != null ? PaginationMeta.fromJson(json['meta']) : null,
+          .toList();
+      if (json['links'] != null) links = PaginationLinks.fromJson(json['links']);
+      if (json['meta'] != null) meta = PaginationMeta.fromJson(json['meta']);
+    }
+
+    return TransactionModel(
+      data: items,
+      links: links,
+      meta: meta,
       status: json['status'],
       message: json['message'],
     );

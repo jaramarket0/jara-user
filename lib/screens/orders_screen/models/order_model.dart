@@ -166,7 +166,9 @@ class OrderItem {
   }
 
   String get displayName {
-    final name = productName ?? ingredientName ?? 'Item';
+    final name = ingredientId != null
+        ? (ingredientName ?? productName ?? 'Item')
+        : (productName ?? ingredientName ?? 'Item');
     return quantity > 1 ? '$name ×$quantity' : name;
   }
 }
