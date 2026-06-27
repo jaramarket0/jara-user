@@ -36,7 +36,13 @@ class Data {
   Data({this.url});
 
   Data.fromJson(Map<String, dynamic> json) {
-    url = json['url'];
+    // API returns: { data: { authorization_url: "..." } }
+    // or nested:  { data: { data: { authorization_url: "..." } } }
+    final inner = json['data'];
+    if (inner is Map<String, dynamic>) {
+      url = inner['authorization_url']?.toString();
+    }
+    url ??= json['authorization_url']?.toString() ?? json['url']?.toString();
   }
 
   Map<String, dynamic> toJson() {

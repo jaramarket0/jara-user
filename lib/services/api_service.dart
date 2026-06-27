@@ -893,9 +893,7 @@ class ApiService extends GetConnect {
     _logRequest('POST', url, body: fundData);
     final response = await http.post(
       url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+      headers: await _authHeaders(),
       body: jsonEncode(fundData),
     );
     _logResponse(response);
