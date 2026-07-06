@@ -78,9 +78,8 @@ class _AtomicWebViewScreenState extends State<AtomicWebViewScreen> {
                 ));
             walletController.fetchWallet();
             walletController.fetchTransactions();
-            Navigator.pop(context); // Close the WebView
-            Navigator.pop(context); // Close the WebView
-            Navigator.pop(context); // Close the WebView
+            Get.until((route) => route.settings.name == AppRoutes.walletScreen
+                || route.isFirst);
             // Navigator.pushReplacement(
             //   context,
             //   MaterialPageRoute(builder: (_) => const SuccessScreen()),

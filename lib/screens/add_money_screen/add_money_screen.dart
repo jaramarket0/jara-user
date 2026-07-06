@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/screens/add_money_screen/controller/add_money_controller.dart';
-import 'dart:convert';
 import 'package:jara_market/screens/payment_method_screen/payment_method_screen.dart';
 import '../../widgets/custom_back_header.dart';
-import '../../services/api_service.dart';
 
 AddMoneyController controller = Get.put(AddMoneyController());
 
@@ -19,10 +17,8 @@ class AddMoneyScreen extends StatefulWidget {
 class _AddMoneyScreenState extends State<AddMoneyScreen> {
   final TextEditingController _amountController = TextEditingController(text: '0');
   final FocusNode _amountFocusNode = FocusNode();
-   ApiService _apiService = ApiService(Duration(seconds: 60 * 5));
   bool _isButtonActive = false;
   final double _minimumAmount = 1000;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -44,36 +40,8 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
     super.dispose();
   }
 
-  Future<void> _fundWallet() async {
-    try {
-      // Prepare the data for the API call
-      final fundData = {
-        'amount': double.parse(_amountController.text),
-        'user_id': 'user123', // Replace with actual user ID from auth provider
-        'payment_method': 'card', // This will be selected in the payment method screen
-      };
-
-      // Call the API service method
-      final response = await _apiService.fundWallet(fundData);
-
-      if (response.statusCode == 200) {
-        // Handle successful response
-        print('Wallet funded successfully');
-        return jsonDecode(response.body);
-      } else {
-        // Handle error response
-        print('Failed to fund wallet: ${response.statusCode}');
-        throw Exception('Failed to fund wallet: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Handle network or other errors
-      print('Error funding wallet: $e');
-      throw e;
-    }
-  }
-
-  void _navigateToPaymentMethod() async {
-    final result = await Navigator.push(
+  void _navigateToPaymentMethod() {
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => PaymentMethodScreen(
@@ -81,15 +49,6 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
         ),
       ),
     );
-
-    // If payment method was selected and payment was successful
-    if (result != null && result['success'] == true) {
-      // Return to wallet screen with success result
-      Navigator.pop(context, {
-        'amount': double.parse(_amountController.text),
-        'success': true
-      });
-    }
   }
 
   @override
@@ -182,32 +141,7 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
             Padding(
               padding: const EdgeInsets.all(16),
               child: ElevatedButton(
-                onPressed: _isButtonActive && !_isLoading
-                    ? () async {
-                  setState(() {
-                    _isLoading = true;
-                  });
-
-                  try {
-                    await _fundWallet();
-                    if (mounted) {
-                      _navigateToPaymentMethod();
-                    }
-                  } catch (e) {
-                    print('Error: $e');
-                    // Even if there's an error, we still navigate
-                    if (mounted) {
-                      _navigateToPaymentMethod();
-                    }
-                  } finally {
-                    if (mounted) {
-                      setState(() {
-                        _isLoading = false;
-                      });
-                    }
-                  }
-                }
-                    : null,
+                onPressed: _isButtonActive ? _navigateToPaymentMethod : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).primaryColor,
                   minimumSize: const Size(double.infinity, 56),
@@ -218,16 +152,7 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
                   disabledBackgroundColor: Theme.of(context).primaryColor.withOpacity(0.5),
                   disabledForegroundColor: Colors.white.withOpacity(0.7),
                 ),
-                child: _isLoading
-                    ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                    : const Text(
+                child: const Text(
                   'Continue',
                   style: TextStyle(
                     fontSize: 18,

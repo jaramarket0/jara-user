@@ -139,26 +139,28 @@ class AuthController extends GetxController {
       isLoading.value = false;
       var res = jsonDecode(res1.body); // Adjust based on your actual response structure
       myLog.log('Google backend response received: $res');
-      if (res['success'] == true) {
+      if (res['status'] == true) {
         final data = res['data'];
-        
-        // Persist session tokens locally
-        await _db.saveToken(data['access'] ?? data['token'] ?? '');
-        await _db.saveRefreshToken(data['refresh'] ?? '');
-        await _db.saveUserName(data['username'] ?? account.displayName ?? '');
-        await _db.saveEmail(data['email'] ?? account.email);
-        
-        isLoggedIn.value = true;
-        await fetchMe(); // Fetch current user details from server
 
-        // Route matching backend status instructions
-        if (data['code'] == 200) {
-          Get.offAllNamed('/main_screen');
-        } else {
+        // Persist session tokens locally
+        await _db.saveToken(data['token'] ?? '');
+        await _db.saveRefreshToken(data['refresh_token'] ?? '');
+        await _db.saveUserName(
+            '${data['firstname'] ?? ''} ${data['lastname'] ?? ''}'.trim().isNotEmpty
+                ? '${data['firstname'] ?? ''} ${data['lastname'] ?? ''}'.trim()
+                : account.displayName ?? '');
+        await _db.saveEmail(data['email'] ?? account.email);
+
+        isLoggedIn.value = true;
+
+        // New users go to preferences; returning users go straight to home
+        if (data['is_new_user'] == true) {
           Get.offAllNamed('/preferences_screen');
+        } else {
+          Get.offAllNamed('/main_screen');
         }
       } else {
-        errorMessage.value = res['error'] ?? 'Google authentication rejected.';
+        errorMessage.value = res['message'] ?? 'Google authentication rejected.';
       }
     } catch (e) {
       isLoading.value = false;
