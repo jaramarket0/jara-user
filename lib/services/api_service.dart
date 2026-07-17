@@ -22,8 +22,8 @@ class ApiService extends GetConnect {
   //var baseUrl = 'https://jaramarket.kenjeffy.com/api/jaram';
   // var baseUrl = 'https://jara-market-laravel-backend-production.up.railway.app/api';
   // var baseUrl = 'http://192.168.45.146:8000/jaram';
-  var baseUrl = 'https://jaramarket-backend.onrender.com/api/jaram';
-
+  var baseUrl = 'https://api.jaramarket.com.ng/api/jaram';
+//https://api.jaramarket.com.ng/api/jaram
   static const int maxRetries = 3;
   static const Duration retryDelay = Duration(seconds: 2);
 
