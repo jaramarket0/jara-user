@@ -6,6 +6,7 @@ class RegisterButton extends StatelessWidget {
   final VoidCallback? onPressed; // Change to nullable VoidCallback
   final bool isOutlined;
   final Color color;
+  final bool isLoading;
 
   const RegisterButton({
     Key? key,
@@ -13,6 +14,7 @@ class RegisterButton extends StatelessWidget {
     required this.onPressed, // Still required, but can be null
     this.isOutlined = false,
     required this.color,
+    this.isLoading = false,
   }) : super(key: key);
 
   @override
@@ -20,7 +22,7 @@ class RegisterButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: onPressed, // ElevatedButton accepts nullable callbacks
+        onPressed: isLoading ? null : onPressed, // ElevatedButton accepts nullable callbacks
         style: ElevatedButton.styleFrom(
           foregroundColor: isOutlined ? Theme.of(context).primaryColor : Colors.white,
           backgroundColor: isOutlined ? Colors.white : color,
@@ -32,7 +34,18 @@ class RegisterButton extends StatelessWidget {
                 : BorderSide.none,
           ),
         ),
-        child: Text(text),
+        child: isLoading
+            ? SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isOutlined ? Theme.of(context).primaryColor : Colors.white,
+                  ),
+                ),
+              )
+            : Text(text),
       ),
     );
   }

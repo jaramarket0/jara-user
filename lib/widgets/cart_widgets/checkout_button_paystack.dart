@@ -52,7 +52,7 @@ class CheckoutButtonPaystack extends StatelessWidget {
             textCancel: 'No use My Current Location',
             title: 'Confirm Address',
             content: Text(
-                'Will Deliver your order to this address?\n\n$address',
+                'We Will Deliver your order to this address.\n\n$address \n Confirm To CheckOut',
                 textAlign: TextAlign.center),
             onCancel: () async {
               AlertInfo.show(

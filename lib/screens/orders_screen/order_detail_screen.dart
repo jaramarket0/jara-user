@@ -211,7 +211,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       },
       {
         'icon': Icons.kitchen_outlined,
-        'label': 'Preparing',
+        'label': 'Shopping',
         'done': currentIdx >= 1,
       },
       {

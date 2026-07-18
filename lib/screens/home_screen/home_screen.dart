@@ -1545,7 +1545,6 @@ import 'package:jara_market/screens/home_screen/controller/home_controller.dart'
 import 'package:jara_market/screens/main_screen/main_screen.dart';
 import 'package:jara_market/screens/wallet_screen/wallet_screen.dart';
 import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
-import 'package:jara_market/screens/wallet_screen/withdraw_screen.dart';
 import 'package:jara_market/widgets/custom_button.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
@@ -1556,7 +1555,7 @@ AddressGoogleChangeController controller1 =
     Get.put(AddressGoogleChangeController());
 WalletController walletController = Get.put(WalletController());
 
-var cartController = Get.put(CartController());
+var cartController = Get.find<CartController>();
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);

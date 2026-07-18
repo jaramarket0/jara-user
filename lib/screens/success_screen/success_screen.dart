@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:jara_market/config/routes.dart';
 import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
 import 'package:jara_market/screens/success_screen/controller/success_controller.dart';
@@ -251,9 +252,10 @@ class _SuccessScreenState extends State<SuccessScreen> {
                         width: 150,
                         child: ElevatedButton(
                           onPressed: () {
-                            // to implement tracking my order here
                             cartController.cartItems.clear();
                             cartController.ingredientList.clear();
+                            Get.offAllNamed(AppRoutes.mainScreen);
+                            Get.toNamed(AppRoutes.ordersScreen);
                           },
                           //   : null,
                           child: const Text(

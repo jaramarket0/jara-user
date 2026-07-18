@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:jara_market/config/auth_service.dart';
 import 'package:jara_market/config/local_storage.dart';
 import 'package:jara_market/config/routes.dart';
+import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart';
 import 'package:jara_market/firebase_options.dart';
 import 'package:jara_market/send_token_service.dart';
 import 'package:overlay_kit/overlay_kit.dart';
@@ -108,6 +109,7 @@ void main() async {
   // Inject the AuthController globally
   Get.put(AuthController());
   Get.put(DataBase());
+  Get.put(CartController());
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 

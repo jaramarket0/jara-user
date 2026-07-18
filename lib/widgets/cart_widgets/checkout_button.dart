@@ -6,7 +6,6 @@ import 'package:jara_market/screens/cart_screen/models/models.dart';
 import 'package:jara_market/screens/checkout_screen/checkout_flow.dart';
 import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
 import 'package:jara_market/screens/wallet_screen/models/models.dart';
-import 'package:jara_market/screens/wallet_screen/withdraw_screen.dart';
 import '../../screens/checkout_screen/checkout_screen.dart';
 // import '../../models/cart_item.dart';
 

@@ -66,7 +66,6 @@ import 'package:jara_market/screens/user_orders_screen/bindings/user_orders_bind
 import 'package:jara_market/screens/user_orders_screen/user_orders_screen.dart';
 import 'package:jara_market/screens/wallet_screen/bindings/wallet_bindings.dart';
 import 'package:jara_market/screens/wallet_screen/wallet_screen.dart';
-import 'package:jara_market/screens/wallet_screen/withdraw_screen.dart';
 import 'package:jara_market/widgets/payment_method_card.dart';
 
 class AppRoutes {

@@ -4,6 +4,7 @@ import 'dart:developer' as myLog;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/config/local_storage.dart';
+import 'package:jara_market/config/routes.dart';
 import 'package:jara_market/screens/add_address_to_discover/add_address_screen.dart';
 import 'package:jara_market/screens/login_screen/models/models.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
@@ -86,10 +87,29 @@ class LoginController extends GetxController {
           myLog.log('State ID not found in local storage.');
         }
       } else {
+        final decoded = jsonDecode(response.body);
+        final errorDetail =
+            (decoded['errors'] ?? decoded['message'] ?? '').toString();
+
+        if (errorDetail.toLowerCase().contains('verify your email')) {
+          final email = emailController.text;
+          await _apiService.resendOtp({'email': email});
+          ScaffoldMessenger.of(Get.context!).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Your account is not verified yet. We\'ve sent you a new code.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          Get.toNamed(AppRoutes.loginEmailVerification,
+              arguments: {'email': email});
+          return;
+        }
+
         ScaffoldMessenger.of(Get.context!).showSnackBar(
           SnackBar(
             content: Text(
-                'Login failed: ${jsonDecode(response.body)['message']}\n description: ${jsonDecode(response.body)['errors']}'),
+                'Login failed: ${decoded['message']}\n description: ${decoded['errors']}'),
             backgroundColor: Colors.red,
           ),
         );

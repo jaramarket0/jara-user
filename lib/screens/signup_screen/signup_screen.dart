@@ -27,7 +27,6 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _agreeToTerms = false;
   bool _isPasswordVisible = false;
   bool _isButtonEnabled = false;
-  bool _isLoading = false;
 
   // final TextEditingController _firstNameController = TextEditingController();
   // final TextEditingController _lastNameController = TextEditingController();
@@ -340,15 +339,16 @@ class _SignupScreenState extends State<SignupScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              RegisterButton(
-                text: _isLoading ? "Processing..." : "Sign Up",
-                onPressed: (_isButtonEnabled && !_isLoading)
-                    ? controller.registerCustomer
-                    : null,
-                color: _isButtonEnabled
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey,
-              ),
+              Obx(() => RegisterButton(
+                    text: controller.isLoading ? "Processing..." : "Sign Up",
+                    isLoading: controller.isLoading,
+                    onPressed: (_isButtonEnabled && !controller.isLoading)
+                        ? controller.registerCustomer
+                        : null,
+                    color: _isButtonEnabled
+                        ? Theme.of(context).primaryColor
+                        : Colors.grey,
+                  )),
               const SizedBox(height: 20),
               Row(
                 children: const [

@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-var controller = Get.put(CartController());
+var controller = Get.find<CartController>();
 
 class CustomBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -91,7 +91,7 @@ class CustomBottomNav extends StatelessWidget {
                 weight: 0.1,
               ),
             ),
-            label: 'Ai Meal',
+            label: 'Meal Plan',
           ),
           BottomNavigationBarItem(
             icon: Obx(() {

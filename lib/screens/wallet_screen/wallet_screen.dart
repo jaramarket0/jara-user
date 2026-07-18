@@ -5,7 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/screens/add_money_screen/add_money_screen.dart';
 import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
-import 'package:jara_market/screens/wallet_screen/withdraw_screen.dart';
 import '../../widgets/custom_back_header.dart';
 import '../../widgets/balance_card.dart';
 
@@ -88,19 +87,6 @@ class _WalletScreenState extends State<WalletScreen> {
                                       MaterialPageRoute(
                                         builder: (context) =>
                                             const AddMoneyScreen(),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                _buildActionButton(
-                                  icon: 'assets/images/withdraw.svg',
-                                  label: 'Withdraw',
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const WithdrawScreen(),
                                       ),
                                     );
                                   },

@@ -28,7 +28,7 @@ class _MainScreenState extends State<MainScreen> {
   initState() {
     super.initState();
     controller.fetchFoodCategoriesByCondition();
-    cartController = Get.put(CartController());
+    cartController = Get.find<CartController>();
     //controller.fetchFoods();
   }
 

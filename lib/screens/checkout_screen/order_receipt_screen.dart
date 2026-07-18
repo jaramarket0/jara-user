@@ -6,6 +6,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
 // ─── Model ───────────────────────────────────────────────────────────────────
@@ -109,6 +111,7 @@ class OrderReceiptScreen extends StatefulWidget {
 class _OrderReceiptScreenState extends State<OrderReceiptScreen> {
   final GlobalKey _receiptKey = GlobalKey();
   bool _isDownloading = false;
+  bool _isSharing = false;
 
   late OrderReceipt receipt;
 
@@ -185,6 +188,145 @@ class _OrderReceiptScreenState extends State<OrderReceiptScreen> {
           snackPosition: SnackPosition.BOTTOM);
     } finally {
       setState(() => _isDownloading = false);
+    }
+  }
+
+  Future<void> _shareReceiptPdf() async {
+    setState(() => _isSharing = true);
+    try {
+      // Roboto includes the ₦ glyph; the pdf package's built-in fonts don't.
+      final regularFont = pw.Font.ttf(
+          await rootBundle.load('assets/fonts/RobotoRegular.ttf'));
+      final boldFont = pw.Font.ttf(
+          await rootBundle.load('assets/fonts/RobotoRomanBold.ttf'));
+
+      const primary = PdfColor.fromInt(0xFFFFAA00);
+      const grey = PdfColor.fromInt(0xFF888888);
+
+      pw.Widget row(String label, String value, {bool bold = false}) {
+        return pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(vertical: 3),
+          child: pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(label,
+                  style: pw.TextStyle(
+                      font: bold ? boldFont : regularFont,
+                      fontSize: bold ? 12 : 10,
+                      color: bold ? PdfColors.black : grey)),
+              pw.Text(value,
+                  style: pw.TextStyle(
+                      font: bold ? boldFont : regularFont,
+                      fontSize: bold ? 12 : 10,
+                      color: bold ? primary : PdfColors.black)),
+            ],
+          ),
+        );
+      }
+
+      final doc = pw.Document();
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.all(20),
+                decoration: pw.BoxDecoration(
+                  color: primary,
+                  borderRadius: pw.BorderRadius.circular(8),
+                ),
+                child: pw.Column(
+                  children: [
+                    pw.Text('JaraMarket',
+                        style: pw.TextStyle(
+                            font: boldFont,
+                            fontSize: 20,
+                            color: PdfColors.white)),
+                    pw.SizedBox(height: 4),
+                    pw.Text('Order Receipt',
+                        style: pw.TextStyle(
+                            font: regularFont,
+                            fontSize: 12,
+                            color: PdfColors.white)),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 16),
+              row('Order ID', receipt.orderId),
+              row('Date', _formatDate(receipt.orderDate)),
+              row('Status', receipt.status),
+              pw.SizedBox(height: 12),
+              pw.Divider(color: grey, thickness: 0.5),
+              if (receipt.items.isNotEmpty) ...[
+                pw.SizedBox(height: 8),
+                pw.Text('Products',
+                    style: pw.TextStyle(font: boldFont, fontSize: 11)),
+                pw.SizedBox(height: 4),
+                ...receipt.items.map((item) => row(
+                    '${item.quantity}x ${item.name}${item.unit != null ? ' (${item.unit})' : ''}',
+                    _formatCurrency(item.price * item.quantity))),
+              ],
+              if (receipt.ingredients.isNotEmpty) ...[
+                pw.SizedBox(height: 8),
+                pw.Text('Ingredients',
+                    style: pw.TextStyle(font: boldFont, fontSize: 11)),
+                pw.SizedBox(height: 4),
+                ...receipt.ingredients.map((item) => row(
+                    '${item.quantity}x ${item.name}${item.unit != null ? ' (${item.unit})' : ''}',
+                    _formatCurrency(item.price * item.quantity))),
+              ],
+              pw.SizedBox(height: 12),
+              pw.Divider(color: grey, thickness: 0.5),
+              pw.SizedBox(height: 8),
+              row('Subtotal', _formatCurrency(receipt.subTotal)),
+              row('Service Charge', _formatCurrency(receipt.serviceCharge)),
+              row('Shipping', _formatCurrency(receipt.shippingFee)),
+              row('VAT', _formatCurrency(receipt.vat)),
+              pw.SizedBox(height: 4),
+              row('TOTAL', _formatCurrency(receipt.total), bold: true),
+              pw.SizedBox(height: 12),
+              pw.Divider(color: grey, thickness: 0.5),
+              pw.SizedBox(height: 8),
+              row('Delivery To', receipt.deliveryAddress),
+              row('Payment Method', receipt.paymentMethod),
+              pw.Spacer(),
+              pw.Center(
+                child: pw.Text('Thank you for shopping with us!',
+                    style: pw.TextStyle(
+                        font: boldFont, fontSize: 11, color: primary)),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Center(
+                child: pw.Text('JaraMarket — Fresh from the market',
+                    style: pw.TextStyle(
+                        font: regularFont, fontSize: 9, color: grey)),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final bytes = await doc.save();
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File(
+          '${dir.path}/receipt_${receipt.orderId}_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      await file.writeAsBytes(bytes);
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'application/pdf')],
+        text: 'JaraMarket Order Receipt - ${receipt.orderId}',
+        subject: 'Order Receipt',
+      );
+    } catch (e) {
+      Get.snackbar('Error', 'Could not share receipt: $e',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      setState(() => _isSharing = false);
     }
   }
 
@@ -411,14 +553,20 @@ class _OrderReceiptScreenState extends State<OrderReceiptScreen> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => Get.offAllNamed('/main_screen'),
-                    icon: const Icon(Icons.home_rounded,
-                        color: Colors.white, size: 18),
-                    label: const Text('Back to Home',
-                        style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFAA00),
+                  child: OutlinedButton.icon(
+                    onPressed: _isSharing ? null : _shareReceiptPdf,
+                    icon: _isSharing
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Color(0xFFFFAA00)))
+                        : const Icon(Icons.share_rounded,
+                            color: Color(0xFFFFAA00), size: 18),
+                    label: const Text('Share Receipt',
+                        style: TextStyle(color: Color(0xFFFFAA00))),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFFFAA00)),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -426,6 +574,23 @@ class _OrderReceiptScreenState extends State<OrderReceiptScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Get.offAllNamed('/main_screen'),
+                icon: const Icon(Icons.home_rounded,
+                    color: Colors.white, size: 18),
+                label: const Text('Back to Home',
+                    style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFAA00),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
             ),
             const SizedBox(height: 32),
           ],

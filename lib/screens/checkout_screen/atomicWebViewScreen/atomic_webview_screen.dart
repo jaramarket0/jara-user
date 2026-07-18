@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:jara_market/config/routes.dart';
 import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
 //import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
-import 'package:jara_market/screens/wallet_screen/withdraw_screen.dart';
 
 WalletController walletController = Get.put(WalletController());
 

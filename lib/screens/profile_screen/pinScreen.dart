@@ -64,9 +64,12 @@ class PinController extends GetxController {
       myLog.log('Verify PIN response: ${res.body}');
       final body = jsonDecode(res.body);
       if (res.statusCode == 200 || res.statusCode == 201) {
-        final token = body['data']?['pin_token'] ?? body['pin_token'] ?? '';
+        final token =
+            (body['data']?['pin_token'] ?? body['pin_token'] ?? '').toString();
         pinToken.value = token;
-        return pin; //token;
+        // The transfer endpoint expects the server-issued pin_token
+        // (sent as X-PIN-TOKEN), not the raw PIN.
+        return token.isNotEmpty ? token : pin;
       } else {
         //_showError(body['message'] ?? 'Incorrect PIN. Please try again.');
         AlertInfo.show(
