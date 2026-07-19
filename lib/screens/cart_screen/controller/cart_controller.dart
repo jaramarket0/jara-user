@@ -209,16 +209,24 @@ class CartController extends GetxController {
 //   return calculatedServiceChargeForFood + (ingredientList.isNotEmpty ? calculatedServiceCharge : 0.0 ) ;
 // }
 
+  /// Tiered service fee:
+  /// up to ₦10k → flat ₦1,000 | ₦10k–₦100k → 10% | ₦100k–₦500k → 8%
+  /// ₦500k–₦1m → 7% | above ₦1m → 5%
+  double _serviceChargeFor(double amount) {
+    if (amount <= 0) return 0.0;
+    if (amount <= 10000) return 1000.0;
+    if (amount <= 100000) return amount * 0.10;
+    if (amount <= 500000) return amount * 0.08;
+    if (amount <= 1000000) return amount * 0.07;
+    return amount * 0.05;
+  }
+
   double get calculatedServiceCharge {
-    return ((totalItems) * 0.10) < 1000.0
-        ? 1000.0
-        : (totalIngredientPrice.value * 0.10);
+    return _serviceChargeFor(totalItems.value);
   }
 
   double get calculatedServiceChargeForIngredient {
-    return (totalIngredientPriceForIngredient.value * 0.10) < 1000.0
-        ? 1000.0
-        : (totalIngredientPrice.value * 0.10);
+    return _serviceChargeFor(totalIngredientPriceForIngredient.value);
   }
 
   RxDouble get totalIngredientPrice {

@@ -66,15 +66,25 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     'ingredient 10',
   ];
 
-  Future<void> generatePdf(List<String> items) async {
+  Future<void> generatePdf(String steps) async {
     final pdf = pw.Document();
     Get.snackbar('Dowloading', 'Loading...');
+    final lines = steps
+        .split(RegExp(r'\r?\n'))
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
     pdf.addPage(
       pw.Page(
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: items.map((item) => pw.Text(item)).toList(),
+            children: lines
+                .map((line) => pw.Padding(
+                      padding: const pw.EdgeInsets.only(bottom: 8),
+                      child: pw.Text(line),
+                    ))
+                .toList(),
           );
         },
       ),
@@ -336,7 +346,13 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                   CustomButton(
                       text: 'Download Recipe Steps',
                       onPressed: () async {
-                        await generatePdf(widget.item.preparationSteps!);
+                        final steps = widget.item.preparationSteps;
+                        if (steps == null || steps.trim().isEmpty) {
+                          Get.snackbar('No Recipe Steps',
+                              'This item doesn\'t have recipe steps yet.');
+                          return;
+                        }
+                        await generatePdf(steps);
                       }),
                   // ListView.separated(
                   //   itemCount: 4,// widget.item.preparationSteps!.length,

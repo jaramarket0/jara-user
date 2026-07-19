@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/screens/referral_screen/controller/referral_controller.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:jara_market/screens/referral_screen/models/models.dart';
 
 ReferralController controller = Get.put(ReferralController());
@@ -105,8 +106,14 @@ class ReferralScreen extends StatelessWidget {
                         width: 85,
                         child: ElevatedButton(
                           onPressed: () {
-                              Clipboard.setData(ClipboardData(text: data));
-                            // TODO: Implement share functionality
+                            final code = data ?? '';
+                            SharePlus.instance.share(ShareParams(
+                              text:
+                                  'Join me on JaraMarket — fresh food and groceries delivered to you! '
+                                  'Sign up with my referral code $code and we both earn rewards. '
+                                  'Download the app to get started.',
+                              subject: 'Join me on JaraMarket',
+                            ));
                           },
                           style: ElevatedButton.styleFrom(
                               padding: EdgeInsets.zero,

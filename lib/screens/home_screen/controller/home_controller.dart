@@ -7,7 +7,7 @@ import 'package:jara_market/screens/home_screen/models/food_model.dart';
 import 'package:jara_market/screens/home_screen/models/models.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
 import 'package:jara_market/services/api_service.dart';
-import 'package:jara_market/widgets/snacknar.dart';
+import 'package:jara_market/utils/app_feedback.dart';
 
 class HomeController extends GetxController {
   ApiService apiService = ApiService(Duration(seconds: 60 * 5));
@@ -92,11 +92,16 @@ class HomeController extends GetxController {
             'Page ${_currentPage - 1} loaded — total cats: ${category.length}',
             name: 'HomeController');
       } else {
-        showErrorSnackBar('Failed to load categories: ${response.body}');
+        myLog.log('Failed to load categories: ${response.body}',
+            name: 'HomeController');
+        AppFeedback.showError(null,
+            fallback: 'We couldn\'t load products right now. Please try again.');
       }
     } catch (e, stackTrace) {
-      print('Error fetching food categories: $e\n$stackTrace');
-      showErrorSnackBar('Error loading categories: $e');
+      myLog.log('Error fetching food categories: $e\n$stackTrace',
+          name: 'HomeController');
+      AppFeedback.showError(e,
+          fallback: 'We couldn\'t load products right now. Please try again.');
     } finally {
       _isLoading.value    = false;
       isLoadingMore.value = false;
@@ -124,11 +129,15 @@ class HomeController extends GetxController {
           searchResults.clear();
         }
       } else {
-        showErrorSnackBar('Search failed: ${response.body}');
+        myLog.log('Search failed: ${response.body}', name: 'HomeController');
+        AppFeedback.showError(null,
+            fallback: 'Search didn\'t go through. Please try again.');
         searchResults.clear();
       }
     } catch (e) {
-      showErrorSnackBar('Error searching: $e');
+      myLog.log('Error searching: $e', name: 'HomeController');
+      AppFeedback.showError(e,
+          fallback: 'Search didn\'t go through. Please try again.');
       searchResults.clear();
     } finally {
       _isLoading.value = false;
@@ -150,12 +159,17 @@ class HomeController extends GetxController {
         isLoading1.value = false;
       } else {
         isLoading1.value = false;
-        showErrorSnackBar('Failed to load foods: ${response.body}');
+        myLog.log('Failed to load foods: ${response.body}',
+            name: 'HomeController');
+        AppFeedback.showError(null,
+            fallback: 'We couldn\'t load foods right now. Please try again.');
       }
     } catch (e, stackTrace) {
-      print('Error fetching foods: $e\n$stackTrace');
+      myLog.log('Error fetching foods: $e\n$stackTrace',
+          name: 'HomeController');
       isLoading1.value = false;
-      showErrorSnackBar('Error loading foods: $e');
+      AppFeedback.showError(e,
+          fallback: 'We couldn\'t load foods right now. Please try again.');
     }
   }
 
@@ -167,12 +181,17 @@ class HomeController extends GetxController {
           SnackBar(content: Text('Added to favorites'), backgroundColor: Colors.green),
         );
       } else {
-        showErrorSnackBar('Failed to add to favorites: ${response.body}');
+        myLog.log('Failed to add to favorites: ${response.body}',
+            name: 'HomeController');
+        AppFeedback.showError(null,
+            fallback: 'Couldn\'t add to favorites. Please try again.');
       }
       return true;
     } catch (e, stackTrace) {
-      print('Error adding to favorites: $e\n$stackTrace');
-      showErrorSnackBar('Error adding to favorites: $e');
+      myLog.log('Error adding to favorites: $e\n$stackTrace',
+          name: 'HomeController');
+      AppFeedback.showError(e,
+          fallback: 'Couldn\'t add to favorites. Please try again.');
       return false;
     }
   }
@@ -185,12 +204,17 @@ class HomeController extends GetxController {
           SnackBar(content: Text('Removed from favorites'), backgroundColor: Colors.red),
         );
       } else {
-        showErrorSnackBar('Failed to remove from favorites: ${response.body}');
+        myLog.log('Failed to remove from favorites: ${response.body}',
+            name: 'HomeController');
+        AppFeedback.showError(null,
+            fallback: 'Couldn\'t remove from favorites. Please try again.');
       }
       return true;
     } catch (e, stackTrace) {
-      print('Error removing from favorites: $e\n$stackTrace');
-      showErrorSnackBar('Error removing from favorites: $e');
+      myLog.log('Error removing from favorites: $e\n$stackTrace',
+          name: 'HomeController');
+      AppFeedback.showError(e,
+          fallback: 'Couldn\'t remove from favorites. Please try again.');
       return false;
     }
   }

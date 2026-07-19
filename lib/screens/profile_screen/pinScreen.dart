@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/services/api_service.dart';
+import 'package:jara_market/utils/app_feedback.dart';
 import 'dart:developer' as myLog;
 
 // ─── Controller ─────────────────────────────────────────────────────────────
@@ -137,13 +138,7 @@ class PinController extends GetxController {
   }
 
   void _showError(String msg) {
-    Get.snackbar(
-      'Error',
-      msg,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    AppFeedback.showError(null, fallback: msg);
   }
 }
 

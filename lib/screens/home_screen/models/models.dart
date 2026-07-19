@@ -203,7 +203,7 @@ class Products {
   String? discountPrice;
   bool? isStatePrice;
   int? stock;
-  List<String>? preparationSteps;
+  String? preparationSteps;
   String? rating;
   String? imageUrl;
   List<Ingredients>? ingredients;
@@ -231,8 +231,7 @@ class Products {
     discountPrice = json['discount_price'];
     isStatePrice = json['is_state_price'];
     stock = json['stock'];
-    final rawSteps = json['preparation_steps'];
-    preparationSteps = rawSteps is List ? List<String>.from(rawSteps) : null;
+    preparationSteps = json['preparation_steps']?.toString();
     rating = json['rating']?.toString();
     imageUrl = getImageUrl(json['image_url']);
     if (json['ingredients'] != null) {

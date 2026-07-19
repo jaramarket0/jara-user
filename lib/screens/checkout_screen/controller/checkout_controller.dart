@@ -14,6 +14,7 @@ import 'package:jara_market/screens/checkout_screen/models/models.dart';
 import 'package:jara_market/screens/checkout_screen/models/ordersuccess.dart';
 import 'package:jara_market/screens/success_screen/success_screen.dart';
 import 'package:jara_market/services/api_service.dart';
+import 'package:jara_market/utils/app_feedback.dart';
 
 class CheckoutController extends GetxController {
   ApiService _apiService = ApiService(Duration(seconds: 60 * 5));
@@ -150,7 +151,7 @@ class CheckoutController extends GetxController {
         addressId: selectedAddressId.value,
         deliveryType: 'pickup',
         shippingFee: 2000,
-        serviceCharge: 1000,
+        serviceCharge: cartController.calculatedServiceCharge,
         vat: 0,
         remarks: cartController.messageController.text.isNotEmpty ? cartController.messageController.text : 'This is a sample order',
         audio_url: audio ?? null,
@@ -181,10 +182,8 @@ class CheckoutController extends GetxController {
       }
     } catch (e) {
       myLog.log('Order exception: $e', name: 'CheckoutController');
-      ScaffoldMessenger.of(Get.context!).showSnackBar(SnackBar(
-        content: Text(e.toString()),
-        backgroundColor: Colors.red,
-      ));
+      AppFeedback.showError(e,
+          fallback: 'We couldn\'t place your order. Please try again.');
     } finally {
       isLoading.value = false;
     }

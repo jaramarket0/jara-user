@@ -7,8 +7,11 @@ import 'package:jara_market/screens/address_google/controller/address_google.dar
 // import 'package:jara_market/screens/checkout_address_change/models/country_model.dart';
 // import 'package:jara_market/screens/checkout_address_change/models/lga_model.dart'
   //  as lgaData;
+import 'package:jara_market/screens/checkout_address_change/models/lga_model.dart'
+    as lga;
 import 'package:jara_market/screens/checkout_address_change/models/state_model.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
+import 'package:jara_market/utils/app_feedback.dart';
 import 'package:jara_market/screens/profile_screen/controller/profile_controller.dart';
 import 'package:jara_market/widgets/custom_button.dart';
 //import 'package:jara_market/widgets/custom_text_field.dart';
@@ -48,7 +51,13 @@ class _AddressGoogleChangeScreenState extends State<AddressGoogleChangeScreen> {
           child: CustomButton(
             text: 'Proceed',
             onPressed: () async {
-              // Get.back();
+              if (controller.selectedStateId == null ||
+                  controller.selectedLGAId == null) {
+                AppFeedback.showError(null,
+                    fallback:
+                        'Please select your state and L.G.A to continue.');
+                return;
+              }
               Get.offAll(
                 () => MainScreen(),
                 transition: Transition.rightToLeft,
@@ -103,23 +112,17 @@ class _AddressGoogleChangeScreenState extends State<AddressGoogleChangeScreen> {
                       setState(() {
                         controller.selectedState1 = value!.name;
                         controller.selectedStateId = value.id;
+                        // Reset LGA when state changes
+                        controller.selectedLGA = null;
+                        controller.selectedLGA1 = null;
+                        controller.selectedLGAId = null;
                       });
-                      await dataBase
-                          .saveSateAddress(
-                              controller.selectedStateId.toString())
-                          .then((_) {
-                        myLog.log(
-                            'State ID saved successfully: ${controller.selectedStateId}');
-                      }).catchError((error) {
-                        myLog.log('Error saving state ID: $error');
-                      });
-                      print('selected item is: ${controller.selectedState1}');
-                      await controller.fetchLgas(controller.selectedState1!);
-                      myLog.log('Selected state: ${controller.selectedState1}');
-                      myLog.log(
-                          'Selected state ID: ${controller.selectedStateId}');
                       await dataBase.saveSateAddress(
                           controller.selectedStateId.toString());
+                      await dataBase.saveState(controller.selectedState1!);
+                      myLog.log(
+                          'Saved state: ${controller.selectedState1} (id: ${controller.selectedStateId})');
+                      await controller.fetchLgas(controller.selectedState1!);
                     },
                     selectedItem: controller.selectedState,
                     suffixProps: DropdownSuffixProps(),
@@ -214,6 +217,109 @@ class _AddressGoogleChangeScreenState extends State<AddressGoogleChangeScreen> {
                         showSearchBox: true,
                         searchFieldProps: TextFieldProps(),
                         disabledItemFn: (item) => item == 'Item 3',
+                        fit: FlexFit.loose),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 10, horizontal: 16.0),
+                  child: DropdownSearch<lga.LgaData>(
+                    onChanged: (value) async {
+                      if (value == null) return;
+                      setState(() {
+                        controller.selectedLGA = value;
+                        controller.selectedLGA1 = value.name;
+                        controller.selectedLGAId = value.id;
+                      });
+                      await dataBase.saveLGAAddress(value.name ?? '');
+                      await dataBase.saveLGAAddressID(value.id ?? 1);
+                      myLog.log(
+                          'Saved LGA: ${value.name} (id: ${value.id})');
+                    },
+                    selectedItem: controller.selectedLGA,
+                    suffixProps: DropdownSuffixProps(),
+                    compareFn: (item1, item2) {
+                      return item1.id == item2.id;
+                    },
+                    decoratorProps: DropDownDecoratorProps(
+                        baseStyle: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Color(0xffF5F5F5),
+                            alignLabelWithHint: true,
+                            suffixIconColor: Colors.amber,
+                            focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: Colors.amber,
+                                    width: 1),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(8))),
+                            enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: Color(0xffD9D9D9),
+                                    width: 1),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(12))),
+                            border: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    style: BorderStyle.solid,
+                                    color: Color(0xffD9D9D9),
+                                    width: 1),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(12))))),
+                    dropdownBuilder: (context, selectedItem) {
+                      if (selectedItem != null) {
+                        return Text(selectedItem.name!);
+                      } else {
+                        return Text(
+                          'Enter Your L.G.A',
+                          style: TextStyle(
+                            color: Colors.grey[300],
+                            fontSize: 16,
+                          ),
+                        );
+                      }
+                    },
+                    items: (f, cs) => controller.isLgaLoading.value
+                        ? []
+                        : controller.lgaDataList,
+                    itemAsString: (item) {
+                      return item.name ?? '';
+                    },
+                    popupProps: PopupProps.menu(
+                        showSelectedItems: true,
+                        searchDelay: Duration(seconds: 0),
+                        emptyBuilder: (context, searchEntry) {
+                          return controller.isLgaLoading.value
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                  color: Colors.amber,
+                                ))
+                              : Center(
+                                  child: Text(
+                                    controller.selectedState1 == null
+                                        ? 'Select a state first'
+                                        : 'No LGAs found',
+                                    style: TextStyle(
+                                        color: Colors.grey,
+                                        fontFamily: 'Poppins',
+                                        fontSize: 12),
+                                  ),
+                                );
+                        },
+                        title: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text('Search L.G.A',
+                              style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 12,
+                                  color: Colors.black)),
+                        ),
+                        scrollbarProps: ScrollbarProps(),
+                        showSearchBox: true,
+                        searchFieldProps: TextFieldProps(),
                         fit: FlexFit.loose),
                   ),
                 ),

@@ -334,7 +334,7 @@ String _statusLabel(String status) {
     case 'delivered':
       return 'Delivered';
     case 'processing':
-      return 'Processing';
+      return 'Shopping';
     case 'accepted':
       return 'Accepted';
     case 'cancelled':

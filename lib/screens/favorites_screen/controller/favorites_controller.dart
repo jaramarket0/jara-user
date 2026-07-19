@@ -6,7 +6,7 @@ import 'package:jara_market/models/food_item.dart';
 import 'package:jara_market/screens/favorites_screen/models/models.dart';
 import 'package:jara_market/services/api_service.dart';
 import 'package:jara_market/services/cart_service.dart';
-import 'package:jara_market/widgets/snacknar.dart';
+import 'package:jara_market/utils/app_feedback.dart';
 
 class FavoritesController extends GetxController {
   RxBool isLoading = false.obs;
@@ -72,6 +72,10 @@ Future<void> fetchFavorites() async {
       );
     } catch (e) {
      
+      AppFeedback.showError(e,
+          fallback: 'Couldn\'t add ${item.name} to cart. Please try again.');
+      return;
+      // ignore: dead_code
       ScaffoldMessenger.of(Get.context!).showSnackBar(
         SnackBar(
           content:
@@ -91,13 +95,17 @@ Future<void> fetchFavorites() async {
           SnackBar(content: Text('Removed from favorites'), backgroundColor: Colors.red),
         );
       } else {
-        showErrorSnackBar('Failed to remove from favorites: ${response.body}');
+        myLog.log('Failed to remove from favorites: ${response.body}',
+            name: 'FavoritesController');
+        AppFeedback.showError(null,
+            fallback: 'Couldn\'t remove from favorites. Please try again.');
       }
       return true;
     } catch (e, stackTrace) {
-      print('Error removing from favorites: $e');
-      print('Stack Trace: $stackTrace');
-      showErrorSnackBar('Error removing from favorites: $e');
+      myLog.log('Error removing from favorites: $e\n$stackTrace',
+          name: 'FavoritesController');
+      AppFeedback.showError(e,
+          fallback: 'Couldn\'t remove from favorites. Please try again.');
       return false;
     }
   }
@@ -171,13 +179,17 @@ Future<void> fetchFavorites() async {
           SnackBar(content: Text('Removed from favorites'), backgroundColor: Colors.red),
         );
       } else {
-        showErrorSnackBar('Failed to remove from favorites: ${response.body}');
+        myLog.log('Failed to remove from favorites: ${response.body}',
+            name: 'FavoritesController');
+        AppFeedback.showError(null,
+            fallback: 'Couldn\'t remove from favorites. Please try again.');
       }
       return true;
     } catch (e, stackTrace) {
-      print('Error removing from favorites: $e');
-      print('Stack Trace: $stackTrace');
-      showErrorSnackBar('Error removing from favorites: $e');
+      myLog.log('Error removing from favorites: $e\n$stackTrace',
+          name: 'FavoritesController');
+      AppFeedback.showError(e,
+          fallback: 'Couldn\'t remove from favorites. Please try again.');
       return false;
     }
   }}

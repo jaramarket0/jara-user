@@ -1543,6 +1543,7 @@ import 'package:jara_market/screens/grains_screen/grains_screen.dart';
 import 'package:jara_market/screens/home_screen/confetti.dart';
 import 'package:jara_market/screens/home_screen/controller/home_controller.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
+import 'package:jara_market/screens/profile_screen/pinScreen.dart';
 import 'package:jara_market/screens/wallet_screen/wallet_screen.dart';
 import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
 import 'package:jara_market/widgets/custom_button.dart';
@@ -1660,6 +1661,135 @@ class _HomeScreenState extends State<HomeScreen> {
     walletController.fetchWallet();
     setLGA();
     carouselController = CarouselSliderController();
+    _maybeShowWelcomeDialog();
+  }
+
+  Future<void> _maybeShowWelcomeDialog() async {
+    final alreadyShown = await dataBase.getWelcomeShown();
+    if (alreadyShown || !mounted) return;
+    await dataBase.saveWelcomeShown();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFF3E0),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.celebration_rounded,
+                      size: 32, color: Color(0xFFFFAA00)),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Welcome to JaraMarket${name != null && name!.isNotEmpty ? ', $name' : ''}! 🎉',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Here\'s how to get started:',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+                ),
+                const SizedBox(height: 16),
+                const _WelcomeStep(
+                  number: '1',
+                  title: 'Fund your wallet',
+                  subtitle:
+                      'Go to Wallet → Add Money, enter an amount and pay securely with Paystack.',
+                ),
+                const SizedBox(height: 12),
+                const _WelcomeStep(
+                  number: '2',
+                  title: 'Set your transaction PIN',
+                  subtitle:
+                      'Your 4-digit PIN keeps every payment and withdrawal secure.',
+                ),
+                const SizedBox(height: 12),
+                const _WelcomeStep(
+                  number: '3',
+                  title: 'Shop & checkout',
+                  subtitle:
+                      'Add items to your cart and pay straight from your wallet.',
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const SetPinScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFAA00),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text(
+                      'Set Transaction PIN',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const WalletScreen()),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFFFAA00)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text(
+                      'Fund My Wallet',
+                      style: TextStyle(
+                          color: Color(0xFFFFAA00),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Maybe later',
+                      style: TextStyle(color: Colors.grey, fontSize: 13)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   void _onSearchChanged() {
@@ -1694,11 +1824,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           Flexible(
                             child: Padding(
                               padding: const EdgeInsets.all(16),
-                              child: GestureDetector(
-                                onTap: () {
-                                  Get.to(() => GiftAnimationScreen());
-                                },
-                                child: Text(
+                              child: 
+                              // GestureDetector(
+                              //   onTap: () {
+                              //     Get.to(() => GiftAnimationScreen());
+                              //   },
+                              //   child: 
+                                Text(
                                   'Hello ${name ?? "User"},',
                                   style: const TextStyle(
                                     fontSize: 18,
@@ -1706,7 +1838,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
+                             // ),
                             ),
                           ),
                           // Wallet Balance
@@ -2991,6 +3123,56 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         );
       },
+    );
+  }
+}
+
+class _WelcomeStep extends StatelessWidget {
+  final String number;
+  final String title;
+  final String subtitle;
+
+  const _WelcomeStep({
+    required this.number,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: Color(0xFFFFAA00),
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            number,
+            style: const TextStyle(
+                color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text(subtitle,
+                  style: const TextStyle(
+                      fontSize: 12, color: Color(0xFF888888), height: 1.4)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

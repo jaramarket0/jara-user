@@ -751,6 +751,17 @@ class DataBase extends GetxController {
     }
   }
 
+  Future<bool> saveWelcomeShown() async {
+    SharedPreferences sharedPreferences = await _pref;
+    await sharedPreferences.setBool('welcomeShown', true);
+    return true;
+  }
+
+  Future<bool> getWelcomeShown() async {
+    SharedPreferences sharedPreferences = await _pref;
+    return sharedPreferences.getBool('welcomeShown') ?? false;
+  }
+
   Future<bool> getIsSeeen() async {
     SharedPreferences sharedPreferences = await _pref;
 

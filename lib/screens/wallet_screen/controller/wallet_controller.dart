@@ -7,6 +7,7 @@ import 'package:jara_market/screens/wallet_screen/models/single_transaction_mode
 import 'package:jara_market/screens/wallet_screen/models/transaction_model.dart';
 import 'package:jara_market/screens/wallet_screen/receipt.dart';
 import 'package:jara_market/services/api_service.dart';
+import 'package:jara_market/utils/app_feedback.dart';
 import 'dart:developer' as myLog;
 import 'dart:convert';
 
@@ -158,8 +159,8 @@ class WalletController extends GetxController {
       }
     } catch (e) {
       myLog.log('Error fetching banks: $e');
-      Get.snackbar('Error', 'Failed to load banks: $e',
-          colorText: Colors.white, backgroundColor: Colors.red);
+      AppFeedback.showError(e,
+          fallback: 'We couldn\'t load the bank list. Please try again.');
     }
   }
 
@@ -193,8 +194,8 @@ class WalletController extends GetxController {
       }
     } catch (e) {
       OverlayLoadingProgress.stop();
-      Get.snackbar('Error', 'Withdraw failed: $e',
-          colorText: Colors.white, backgroundColor: Colors.red);
+      AppFeedback.showError(e,
+          fallback: 'Withdrawal failed. Please try again.');
     }
   }
 }
