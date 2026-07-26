@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:jara_market/widgets/custom_button.dart';
 import 'package:jara_market/widgets/custom_image_view.dart';
 import 'package:path_provider/path_provider.dart';
@@ -66,38 +67,114 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     'ingredient 10',
   ];
 
-  Future<void> generatePdf(String steps) async {
+  static const _brandColor = PdfColor.fromInt(0xFF2E7D32);
+  static const _accentColor = PdfColor.fromInt(0xFFFF9800);
+
+  Future<void> generatePdf(String steps, String foodName) async {
     final pdf = pw.Document();
-    Get.snackbar('Dowloading', 'Loading...');
+    Get.snackbar('Downloading', 'Preparing your recipe...');
+
+    final logoBytes = await rootBundle.load('assets/images/jara_market_logo.png');
+    final logo = pw.MemoryImage(logoBytes.buffer.asUint8List());
+
     final lines = steps
         .split(RegExp(r'\r?\n'))
         .map((line) => line.trim())
         .where((line) => line.isNotEmpty)
         .toList();
+
     pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: lines
-                .map((line) => pw.Padding(
-                      padding: const pw.EdgeInsets.only(bottom: 8),
-                      child: pw.Text(line),
-                    ))
-                .toList(),
-          );
-        },
+      pw.MultiPage(
+        margin: const pw.EdgeInsets.fromLTRB(32, 28, 32, 28),
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            pw.Image(logo, height: 48),
+            pw.SizedBox(height: 12),
+            pw.Container(height: 2, width: 60, color: _accentColor),
+          ],
+        ),
+        footer: (context) => pw.Column(
+          children: [
+            pw.Divider(color: PdfColors.grey300),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Order fresh ingredients for this recipe on the Jaramarket app.',
+              style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              'Page ${context.pageNumber} of ${context.pagesCount}',
+              style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+            ),
+          ],
+        ),
+        build: (context) => [
+          pw.SizedBox(height: 16),
+          pw.Text(
+            foodName,
+            style: pw.TextStyle(
+              fontSize: 24,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey900,
+            ),
+          ),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'Recipe Steps',
+            style: pw.TextStyle(
+              fontSize: 13,
+              color: _brandColor,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 20),
+          ...lines.asMap().entries.map(
+                (entry) => pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 14),
+                  child: pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Container(
+                        width: 24,
+                        height: 24,
+                        alignment: pw.Alignment.center,
+                        decoration: pw.BoxDecoration(
+                          color: _brandColor,
+                          shape: pw.BoxShape.circle,
+                        ),
+                        child: pw.Text(
+                          '${entry.key + 1}',
+                          style: pw.TextStyle(
+                            color: PdfColors.white,
+                            fontSize: 11,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      pw.SizedBox(width: 12),
+                      pw.Expanded(
+                        child: pw.Text(
+                          entry.value,
+                          style: const pw.TextStyle(fontSize: 12, lineSpacing: 2),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+        ],
       ),
     );
 
     final outputDir = await getApplicationDocumentsDirectory();
-    final file = File("${outputDir.path}/my_list.pdf");
+    final safeName = foodName.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '_');
+    final file = File("${outputDir.path}/${safeName}_recipe.pdf");
 
     await file.writeAsBytes(await pdf.save());
 
-    // Optional: Open the file (on Android/iOS)
     await OpenFile.open(file.path);
-    Get.snackbar('Dowloading', 'Done!!!!');
+    Get.snackbar('Downloaded', 'Your recipe steps are ready!');
   }
 
   @override
@@ -352,7 +429,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                               'This item doesn\'t have recipe steps yet.');
                           return;
                         }
-                        await generatePdf(steps);
+                        await generatePdf(steps, widget.item.name ?? 'Recipe');
                       }),
                   // ListView.separated(
                   //   itemCount: 4,// widget.item.preparationSteps!.length,

@@ -179,6 +179,7 @@ class AuthController extends GetxController {
         } else {
           Get.offAllNamed('/main_screen');
         }
+        
       } else {
         errorMessage.value = res['message'] ?? 'Google authentication rejected.';
       }

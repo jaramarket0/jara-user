@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:jara_market/screens/orders_screen/controller/orders_controller.dart';
 import 'package:jara_market/screens/orders_screen/models/order_model.dart';
 
 class OrderDetailScreen extends StatefulWidget {
@@ -89,8 +87,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       _buildRemarks(),
                     ],
                     const SizedBox(height: 24),
-                    if (_order.status.toLowerCase() == 'pending')
-                      _buildCancelButton(),
                   ],
                 ),
               ),
@@ -355,98 +351,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  Widget _buildCancelButton() {
-    return Obx(() {
-      final ctrl = Get.find<OrdersController>();
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: ctrl.isCancelling.value
-              ? null
-              : () async {
-                  final confirmed = await _showCancelDialog();
-                  if (confirmed == true) {
-                    final ok = await ctrl.cancelOrder(_order.id);
-                    if (ok && mounted) {
-                      setState(() {
-                        _order = OrderData(
-                          id: _order.id,
-                          reference: _order.reference,
-                          orderDate: _order.orderDate,
-                          deliveryType: _order.deliveryType,
-                          shippingFee: _order.shippingFee,
-                          serviceCharge: _order.serviceCharge,
-                          vat: _order.vat,
-                          total: _order.total,
-                          remarks: _order.remarks,
-                          mealPrep: _order.mealPrep,
-                          status: 'cancelled',
-                          addressId: _order.addressId,
-                          createdAt: _order.createdAt,
-                          items: _order.items,
-                        );
-                      });
-                      Get.snackbar('Cancelled',
-                          'Order #${_order.reference} has been cancelled.',
-                          backgroundColor: Colors.green,
-                          colorText: Colors.white,
-                          snackPosition: SnackPosition.TOP);
-                    }
-                  }
-                },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            disabledBackgroundColor: Colors.red.withOpacity(0.5),
-            minimumSize: const Size(double.infinity, 52),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-          child: ctrl.isCancelling.value
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white),
-                )
-              : const Text('Cancel Order',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white)),
-        ),
-      );
-    });
-  }
-
-  Future<bool?> _showCancelDialog() {
-    return showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Cancel Order',
-            style: TextStyle(fontWeight: FontWeight.w700)),
-        content: const Text(
-            'This action cannot be undone. Your wallet will be refunded within 24 hours.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep it',
-                style: TextStyle(color: Color(0xFF666666))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes, Cancel',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _Card extends StatelessWidget {

@@ -117,8 +117,16 @@ class HomeController extends GetxController {
     isSearching.value = true;
     _isLoading.value  = true;
     try {
-      final response = await apiService
-          .get('/fetch/product?search=$query&lga_id=$lgaId&&state_id=$stateId');
+      final url = Uri.parse(
+          '${apiService.baseUrl}/fetch/product?search=$query&lga_id=$lgaId&state_id=$stateId');
+      var token = await dataBase.getToken();
+      final response = await authHttpClient.get(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         if (decoded['data'] != null) {

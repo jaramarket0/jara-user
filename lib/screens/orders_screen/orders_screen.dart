@@ -185,7 +185,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
         itemBuilder: (_, i) => _OrderCard(
           order: orders[i],
           onTap: () => _openDetail(orders[i]),
-          onCancel: () => _confirmCancel(orders[i]),
         ),
       );
     });
@@ -198,46 +197,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
         builder: (_) => OrderDetailScreen(order: order),
       ),
     ).then((_) => _ctrl.fetchOrders());
-  }
-
-  void _confirmCancel(OrderData order) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Cancel Order',
-            style: TextStyle(fontWeight: FontWeight.w700)),
-        content: Text(
-            'Are you sure you want to cancel order #${order.reference}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Keep Order',
-                style: TextStyle(color: Color(0xFF666666))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              final ok = await _ctrl.cancelOrder(order.id);
-              if (ok && mounted) {
-                Get.snackbar('Cancelled',
-                    'Order #${order.reference} has been cancelled.',
-                    backgroundColor: Colors.green,
-                    colorText: Colors.white,
-                    snackPosition: SnackPosition.TOP);
-              }
-            },
-            child: const Text('Cancel Order',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildEmptyState() {
@@ -363,12 +322,10 @@ String _formatDate(String raw) {
 class _OrderCard extends StatelessWidget {
   final OrderData order;
   final VoidCallback onTap;
-  final VoidCallback onCancel;
 
   const _OrderCard({
     required this.order,
     required this.onTap,
-    required this.onCancel,
   });
 
   @override
@@ -506,24 +463,11 @@ class _OrderCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          if (order.status.toLowerCase() == 'pending')
-                            _ActionButton(
-                              label: 'Cancel',
-                              color: Colors.red,
-                              outline: true,
-                              onTap: onCancel,
-                            ),
-                          if (order.status.toLowerCase() == 'pending')
-                            const SizedBox(width: 8),
-                          _ActionButton(
-                            label: 'Details',
-                            color: const Color(0xFFFFAA00),
-                            outline: false,
-                            onTap: onTap,
-                          ),
-                        ],
+                      _ActionButton(
+                        label: 'Details',
+                        color: const Color(0xFFFFAA00),
+                        outline: false,
+                        onTap: onTap,
                       ),
                     ],
                   ),

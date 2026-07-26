@@ -7,6 +7,7 @@ import 'package:jara_market/screens/forget_password_screen/forget_password_scree
 import 'package:jara_market/screens/help_and_support/help_and_support.dart';
 import 'package:jara_market/screens/notification/app_notification_screen.dart';
 import 'package:jara_market/screens/profile_screen/controller/profile_controller.dart';
+import 'package:jara_market/screens/profile_screen/pinScreen.dart';
 import 'package:jara_market/screens/success_screen/success_screen.dart';
 import 'package:jara_market/widgets/custom_button.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
@@ -654,7 +655,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     //  const SizedBox(height: 16),
                                     GestureDetector(
                                       onTap: () {
-                                        _showSetPINDialog();
+                                        Get.to(() => const SetPinScreen());
                                       },
                                       child: Row(
                                         mainAxisAlignment:
@@ -898,108 +899,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showSetPINDialog() {
-    controller.pinController.clear();
-    controller.confirmPinController.clear();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Set Transaction PIN',
-          style: TextStyle(
-              fontFamily: 'Poppins', fontWeight: FontWeight.w400, fontSize: 18),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Set a 4-digit PIN for secure transactions',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller.pinController,
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              maxLength: 4,
-              decoration: InputDecoration(
-                prefix: Icon(Icons.lock, color: Colors.amber),
-                hintText: 'Enter 4-digit PIN',
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(width: 1, color: Colors.amber),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(width: 1, color: Color(0xff9E9E9E)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(width: 1, color: Color(0xff9E9E9E)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller.confirmPinController,
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              maxLength: 4,
-              decoration: InputDecoration(
-                prefix: Icon(Icons.lock, color: Colors.amber),
-                hintText: 'Confirm PIN',
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(width: 1, color: Colors.amber),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(width: 1, color: Color(0xff9E9E9E)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(width: 1, color: Color(0xff9E9E9E)),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.black)),
-          ),
-          Obx(
-            () => TextButton(
-              onPressed: controller.isLoading.value
-                  ? null
-                  : () {
-                      if (controller.pinController.text.isEmpty ||
-                          controller.confirmPinController.text.isEmpty) {
-                        Get.snackbar('Error', 'Both fields are required');
-                        return;
-                      }
-                      Navigator.pop(context);
-                      controller.setPIN(
-                        controller.pinController.text,
-                        controller.confirmPinController.text,
-                      );
-                    },
-              child: controller.isLoading.value
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
-                      ),
-                    )
-                  : const Text('Set PIN'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

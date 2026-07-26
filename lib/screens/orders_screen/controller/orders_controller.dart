@@ -18,7 +18,7 @@ class OrdersController extends GetxController {
   static const List<Map<String, String>> statusTabs = [
     {'key': 'all', 'label': 'All'},
     {'key': 'pending', 'label': 'Pending'},
-    {'key': 'processing', 'label': 'Processing'},
+    {'key': 'processing', 'label': 'Shopping'},
     {'key': 'completed', 'label': 'Completed'},
     {'key': 'cancelled', 'label': 'Cancelled'},
   ];

@@ -43,43 +43,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     }
   }
 
-  Future<void> _cancelOrder() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final response = await _apiService.cancelOrder(widget.orderId);
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order cancelled successfully')),
-        );
-        // Refresh order details
-        setState(() {
-          _orderDetails = fetchOrderDetails(widget.orderId);
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to cancel order: ${response.body}')),
-        );
-      }
-    } catch (e, stackTrace) {
-      print('Error: $e');
-      print('Stack Trace: $stackTrace');
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    }
-  }
-
   Future<void> _viewReceipt() async {
     try {
       final response = await _apiService.getOrderReceipt(widget.orderId);
@@ -220,12 +183,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            ElevatedButton(
-                              onPressed: order['status'] == 'pending'
-                                  ? _cancelOrder
-                                  : null,
-                              child: const Text('Cancel Order'),
-                            ),
                             ElevatedButton(
                               onPressed: _viewReceipt,
                               child: const Text('View Receipt'),

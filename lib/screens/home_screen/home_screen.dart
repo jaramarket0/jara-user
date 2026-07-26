@@ -2609,9 +2609,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _triggerSearch(String value) async {
     var stateId = await dataBase.getStateAddressId();
     var lgaId = await dataBase.getLGAAddressId();
-    if (stateId.isNotEmpty) {
-      controller.searchProducts(value, lgaId.toString(), stateId);
-    }
+    controller.searchProducts(value, lgaId.toString(), stateId);
   }
 
   Widget _buildCategorySection(int categoryIndex) {
@@ -2891,8 +2889,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                               ),
-                              Spacer(),
-                              Text('2.5k orders'),
                             ],
                           ),
                           SizedBox(height: 10),

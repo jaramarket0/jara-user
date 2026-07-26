@@ -1449,8 +1449,6 @@ class _GrainsScreenState extends State<GrainsScreen> {
                                                                           .w600),
                                                             ),
                                                           ),
-                                                          const Text(
-                                                              '2.5k orders'),
                                                         ],
                                                       ),
                                                       const SizedBox(

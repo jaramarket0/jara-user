@@ -38,20 +38,6 @@ class _OrderReceiptScreenState extends State<OrderReceiptScreen> {
     }
   }
 
-  Future<void> _cancelOrder() async {
-    final response = await http.post(Uri.parse(
-        'https://ryda.com.ng/api/orders/${widget.orderId}/cancel'));
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _order!['status'] = 'cancelled';
-      });
-      print('Order cancelled successfully');
-    } else {
-      print('Failed to cancel order');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,12 +70,6 @@ class _OrderReceiptScreenState extends State<OrderReceiptScreen> {
                           'Quantity: ${item['quantity']} - Price: ${item['price']}'),
                     );
                   }).toList(),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed:
-                        _order!['status'] == 'active' ? _cancelOrder : null,
-                    child: const Text('Cancel Order'),
-                  ),
                 ],
               ),
             ),

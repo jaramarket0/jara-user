@@ -150,7 +150,6 @@ class _SoupListScreenState extends State<SoupListScreen> {
                                             FoodDetailScreen(item: food)),
                                   );
                                 },
-                                showMostOrdered: true,
                               ))
                           .toList(),
                     ),
