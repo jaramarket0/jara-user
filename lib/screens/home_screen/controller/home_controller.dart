@@ -35,6 +35,41 @@ class HomeController extends GetxController {
   RxBool isSearching = false.obs;
   RxList<Products> searchResults = <Products>[].obs;
 
+  // "Shopping for someone else" mode — in-memory only, never persisted, so a
+  // fresh app launch always defaults back to "Myself".
+  RxBool isShoppingForSomeoneElse = false.obs;
+  RxnInt otherStateId = RxnInt();
+  RxnString otherStateName = RxnString();
+  RxnInt otherLgaId = RxnInt();
+  RxnString otherLgaName = RxnString();
+
+  Future<String> getActiveStateId() async => isShoppingForSomeoneElse.value
+      ? (otherStateId.value?.toString() ?? '')
+      : await dataBase.getStateAddressId();
+
+  Future<String> getActiveLgaId() async => isShoppingForSomeoneElse.value
+      ? (otherLgaId.value?.toString() ?? '')
+      : (await dataBase.getLGAAddressId()).toString();
+
+  void setOtherLocation({
+    required int stateId,
+    required String stateName,
+    required int lgaId,
+    required String lgaName,
+  }) {
+    otherStateId.value = stateId;
+    otherStateName.value = stateName;
+    otherLgaId.value = lgaId;
+    otherLgaName.value = lgaName;
+  }
+
+  void clearOtherLocation() {
+    otherStateId.value = null;
+    otherStateName.value = null;
+    otherLgaId.value = null;
+    otherLgaName.value = null;
+  }
+
   @override
   void onInit() {
     super.onInit();

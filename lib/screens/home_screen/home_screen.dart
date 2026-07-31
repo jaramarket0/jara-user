@@ -1621,275 +1621,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget dotIndicator(int index, int lenght) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          height: 20,
-          child: ListView.builder(
-              itemCount: lenght,
-              itemBuilder: (BuildContext, index) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  width: _currentIndex == index ? 18.0 : 10.0,
-                  height: _currentIndex == index ? 10.0 : 10.0,
-                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5.0),
-                    color: _currentIndex == index
-                        ? Colors.blue
-                        : Colors.grey.withValues(alpha: 0.5),
-                  ),
-                );
-              }),
-        )
-      ],
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    getUserName();
-    controller.fetchFoodCategoriesByCondition();
-    _searchController.addListener(_onSearchChanged);
-    controller1.fetchStates();
-    getState();
-    walletController.fetchWallet();
-    setLGA();
-    carouselController = CarouselSliderController();
-    _maybeShowWelcomeDialog();
-  }
-
-  Future<void> _maybeShowWelcomeDialog() async {
-    final alreadyShown = await dataBase.getWelcomeShown();
-    if (alreadyShown || !mounted) return;
-    await dataBase.saveWelcomeShown();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFF3E0),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.celebration_rounded,
-                      size: 32, color: Color(0xFFFFAA00)),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Welcome to JaraMarket${name != null && name!.isNotEmpty ? ', $name' : ''}! 🎉',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Here\'s how to get started:',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
-                ),
-                const SizedBox(height: 16),
-                const _WelcomeStep(
-                  number: '1',
-                  title: 'Fund your wallet',
-                  subtitle:
-                      'Go to Wallet → Add Money, enter an amount and pay securely with Paystack.',
-                ),
-                const SizedBox(height: 12),
-                const _WelcomeStep(
-                  number: '2',
-                  title: 'Set your transaction PIN',
-                  subtitle:
-                      'Your 4-digit PIN keeps every payment and withdrawal secure.',
-                ),
-                const SizedBox(height: 12),
-                const _WelcomeStep(
-                  number: '3',
-                  title: 'Shop & checkout',
-                  subtitle:
-                      'Add items to your cart and pay straight from your wallet.',
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SetPinScreen()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFAA00),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      'Set Transaction PIN',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const WalletScreen()),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFFFAA00)),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      'Fund My Wallet',
-                      style: TextStyle(
-                          color: Color(0xFFFFAA00),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Maybe later',
-                      style: TextStyle(color: Colors.grey, fontSize: 13)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    });
-  }
-
-  void _onSearchChanged() {
-    // Rebuild to show/hide the clear (X) icon reactively
-    setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _searchController.removeListener(_onSearchChanged);
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    try {
-      return Scaffold(
-        body: SafeArea(
-          child: Obx(() {
-            return controller.isLoading.value
-                ? const Center(
-                    child: CircularProgressIndicator(
-                    color: Color(0xFFFBBC05),
-                  ))
-                : Column(
-                    children: [
-                      // Header
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: 
-                              // GestureDetector(
-                              //   onTap: () {
-                              //     Get.to(() => GiftAnimationScreen());
-                              //   },
-                              //   child: 
-                                Text(
-                                  'Hello ${name ?? "User"},',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                             // ),
-                            ),
-                          ),
-                          // Wallet Balance
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const WalletScreen(),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.rectangle,
-                                borderRadius: BorderRadius.circular(20),
-                                color: Color(0xFFFF9800).withOpacity(0.1),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.wallet,
-                                    size: 18,
-                                    color: Color(0xFFFF9800),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    walletController.walletModel.data!.balance
-                                                .toString()
-                                                .length >
-                                            3
-                                        ? '₦${walletController.walletModel.data!.balance.toString().substring(0, 3)}K'
-                                        : '₦${walletController.walletModel.data!.balance}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFFF9800),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          // Location picker
-                          GestureDetector(
-                            onTap: () {
+  Future<void> _openLocationPicker(BuildContext context,
+      {required bool forSomeoneElse}) async {
                               controller1.fetchCountries();
-                              showModalBottomSheet(
+                              final picked = await showModalBottomSheet<bool>(
                                   isDismissible: true,
                                   enableDrag: true,
                                   isScrollControlled: true,
@@ -2255,7 +1990,276 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     );
                                   });
+  }
+
+  Widget dotIndicator(int index, int lenght) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          height: 20,
+          child: ListView.builder(
+              itemCount: lenght,
+              itemBuilder: (BuildContext, index) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  width: _currentIndex == index ? 18.0 : 10.0,
+                  height: _currentIndex == index ? 10.0 : 10.0,
+                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5.0),
+                    color: _currentIndex == index
+                        ? Colors.blue
+                        : Colors.grey.withValues(alpha: 0.5),
+                  ),
+                );
+              }),
+        )
+      ],
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getUserName();
+    controller.fetchFoodCategoriesByCondition();
+    _searchController.addListener(_onSearchChanged);
+    controller1.fetchStates();
+    getState();
+    walletController.fetchWallet();
+    setLGA();
+    carouselController = CarouselSliderController();
+    _maybeShowWelcomeDialog();
+  }
+
+  Future<void> _maybeShowWelcomeDialog() async {
+    final alreadyShown = await dataBase.getWelcomeShown();
+    if (alreadyShown || !mounted) return;
+    await dataBase.saveWelcomeShown();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFF3E0),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.celebration_rounded,
+                      size: 32, color: Color(0xFFFFAA00)),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Welcome to JaraMarket${name != null && name!.isNotEmpty ? ', $name' : ''}! 🎉',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Here\'s how to get started:',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+                ),
+                const SizedBox(height: 16),
+                const _WelcomeStep(
+                  number: '1',
+                  title: 'Fund your wallet',
+                  subtitle:
+                      'Go to Wallet → Add Money, enter an amount and pay securely with Paystack.',
+                ),
+                const SizedBox(height: 12),
+                const _WelcomeStep(
+                  number: '2',
+                  title: 'Set your transaction PIN',
+                  subtitle:
+                      'Your 4-digit PIN keeps every payment and withdrawal secure.',
+                ),
+                const SizedBox(height: 12),
+                const _WelcomeStep(
+                  number: '3',
+                  title: 'Shop & checkout',
+                  subtitle:
+                      'Add items to your cart and pay straight from your wallet.',
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const SetPinScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFAA00),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text(
+                      'Set Transaction PIN',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const WalletScreen()),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFFFAA00)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text(
+                      'Fund My Wallet',
+                      style: TextStyle(
+                          color: Color(0xFFFFAA00),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Maybe later',
+                      style: TextStyle(color: Colors.grey, fontSize: 13)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  void _onSearchChanged() {
+    // Rebuild to show/hide the clear (X) icon reactively
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    try {
+      return Scaffold(
+        body: SafeArea(
+          child: Obx(() {
+            return controller.isLoading.value
+                ? const Center(
+                    child: CircularProgressIndicator(
+                    color: Color(0xFFFBBC05),
+                  ))
+                : Column(
+                    children: [
+                      // Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: 
+                              // GestureDetector(
+                              //   onTap: () {
+                              //     Get.to(() => GiftAnimationScreen());
+                              //   },
+                              //   child: 
+                                Text(
+                                  'Hello ${name ?? "User"},',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                             // ),
+                            ),
+                          ),
+                          // Wallet Balance
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const WalletScreen(),
+                                ),
+                              );
                             },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.rectangle,
+                                borderRadius: BorderRadius.circular(20),
+                                color: Color(0xFFFF9800).withOpacity(0.1),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.wallet,
+                                    size: 18,
+                                    color: Color(0xFFFF9800),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    walletController.walletModel.data!.balance
+                                                .toString()
+                                                .length >
+                                            3
+                                        ? '₦${walletController.walletModel.data!.balance.toString().substring(0, 3)}K'
+                                        : '₦${walletController.walletModel.data!.balance}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFFF9800),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Location picker
+                          GestureDetector(
+                            onTap: () => _openLocationPicker(context,
+                                forSomeoneElse: controller.isShoppingForSomeoneElse.value),
                             child: Container(
                               margin: const EdgeInsets.only(right: 16),
                               padding: const EdgeInsets.all(8),
