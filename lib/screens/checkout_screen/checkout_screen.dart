@@ -55,6 +55,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
+  /// The address text shown in the "Confirm Address" popup and the address
+  /// card — mirrors the same fallback chain used for the AddressCard below:
+  /// a freshly picked/changed address takes priority, then the address
+  /// passed into this screen, then a "no address set" message. Without this,
+  /// reading straight from `widget.orderAddress` when it's `{}` (no saved
+  /// address on the backend) produced a literal "null,null,null,null."
+  String get _selectedAddressText {
+    if (result.isNotEmpty) {
+      return '${controller.selectedAddress},${controller.selectedState},${controller.selectedCountry} ';
+    }
+    if (widget.orderAddress.isNotEmpty) {
+      return '${widget.orderAddress['contact_address']},${widget.orderAddress['lga']},${widget.orderAddress['state']},${widget.orderAddress['country']}.';
+    }
+    return 'Set Address to recieve your order.';
+  }
+
   //final TextEditingController _messageController = TextEditingController();
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
@@ -521,8 +537,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                               setState(() {}); // refresh UI
                             },
-                            address:
-                                "${widget.orderAddress['contact_address']},${widget.orderAddress['lga']},${widget.orderAddress['state']},${widget.orderAddress['country']}.",
+                            address: _selectedAddressText,
                             audio: widget.path,
                             color: Colors.grey[400],
                             title: 'Insufficient Balance ${widget.balance}',
@@ -541,8 +556,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                               setState(() {}); // refresh UI
                             },
-                            address:
-                                "${widget.orderAddress['contact_address']},${widget.orderAddress['lga']},${widget.orderAddress['state']},${widget.orderAddress['country']}.",
+                            address: _selectedAddressText,
                             // != null
                             //        ? widget.orderAddress['contact_address']
                             //        : '${controller.selectedAddress},${controller.selectedState},${controller.selectedCountry}',

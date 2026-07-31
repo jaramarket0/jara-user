@@ -35,7 +35,6 @@ class GrainsController extends GetxController {
     var stateId = await dataBase.getStateAddressId();
     myLog.log('Found a state id: $stateId', name: 'GrainsController');
     if (stateId.isNotEmpty) {
-      if (dataList.isNotEmpty) return;
       fetchIngredients();
       return;
     }

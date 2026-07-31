@@ -1576,10 +1576,10 @@ class _HomeScreenState extends State<HomeScreen> {
       RefreshController(initialRefresh: false);
 
   void _onRefresh() async {
-    var stateId = await dataBase.getStateAddressId();
-    var lgaId = await dataBase.getLGAAddressId();
+    var stateId = await controller.getActiveStateId();
+    var lgaId = await controller.getActiveLgaId();
     if (stateId.isNotEmpty) {
-      controller.fetchFoodCategories(lgaId.toString(), stateId);
+      controller.fetchFoodCategories(lgaId, stateId);
     } else {
       Navigator.push(
           Get.context!,
@@ -1696,12 +1696,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     'Selected state: ${controller1.selectedState1}');
                                                 myLog.log(
                                                     'Selected state ID: ${controller1.selectedStateId}');
-                                                await dataBase.saveSateAddress(
-                                                    controller1.selectedStateId
-                                                        .toString());
-                                                await dataBase.saveState(
-                                                    controller1
-                                                        .selectedState1!);
+                                                if (!forSomeoneElse) {
+                                                  await dataBase
+                                                      .saveSateAddress(
+                                                          controller1
+                                                              .selectedStateId
+                                                              .toString());
+                                                  await dataBase.saveState(
+                                                      controller1
+                                                          .selectedState1!);
+                                                }
                                                 setState(() {
                                                   state = controller1
                                                       .selectedState1!;
@@ -1848,10 +1852,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     'Selected LGA: ${controller1.selectedLGA1}');
                                                 myLog.log(
                                                     'Selected lga ID: ${controller1.selectedLGAId}');
-                                                await dataBase.saveLGAAddressID(
-                                                    controller1.selectedLGAId!);
-                                                await dataBase.saveLGAAddress(
-                                                    controller1.selectedLGA1!);
+                                                if (forSomeoneElse) {
+                                                  controller.setOtherLocation(
+                                                    stateId: controller1
+                                                        .selectedStateId!,
+                                                    stateName: controller1
+                                                        .selectedState1!,
+                                                    lgaId: value!.id!,
+                                                    lgaName: value.name!,
+                                                  );
+                                                } else {
+                                                  await dataBase
+                                                      .saveLGAAddressID(
+                                                          controller1
+                                                              .selectedLGAId!);
+                                                  await dataBase
+                                                      .saveLGAAddress(
+                                                          controller1
+                                                              .selectedLGA1!);
+                                                }
                                                 setState(() {
                                                   state =
                                                       controller1.selectedLGA1!;
@@ -1863,7 +1882,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                         .toString(),
                                                     controller1.selectedStateId
                                                         .toString());
-                                                Navigator.pop(context);
+                                                Navigator.pop(context, true);
                                               },
                                               selectedItem:
                                                   controller1.selectedLGA,
@@ -1990,6 +2009,108 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     );
                                   });
+    if (forSomeoneElse &&
+        picked != true &&
+        controller.otherLgaId.value == null) {
+      // Sheet dismissed without ever picking a location this session —
+      // avoid leaving the app in "Someone Else" mode with no valid location.
+      controller.isShoppingForSomeoneElse.value = false;
+    }
+  }
+
+  Future<void> _switchToSomeoneElse() async {
+    if (controller.isShoppingForSomeoneElse.value) return;
+    controller.isShoppingForSomeoneElse.value = true;
+    await _openLocationPicker(context, forSomeoneElse: true);
+  }
+
+  Future<void> _switchToMyself() async {
+    if (!controller.isShoppingForSomeoneElse.value) return;
+    controller.isShoppingForSomeoneElse.value = false;
+    controller.clearOtherLocation();
+    final stateId = await dataBase.getStateAddressId();
+    final lgaId = await dataBase.getLGAAddressId();
+    final lgaName = await dataBase.getLGAAddress();
+    if (!mounted) return;
+    setState(() {
+      state = lgaName;
+      lgax = lgaName;
+    });
+    controller.fetchFoodCategories(lgaId.toString(), stateId);
+  }
+
+  Widget _modeSegment({
+    required String label,
+    required IconData icon,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: active
+              ? const Color(0xFFFF9800).withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: active ? const Color(0xFFFF9800) : Colors.grey[700],
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: active ? const Color(0xFFFF9800) : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShopModeToggle() {
+    return Obx(() {
+      final forOther = controller.isShoppingForSomeoneElse.value;
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(30),
+        ),
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            Expanded(
+              child: _modeSegment(
+                label: 'Myself',
+                icon: Icons.person_outline,
+                active: !forOther,
+                onTap: _switchToMyself,
+              ),
+            ),
+            Expanded(
+              child: _modeSegment(
+                label: 'Someone Else',
+                icon: Icons.people_outline,
+                active: forOther,
+                onTap: _switchToSomeoneElse,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget dotIndicator(int index, int lenght) {
@@ -2095,6 +2216,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Shop & checkout',
                   subtitle:
                       'Add items to your cart and pay straight from your wallet.',
+                ),
+                const SizedBox(height: 12),
+                const _WelcomeStep(
+                  number: '4',
+                  title: 'Track your Order',
+                  subtitle:
+                      'You can track your order status at any time.',
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -2292,6 +2420,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ],
+                      ),
+
+                      // Shopping-for mode toggle
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        child: _buildShopModeToggle(),
                       ),
 
                       // Search Bar
@@ -2611,9 +2746,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Reads the current stateId and calls the controller's search method.
   Future<void> _triggerSearch(String value) async {
-    var stateId = await dataBase.getStateAddressId();
-    var lgaId = await dataBase.getLGAAddressId();
-    controller.searchProducts(value, lgaId.toString(), stateId);
+    var stateId = await controller.getActiveStateId();
+    var lgaId = await controller.getActiveLgaId();
+    controller.searchProducts(value, lgaId, stateId);
   }
 
   Widget _buildCategorySection(int categoryIndex) {
