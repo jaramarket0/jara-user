@@ -1487,6 +1487,14 @@ class ApiService extends GetConnect {
         .timeout(timeout);
   }
 
+  // ─── Advertisements ───────────────────────────────────────────────────────
+
+  Future<http.Response> fetchAdvertisements() async {
+    return authHttpClient
+        .get(_uri('/advertisements'), headers: await _authHeaders())
+        .timeout(timeout);
+  }
+
   // ─── Notifications ────────────────────────────────────────────────────────
 
   Future<http.Response> fetchNotifications() async {

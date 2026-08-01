@@ -1546,7 +1546,9 @@ import 'package:jara_market/screens/main_screen/main_screen.dart';
 import 'package:jara_market/screens/profile_screen/pinScreen.dart';
 import 'package:jara_market/screens/wallet_screen/wallet_screen.dart';
 import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
+import 'package:jara_market/screens/home_screen/models/advertisement_model.dart';
 import 'package:jara_market/widgets/custom_button.dart';
+import 'package:jara_market/widgets/custom_image_view.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 import '../soup_list_screen/soup_list_screen.dart';
@@ -2600,88 +2602,93 @@ class _HomeScreenState extends State<HomeScreen> {
                                     return _buildCategorySection(1);
                                   }
                                   if (sectionIndex == 3) {
-                                    return Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        SizedBox(
-                                          height: 154,
-                                          child: CarouselSlider(
-                                            carouselController:
-                                                carouselController,
-                                            options: CarouselOptions(
-                                              height: 200.0,
-                                              viewportFraction: 0.8,
-                                              initialPage: 0,
-                                              enableInfiniteScroll: true,
-                                              reverse: false,
-                                              autoPlay: true,
-                                              autoPlayInterval:
-                                                  const Duration(seconds: 3),
-                                              autoPlayAnimationDuration:
-                                                  const Duration(
-                                                      milliseconds: 800),
-                                              autoPlayCurve:
-                                                  Curves.fastOutSlowIn,
-                                              enlargeCenterPage: true,
-                                              scrollDirection: Axis.horizontal,
-                                              onPageChanged: (index, reason) {
-                                                setState(() {
-                                                  _currentIndex = index;
-                                                });
-                                              },
+                                    return Obx(() {
+                                      final ads = controller.advertisements;
+                                      if (ads.isEmpty) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      return Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          SizedBox(
+                                            height: 154,
+                                            child: CarouselSlider(
+                                              carouselController:
+                                                  carouselController,
+                                              options: CarouselOptions(
+                                                height: 200.0,
+                                                viewportFraction: 0.8,
+                                                initialPage: 0,
+                                                enableInfiniteScroll:
+                                                    ads.length > 1,
+                                                reverse: false,
+                                                autoPlay: ads.length > 1,
+                                                autoPlayInterval:
+                                                    const Duration(seconds: 3),
+                                                autoPlayAnimationDuration:
+                                                    const Duration(
+                                                        milliseconds: 800),
+                                                autoPlayCurve:
+                                                    Curves.fastOutSlowIn,
+                                                enlargeCenterPage: true,
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                onPageChanged:
+                                                    (index, reason) {
+                                                  setState(() {
+                                                    _currentIndex = index;
+                                                  });
+                                                },
+                                              ),
+                                              items: ads
+                                                  .map((ad) =>
+                                                      _buildCarouselItem(
+                                                          ad, context))
+                                                  .toList(),
                                             ),
-                                            items: [
-                                              _buildCarouselItem(
-                                                  '14%', context),
-                                              _buildCarouselItem(
-                                                  '15%', context),
-                                              _buildCarouselItem(
-                                                  '16%', context),
-                                              _buildCarouselItem(
-                                                  '17%', context),
-                                              _buildCarouselItem(
-                                                  '18%', context),
-                                            ],
                                           ),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: List.generate(
-                                            5,
-                                            (index) => GestureDetector(
-                                              onTap: () {
-                                                carouselController
-                                                    .animateToPage(index);
-                                              },
-                                              child: AnimatedContainer(
-                                                duration: const Duration(
-                                                    milliseconds: 300),
-                                                curve: Curves.easeInOut,
-                                                width: _currentIndex == index
-                                                    ? 12.0
-                                                    : 7.0,
-                                                height: 7.0,
-                                                margin:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 4.0),
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          5.0),
-                                                  color: _currentIndex == index
-                                                      ? Colors.blue
-                                                      : Colors.grey.withValues(
-                                                          alpha: 0.5),
+                                          SizedBox(height: 10),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: List.generate(
+                                              ads.length,
+                                              (index) => GestureDetector(
+                                                onTap: () {
+                                                  carouselController
+                                                      .animateToPage(index);
+                                                },
+                                                child: AnimatedContainer(
+                                                  duration: const Duration(
+                                                      milliseconds: 300),
+                                                  curve: Curves.easeInOut,
+                                                  width: _currentIndex == index
+                                                      ? 12.0
+                                                      : 7.0,
+                                                  height: 7.0,
+                                                  margin: const EdgeInsets
+                                                      .symmetric(
+                                                          horizontal: 4.0),
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5.0),
+                                                    color:
+                                                        _currentIndex == index
+                                                            ? Colors.blue
+                                                            : Colors.grey
+                                                                .withValues(
+                                                                    alpha:
+                                                                        0.5),
+                                                  ),
                                                 ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    );
+                                        ],
+                                      );
+                                    });
                                   }
                                   // Last item — load-more footer
                                   if (sectionIndex ==
@@ -2903,50 +2910,38 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCarouselItem(String discount, BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: MediaQuery.of(context).size.height * 154,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        color: Color(0xFFFBBC05),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'MIN $discount\nOFF',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 24,
-                color: Color(0xff3F1405),
-              ),
-            ),
-            SizedBox(height: 8),
-            SizedBox(
-              height: 28,
-              width: 90,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  backgroundColor: Color(0xffCC6522),
-                  foregroundColor: Color(0xffffffff),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                onPressed: () {},
-                child: Text(
-                  'SHOP NOW',
-                  style: TextStyle(color: Colors.white, fontSize: 8),
+  Widget _buildCarouselItem(Advertisement ad, BuildContext context) {
+    final hasImage = ad.image != null && ad.image!.isNotEmpty;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(15),
+      child: Container(
+        width: double.infinity,
+        color: const Color(0xFFFBBC05),
+        child: hasImage
+            ? CustomImageView(
+                imagePath: ad.image,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              )
+            : Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      (ad.type == 'discount' || ad.type == 'off') && ad.value != null
+                          ? 'MIN ${ad.value}${ad.type == 'discount' ? '%' : ''}\nOFF'
+                          : 'Special Offer',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 24,
+                        color: Color(0xff3F1405),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

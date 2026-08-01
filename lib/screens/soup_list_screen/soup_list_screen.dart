@@ -22,10 +22,19 @@ class _SoupListScreenState extends State<SoupListScreen> {
   final FavoritesService _favoritesService = FavoritesService();
   List<dynamic> _favorites = [];
 
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
     _loadFavorites();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadFavorites() async {
@@ -66,7 +75,14 @@ class _SoupListScreenState extends State<SoupListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Products> foods = widget.item.products ?? [];
+    final List<Products> allFoods = widget.item.products ?? [];
+    final query = _searchQuery.trim().toLowerCase();
+    final List<Products> foods = query.isEmpty
+        ? allFoods
+        : allFoods
+            .where((food) =>
+                (food.name?.toString() ?? '').toLowerCase().contains(query))
+            .toList();
 
     return Scaffold(
       body: SafeArea(
@@ -79,8 +95,10 @@ class _SoupListScreenState extends State<SoupListScreen> {
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, top: 8,bottom: 10),
               child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _searchQuery = value),
                 decoration: InputDecoration(
-                  
+
                   hintText: 'Search...',
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
@@ -115,8 +133,10 @@ class _SoupListScreenState extends State<SoupListScreen> {
             ),
             Expanded(
               child: foods.isEmpty
-                  ? const Center(
-                      child: Text('No foods available in this category'),
+                  ? Center(
+                      child: Text(query.isEmpty
+                          ? 'No foods available in this category'
+                          : 'No results found for "$_searchQuery"'),
                     )
                   : GridView.count(
                       crossAxisCount: 2,

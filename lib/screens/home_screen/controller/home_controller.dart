@@ -3,6 +3,7 @@ import 'dart:developer' as myLog;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/screens/address_google/address_google.dart';
+import 'package:jara_market/screens/home_screen/models/advertisement_model.dart';
 import 'package:jara_market/screens/home_screen/models/food_model.dart';
 import 'package:jara_market/screens/home_screen/models/models.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
@@ -17,6 +18,8 @@ class HomeController extends GetxController {
 
   List<Food> foods = <Food>[];
   RxList<Ingredient> ingredient = <Ingredient>[].obs;
+
+  RxList<Advertisement> advertisements = <Advertisement>[].obs;
 
   RxBool _isLoading = false.obs;
   RxBool isLoading1 = false.obs;
@@ -74,6 +77,23 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     fetchFoodCategoriesByCondition();
+    fetchAdvertisements();
+  }
+
+  Future<void> fetchAdvertisements() async {
+    try {
+      final response = await apiService.fetchAdvertisements();
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final parsed = advertisementModelFromJson(response.body);
+        advertisements.value = parsed.data;
+      } else {
+        myLog.log('Failed to load advertisements: ${response.body}',
+            name: 'HomeController');
+      }
+    } catch (e, stackTrace) {
+      myLog.log('Error fetching advertisements: $e\n$stackTrace',
+          name: 'HomeController');
+    }
   }
 
   fetchFoodCategoriesByCondition() async {
