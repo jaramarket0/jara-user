@@ -168,7 +168,13 @@ class HomeController extends GetxController {
     await fetchFoodCategories(null, null, reset: false);
   }
 
+  // Guards against out-of-order network responses: if a newer search has
+  // started since this request went out, its (possibly stale) response is
+  // dropped instead of overwriting the latest results.
+  String _latestSearchQuery = '';
+
   Future<void> searchProducts(String query, String lgaId, String stateId) async {
+    _latestSearchQuery = query;
     isSearching.value = true;
     _isLoading.value  = true;
     try {
@@ -182,6 +188,7 @@ class HomeController extends GetxController {
           'Authorization': 'Bearer $token',
         },
       );
+      if (query != _latestSearchQuery) return; // superseded by a newer search
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         if (decoded['data'] != null) {
@@ -198,12 +205,15 @@ class HomeController extends GetxController {
         searchResults.clear();
       }
     } catch (e) {
+      if (query != _latestSearchQuery) return;
       myLog.log('Error searching: $e', name: 'HomeController');
       AppFeedback.showError(e,
           fallback: 'Search didn\'t go through. Please try again.');
       searchResults.clear();
     } finally {
-      _isLoading.value = false;
+      if (query == _latestSearchQuery) {
+        _isLoading.value = false;
+      }
     }
   }
 

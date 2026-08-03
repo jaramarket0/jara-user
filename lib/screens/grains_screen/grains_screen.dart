@@ -1182,19 +1182,31 @@ class _GrainsScreenState extends State<GrainsScreen> {
   bool _shopWithYourPrice = false;
   String errorText = '';
   final TextEditingController _priceController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     controller.fetchIngredientByCondition();
     _searchController.addListener(_filterItems);
+    _scrollController.addListener(_onScroll);
     setLGA();
+  }
+
+  void _onScroll() {
+    if (_searchController.text.isNotEmpty) return; // load-more paginates the backend list, not the local search filter
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      controller.loadMoreIngredients();
+    }
   }
 
   @override
   void dispose() {
     _searchController.removeListener(_filterItems);
     _searchController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -1323,6 +1335,7 @@ class _GrainsScreenState extends State<GrainsScreen> {
                           ),
                         )
                       : GridView.builder(
+                          controller: _scrollController,
                           physics: const AlwaysScrollableScrollPhysics(),
                           itemCount: _filteredList.length,
                           gridDelegate:

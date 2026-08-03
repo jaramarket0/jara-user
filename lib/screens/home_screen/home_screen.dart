@@ -1521,6 +1521,7 @@
 //   }
 // }
 
+import 'dart:async';
 import 'dart:developer' as myLog;
 import 'package:alert_info/alert_info.dart';
 import 'package:dropdown_search/dropdown_search.dart';
@@ -1597,6 +1598,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String lgax = 'N/A';
 
   final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   void setLGA() async {
     var lga1 = await dataBase.getLGAAddress();
@@ -2300,6 +2302,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
@@ -2456,14 +2459,25 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           onChanged: (value) {
-                            // Trigger search live as user types
+                            _searchDebounce?.cancel();
                             if (value.isNotEmpty) {
-                              _triggerSearch(value);
+                              // Wait for the user to pause typing before
+                              // firing the request, so we don't send one
+                              // request per keystroke (which was racing —
+                              // a stale response for an earlier partial
+                              // word could arrive after the final one and
+                              // overwrite it, showing "no results" even
+                              // though the full word does match).
+                              _searchDebounce =
+                                  Timer(const Duration(milliseconds: 450), () {
+                                _triggerSearch(value);
+                              });
                             } else {
                               controller.clearSearch();
                             }
                           },
                           onSubmitted: (value) async {
+                            _searchDebounce?.cancel();
                             if (value.isNotEmpty) {
                               _triggerSearch(value);
                             } else {

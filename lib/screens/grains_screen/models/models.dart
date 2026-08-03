@@ -13,13 +13,21 @@ String ingredientResorceModelToJson(IngredientResorceModel data) =>
 class IngredientResorceModel {
   String? message;
   List<Data>? data;
+  int? currentPage;
+  int? lastPage;
+  int? total;
 
-  IngredientResorceModel({this.message, this.data});
+  IngredientResorceModel({this.message, this.data, this.currentPage, this.lastPage, this.total});
 
   IngredientResorceModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
     final outerData = json['data'];
     final list = (outerData is Map) ? outerData['data'] : outerData;
+    if (outerData is Map) {
+      currentPage = outerData['current_page'] as int?;
+      lastPage = outerData['last_page'] as int?;
+      total = outerData['total'] as int?;
+    }
     if (list != null) {
       data = <Data>[];
       list.forEach((v) {

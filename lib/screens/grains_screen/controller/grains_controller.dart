@@ -24,6 +24,14 @@ class GrainsController extends GetxController {
       stock: '',
       unit: '');
   RxList<Data> dataList = <Data>[].obs;
+
+  // Pagination state — mirrors HomeController's category load-more pattern.
+  int _currentPage = 1;
+  int _lastPage = 1;
+  bool _hasMore = true;
+  RxBool isLoadingMore = false.obs;
+  bool get hasMore => _hasMore;
+
   @override
   onInit() {
     super.onInit();
@@ -45,29 +53,47 @@ class GrainsController extends GetxController {
         ));
   }
 
-  Future<void> fetchIngredients() async {
-    isLoading.value = true;
+  Future<void> fetchIngredients({bool reset = true}) async {
+    if (reset) {
+      _currentPage = 1;
+      _hasMore = true;
+      isLoading.value = true;
+    } else {
+      if (!_hasMore || isLoadingMore.value) return;
+      isLoadingMore.value = true;
+    }
 
     try {
-      var response = await apiService.fetchIngredients();
+      var response = await apiService.fetchIngredients(page: _currentPage);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         // myLog.log(response.body, name: 'INGREDIENTS');
         ingredientResorceModel = ingredientResorceModelFromJson(response.body);
-        dataList.value = ingredientResorceModel.data!;
+        _lastPage = ingredientResorceModel.lastPage ?? 1;
+        _hasMore = _currentPage < _lastPage;
+        if (reset) {
+          dataList.value = ingredientResorceModel.data ?? [];
+        } else {
+          dataList.addAll(ingredientResorceModel.data ?? []);
+        }
+        _currentPage++;
         myLog.log(dataList.value.toString(), name: 'INGREDIENTS');
       } else {
-        isLoading.value = false;
         Get.snackbar('Error', response.body,
             colorText: Colors.white, backgroundColor: Colors.red);
       }
     } catch (e) {
       myLog.log(e.toString(), name: 'ERROR FETCHING INGREDIENTS');
-      isLoading.value = false;
       // Get.snackbar('Error', e.toString(),
       //     colorText: Colors.white, backgroundColor: Colors.red);
     } finally {
       isLoading.value = false;
+      isLoadingMore.value = false;
     }
+  }
+
+  Future<void> loadMoreIngredients() async {
+    if (!_hasMore || isLoadingMore.value) return;
+    await fetchIngredients(reset: false);
   }
 }

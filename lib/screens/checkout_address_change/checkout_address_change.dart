@@ -65,7 +65,6 @@ class _CheckoutAddressChangeScreenState
                   var result = await controller.processUpdateCheckoutAddress();
                   myLog.log('Result from processUpdateCheckoutAddress: $result');
                   Get.back(result: result);
-                  Navigator.pop(Get.context!, result);
                   // Get.snackbar('Success', 'is not from profile',
                   //     backgroundColor: Colors.blueGrey,
                   //     colorText: Colors.white,

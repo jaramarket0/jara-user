@@ -612,9 +612,9 @@ class ApiService extends GetConnect {
   }
 
   // Fetch ingredients
-  Future<http.Response> fetchIngredients() async {
+  Future<http.Response> fetchIngredients({int page = 1, int perPage = 40}) async {
     final url = Uri.parse(
-        '$baseUrl/fetch/ingredients?lga_id=${await dataBase.getLGAAddressId()}&&state_id=${await dataBase.getStateAddressId()}');
+        '$baseUrl/fetch/ingredients?lga_id=${await dataBase.getLGAAddressId()}&&state_id=${await dataBase.getStateAddressId()}&page=$page&per_page=$perPage');
     var token = await dataBase.getToken();
     _logRequest('GET', url);
     return _retryRequest(() async {
