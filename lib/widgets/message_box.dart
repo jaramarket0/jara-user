@@ -61,8 +61,7 @@ class _MessageBoxState extends State<MessageBox> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
-                // controller.removeFromCart(itemId);
-                widget.onVoicePressedDelete;
+                widget.onVoicePressedDelete?.call();
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),

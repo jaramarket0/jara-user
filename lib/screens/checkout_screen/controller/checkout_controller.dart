@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:intl/intl.dart';
 import 'dart:developer' as myLog;
@@ -154,11 +155,19 @@ class CheckoutController extends GetxController {
         serviceCharge: cartController.calculatedServiceCharge,
         vat: 0,
         remarks: cartController.messageController.text.isNotEmpty ? cartController.messageController.text : 'This is a sample order',
-        audio_url: audio ?? null,
       );
 
+      // `audio` is the local recording's file path (from cart_screen's
+      // flutter_sound recorder) -- send it as a real multipart file so the
+      // backend actually receives and stores the voice note, instead of
+      // just a meaningless on-device path string.
+      File? audioFile;
+      if (audio != null && audio.isNotEmpty && await File(audio).exists()) {
+        audioFile = File(audio);
+      }
+
 // Send payload to backend
-      var response = await apiService.createOrder(payload); // Example API call
+      var response = await apiService.createOrder(payload, audio: audioFile);
       if (response.statusCode == 200 || response.statusCode == 201) {
         isLoading.value = false;
         myLog.log(response.body, name: 'Order body');

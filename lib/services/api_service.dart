@@ -1571,7 +1571,13 @@ class ApiService extends GetConnect {
       final request = http.MultipartRequest('POST', _uri('/orders'))
         ..headers.addAll(await _authHeadersMultipart());
       data.forEach((key, value) {
-        if (value != null) request.fields[key] = value.toString();
+        if (value == null) return;
+        // Multipart fields are plain strings -- List/Map values (products,
+        // ingredients) must be JSON-encoded rather than Dart's .toString()
+        // (which produces e.g. "[{product_id: 7}]", not valid JSON) so the
+        // backend can decode them back into real lists/dicts.
+        request.fields[key] =
+            (value is List || value is Map) ? jsonEncode(value) : value.toString();
       });
       request.files.add(await http.MultipartFile.fromPath('audio', audio.path));
       final streamed = await authHttpClient.send(request).timeout(timeout);
