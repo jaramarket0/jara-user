@@ -23,22 +23,25 @@ TextEditingController otpController = TextEditingController();
   Future<void> validateOtp(Map<String,dynamic> otpData) async {
     print(otpData);
       isLoading.value = true;
-    
+
 
     try {
-      
+      // Non-consuming check: confirms the OTP is valid without burning it,
+      // since the actual reset-password step still needs to validate (and
+      // consume) it for real -- calling /validate-otp here would delete it
+      // early and make the reset-password step always fail afterwards.
+      final response = await apiService.checkOtp(otpData);
 
-      final response = await apiService.validateUserLoginOtp(otpData);
 
-      
         isLoading.value = false;
-      
+
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final otp = otpData['otp'];
         otpController.dispose();
         Navigator.pushReplacement(
           Get.context!,
-          MaterialPageRoute(builder: (context) =>  NewPasswordScreen(email: otpData['email'],)),
+          MaterialPageRoute(builder: (context) =>  NewPasswordScreen(email: otpData['email'], otp: otp,)),
         );
       } else {
         ScaffoldMessenger.of(Get.context!).showSnackBar(

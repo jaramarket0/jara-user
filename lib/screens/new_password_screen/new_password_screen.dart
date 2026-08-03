@@ -10,9 +10,9 @@ NewPasswordController controller = Get.put(NewPasswordController());
 
 class NewPasswordScreen extends StatefulWidget {
   final String? email; // Make email optional but needed for password reset
-  //final String? token; // Token from OTP verification
+  final String? otp; // The OTP verified on the previous screen -- reset-password needs it again
 
-  const NewPasswordScreen({Key? key, this.email,}) : super(key: key);
+  const NewPasswordScreen({Key? key, this.email, this.otp,}) : super(key: key);
 
   @override
   _NewPasswordScreenState createState() => _NewPasswordScreenState();
@@ -68,7 +68,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               child: ElevatedButton(
                 onPressed: _isPasswordValid && !controller.isLoading.value
                     ? () {
-                        controller.resetPassword(widget.email ?? '',);
+                        controller.resetPassword(widget.email ?? '', widget.otp ?? '',);
                       }
                     : null,
                 style: ElevatedButton.styleFrom(

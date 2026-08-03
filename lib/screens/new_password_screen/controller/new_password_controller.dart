@@ -12,32 +12,28 @@ ApiService apiService = ApiService(Duration(seconds:60 * 5))  ;
 TextEditingController passwordController = TextEditingController();
 TextEditingController confimPasswordController = TextEditingController();
 
-  Future<void> resetPassword(String email) async {
-    // if (widget.email == null) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(content: Text('Email is required for password reset')),
-    //   );
-    //   return;
-    // }
+  Future<void> resetPassword(String email, String otp) async {
 print(email);
-    
+
       isLoading.value = true;
-    
+
 
     try {
+      // Backend's /reset-password requires exactly {email, otp, password} --
+      // password_confirmation is only checked client-side (see
+      // _isPasswordValid in new_password_screen.dart) before this is ever
+      // called, so it doesn't need to be sent.
       final resetData = {
-        'recipient': email,
+        'email': email,
+        'otp': otp,
         'password': passwordController.text,
-        'password_confirmation': confimPasswordController.text,
       };
 
-      // You might need to implement a reset password endpoint in your API service
-      // For now, we'll use the login endpoint
       final response = await apiService.resetPassword(resetData);
 
-      
+
         isLoading.value = false;
-      
+
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         passwordController.dispose();
@@ -53,8 +49,8 @@ print(email);
       } else {
         var body = jsonDecode(response.body);
         ScaffoldMessenger.of(Get.context!).showSnackBar(
-          
-          SnackBar(content: Text('Password reset failed: ${body['errors']['password'][0]}'),backgroundColor: Colors.red,),
+
+          SnackBar(content: Text('Password reset failed: ${body['message'] ?? 'Something went wrong'}'),backgroundColor: Colors.red,),
         );
       }
     } catch (e) {

@@ -2926,36 +2926,56 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCarouselItem(Advertisement ad, BuildContext context) {
     final hasImage = ad.image != null && ad.image!.isNotEmpty;
+    final adText = (ad.type == 'discount' || ad.type == 'off') && ad.value != null
+        ? 'MIN ${ad.value}${ad.type == 'discount' ? '%' : ''}\nOFF'
+        : 'Special Offer';
     return ClipRRect(
       borderRadius: BorderRadius.circular(15),
       child: Container(
         width: double.infinity,
         color: const Color(0xFFFBBC05),
-        child: hasImage
-            ? CustomImageView(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (hasImage)
+              CustomImageView(
                 imagePath: ad.image,
                 width: double.infinity,
                 fit: BoxFit.cover,
-              )
-            : Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      (ad.type == 'discount' || ad.type == 'off') && ad.value != null
-                          ? 'MIN ${ad.value}${ad.type == 'discount' ? '%' : ''}\nOFF'
-                          : 'Special Offer',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 24,
-                        color: Color(0xff3F1405),
-                      ),
-                    ),
-                  ],
+              ),
+            if (hasImage)
+              // Dark scrim behind the text so it stays legible over any image.
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.45),
+                      Colors.black.withValues(alpha: 0.05),
+                    ],
+                  ),
                 ),
               ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    adText,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 24,
+                      color: hasImage ? Colors.white : const Color(0xff3F1405),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

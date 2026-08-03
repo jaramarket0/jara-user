@@ -556,6 +556,23 @@ class ApiService extends GetConnect {
     return response;
   }
 
+  // Non-consuming OTP check -- used by the forgot-password flow's OTP
+  // screen so the code isn't burned before the actual reset-password step.
+  Future<http.Response> checkOtp(Map<String, dynamic> otpData) async {
+    final url = Uri.parse('$baseUrl/check-otp');
+    _logRequest('POST', url, body: otpData);
+    final response = await authHttpClient.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode(otpData),
+    );
+    _logResponse(response);
+    return response;
+  }
+
   // Fetch food categories (paginated — 5 categories per page)
   Future<http.Response> fetchFoodCategory(String lgaID, String stateID,
       {int page = 1}) async {
