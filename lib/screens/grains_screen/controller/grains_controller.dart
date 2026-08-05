@@ -32,6 +32,18 @@ class GrainsController extends GetxController {
   RxBool isLoadingMore = false.obs;
   bool get hasMore => _hasMore;
 
+  // Active price filter -- kept here (not just local widget state) so
+  // pull-to-refresh and load-more keep using it instead of silently
+  // dropping back to an unfiltered list.
+  double? minPrice;
+  double? maxPrice;
+
+  Future<void> applyPriceFilter({double? minPrice, double? maxPrice}) async {
+    this.minPrice = minPrice;
+    this.maxPrice = maxPrice;
+    await fetchIngredients(reset: true);
+  }
+
   @override
   onInit() {
     super.onInit();
@@ -64,7 +76,8 @@ class GrainsController extends GetxController {
     }
 
     try {
-      var response = await apiService.fetchIngredients(page: _currentPage);
+      var response = await apiService.fetchIngredients(
+          page: _currentPage, minPrice: minPrice, maxPrice: maxPrice);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         // myLog.log(response.body, name: 'INGREDIENTS');

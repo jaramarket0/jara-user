@@ -3,6 +3,7 @@ import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:jara_market/screens/profile_screen/controller/profile_controller.dart';
 import 'package:jara_market/services/api_service.dart';
 import 'package:jara_market/utils/app_feedback.dart';
 import 'dart:developer' as myLog;
@@ -328,12 +329,33 @@ class _PinVerifySheetState extends State<_PinVerifySheet> {
   final PinController _ctrl = Get.isRegistered<PinController>()
       ? Get.find<PinController>()
       : Get.put(PinController());
+  final ProfileController _profileCtrl = Get.isRegistered<ProfileController>()
+      ? Get.find<ProfileController>()
+      : Get.put(ProfileController());
   final List<TextEditingController> _ctrl4 =
       List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focus = List.generate(4, (_) => FocusNode());
   bool _obscure = true;
+  bool _checkingPin = true;
+  bool _hasPin = true;
 
   String get _pin => _ctrl4.map((c) => c.text).join();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkHasPin();
+  }
+
+  Future<void> _checkHasPin() async {
+    await _profileCtrl.fetchUserProfile();
+    if (mounted) {
+      setState(() {
+        _hasPin = _profileCtrl.data.hasPin ?? false;
+        _checkingPin = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -392,35 +414,50 @@ class _PinVerifySheetState extends State<_PinVerifySheet> {
             style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
           ),
           const SizedBox(height: 28),
-          _PinLabel(
-            label: 'PIN',
-            obscure: _obscure,
-            onToggle: () => setState(() => _obscure = !_obscure),
-          ),
-          const SizedBox(height: 12),
-          _PinRow(controllers: _ctrl4, focusNodes: _focus, obscure: _obscure),
-          const SizedBox(height: 32),
-          Obx(() => _ctrl.isLoading.value
-              ? const CircularProgressIndicator(color: Color(0xFFFFAA00))
-              : SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFAA00),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+          if (_checkingPin)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: CircularProgressIndicator(color: Color(0xFFFFAA00)),
+            )
+          else if (!_hasPin)
+            _NoPinNotice(
+              onSetPin: () {
+                Navigator.of(context).pop('');
+                Get.to(() => const SetPinScreen());
+              },
+            )
+          else ...[
+            _PinLabel(
+              label: 'PIN',
+              obscure: _obscure,
+              onToggle: () => setState(() => _obscure = !_obscure),
+            ),
+            const SizedBox(height: 12),
+            _PinRow(
+                controllers: _ctrl4, focusNodes: _focus, obscure: _obscure),
+            const SizedBox(height: 32),
+            Obx(() => _ctrl.isLoading.value
+                ? const CircularProgressIndicator(color: Color(0xFFFFAA00))
+                : SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFAA00),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text(
+                        'Confirm',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white),
+                      ),
                     ),
-                    child: const Text(
-                      'Confirm',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white),
-                    ),
-                  ),
-                )),
+                  )),
+          ],
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => Navigator.of(context).pop(''),
@@ -553,6 +590,55 @@ class _ResetPinScreenState extends State<ResetPinScreen> {
 }
 
 // ─── Shared Widgets ───────────────────────────────────────────────────────────
+
+class _NoPinNotice extends StatelessWidget {
+  final VoidCallback onSetPin;
+
+  const _NoPinNotice({required this.onSetPin});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8EC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFFAA00).withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.info_outline, color: Color(0xFFFFAA00), size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'You haven\'t set a transaction PIN yet.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF6B4F00)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: onSetPin,
+            child: const Text(
+              'Click here to set your PIN',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFFFAA00),
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _PinLabel extends StatelessWidget {
   final String label;

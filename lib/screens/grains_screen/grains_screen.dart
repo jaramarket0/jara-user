@@ -1232,6 +1232,93 @@ class _GrainsScreenState extends State<GrainsScreen> {
     });
   }
 
+  void _openPriceFilter() {
+    final minController = TextEditingController(
+        text: controller.minPrice?.toStringAsFixed(0) ?? '');
+    final maxController = TextEditingController(
+        text: controller.maxPrice?.toStringAsFixed(0) ?? '');
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 20,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Filter by price',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: minController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Min price (₦)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: maxController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Max price (₦)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        Navigator.pop(sheetContext);
+                        await controller.applyPriceFilter(minPrice: null, maxPrice: null);
+                        _filterItems();
+                      },
+                      child: const Text('Clear'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final min = double.tryParse(minController.text.trim());
+                        final max = double.tryParse(maxController.text.trim());
+                        Navigator.pop(sheetContext);
+                        await controller.applyPriceFilter(minPrice: min, maxPrice: max);
+                        _filterItems();
+                      },
+                      child: const Text('Apply'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);
 
@@ -1280,30 +1367,52 @@ class _GrainsScreenState extends State<GrainsScreen> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                onChanged: (value) {
-                  _filterItems();
-                },
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search ingredients...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            _filterItems();
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      onChanged: (value) {
+                        _filterItems();
+                      },
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search ingredients...',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _filterItems();
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: (controller.minPrice != null || controller.maxPrice != null)
+                          ? Colors.orange
+                          : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.tune,
+                          color: (controller.minPrice != null || controller.maxPrice != null)
+                              ? Colors.white
+                              : Colors.black87),
+                      onPressed: _openPriceFilter,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),

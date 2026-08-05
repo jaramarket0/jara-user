@@ -336,6 +336,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
+  void _showInsufficientBalanceDialog() {
+    Get.defaultDialog(
+      title: 'Insufficient Balance',
+      titleStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+      content: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+        child: Text(
+          'Your wallet balance of ₦${widget.balance.toStringAsFixed(2)} is not enough to cover this order of ₦${widget.totalAmount.toStringAsFixed(2)}. Please fund your wallet to continue.',
+          textAlign: TextAlign.center,
+        ),
+      ),
+      textConfirm: 'Fund Wallet',
+      confirmTextColor: Colors.white,
+      buttonColor: const Color(0xFFFFAA00),
+      textCancel: 'Cancel',
+      onConfirm: () {
+        Get.back(); // close the dialog
+        Get.toNamed(AppRoutes.walletScreen);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -525,23 +547,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   //       myLog.log(widget.orderAddress['state'].toString());
                   //     }),
                   (widget.balance < widget.totalAmount)
-                      ? AbsorbPointer(
-                          child: CheckoutButtonPaystack(
-                            onLocationDetected: (location) {
-                              // Auto-fill the address text field
-                              controller.selectedAddress.value =
-                                  location.fullAddress;
+                      ? GestureDetector(
+                          onTap: _showInsufficientBalanceDialog,
+                          child: AbsorbPointer(
+                            child: CheckoutButtonPaystack(
+                              onLocationDetected: (location) {
+                                // Auto-fill the address text field
+                                controller.selectedAddress.value =
+                                    location.fullAddress;
 
-                              // Auto-select state if your controller has a state field:
-                              // controller.selectedState1 = location.state;
+                                // Auto-select state if your controller has a state field:
+                                // controller.selectedState1 = location.state;
 
-                              setState(() {}); // refresh UI
-                            },
-                            address: _selectedAddressText,
-                            audio: widget.path,
-                            color: Colors.grey[400],
-                            title: 'Insufficient Balance ${widget.balance}',
-                            amount: widget.totalAmount,
+                                setState(() {}); // refresh UI
+                              },
+                              address: _selectedAddressText,
+                              audio: widget.path,
+                              color: Colors.grey[400],
+                              title: 'Insufficient Balance ${widget.balance}',
+                              amount: widget.totalAmount,
+                            ),
                           ),
                         )
                       : Obx(() {

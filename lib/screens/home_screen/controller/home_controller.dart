@@ -35,6 +35,18 @@ class HomeController extends GetxController {
 
   bool get hasMore => _hasMore;
 
+  // Active price filter -- kept on the controller (not local widget state)
+  // so pull-to-refresh and load-more keep using it instead of silently
+  // dropping back to an unfiltered list.
+  double? minPrice;
+  double? maxPrice;
+
+  Future<void> applyPriceFilter({double? minPrice, double? maxPrice}) async {
+    this.minPrice = minPrice;
+    this.maxPrice = maxPrice;
+    await fetchFoodCategories(_cachedLgaId, _cachedStateId, reset: true);
+  }
+
   RxBool isSearching = false.obs;
   RxList<Products> searchResults = <Products>[].obs;
 
@@ -130,6 +142,8 @@ class HomeController extends GetxController {
         lgaId ?? _cachedLgaId ?? '4',
         stateId ?? _cachedStateId ?? '',
         page: _currentPage,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -178,8 +192,8 @@ class HomeController extends GetxController {
     isSearching.value = true;
     _isLoading.value  = true;
     try {
-      final url = Uri.parse(
-          '${apiService.baseUrl}/fetch/product?search=$query&lga_id=$lgaId&state_id=$stateId');
+      final url = Uri.parse('${apiService.baseUrl}/fetch/product').replace(
+          queryParameters: {'search': query, 'lga_id': lgaId, 'state_id': stateId});
       var token = await dataBase.getToken();
       final response = await authHttpClient.get(
         url,

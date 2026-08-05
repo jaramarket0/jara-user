@@ -575,15 +575,22 @@ class ApiService extends GetConnect {
 
   // Fetch food categories (paginated — 5 categories per page)
   Future<http.Response> fetchFoodCategory(String lgaID, String stateID,
-      {int page = 1}) async {
+      {int page = 1, double? minPrice, double? maxPrice}) async {
     if (Get.isSnackbarOpen) {
       return Future.error('Snackbar is open');
     }
     var stateId = stateID == '' || stateID == null
-        ? dataBase.getStateAddressId()
+        ? await dataBase.getStateAddressId()
         : stateID;
-    final url = Uri.parse(
-        '$baseUrl/fetch/categories-all-products?lga_id=$lgaID&state_id=$stateId&page=$page&per_page=5');
+    final url = Uri.parse('$baseUrl/fetch/categories-all-products').replace(
+        queryParameters: {
+          'lga_id': lgaID,
+          'state_id': stateId,
+          'page': page.toString(),
+          'per_page': '5',
+          if (minPrice != null) 'min_price': minPrice.toString(),
+          if (maxPrice != null) 'max_price': maxPrice.toString(),
+        });
 
     _logRequest('GET', url);
     // final prefs = await SharedPreferences.getInstance();
@@ -629,9 +636,16 @@ class ApiService extends GetConnect {
   }
 
   // Fetch ingredients
-  Future<http.Response> fetchIngredients({int page = 1, int perPage = 40}) async {
-    final url = Uri.parse(
-        '$baseUrl/fetch/ingredients?lga_id=${await dataBase.getLGAAddressId()}&&state_id=${await dataBase.getStateAddressId()}&page=$page&per_page=$perPage');
+  Future<http.Response> fetchIngredients({int page = 1, int perPage = 40,
+      double? minPrice, double? maxPrice}) async {
+    final url = Uri.parse('$baseUrl/fetch/ingredients').replace(queryParameters: {
+      'lga_id': (await dataBase.getLGAAddressId()).toString(),
+      'state_id': await dataBase.getStateAddressId(),
+      'page': page.toString(),
+      'per_page': perPage.toString(),
+      if (minPrice != null) 'min_price': minPrice.toString(),
+      if (maxPrice != null) 'max_price': maxPrice.toString(),
+    });
     var token = await dataBase.getToken();
     _logRequest('GET', url);
     return _retryRequest(() async {
