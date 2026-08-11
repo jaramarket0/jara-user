@@ -239,6 +239,32 @@ class ApiService extends GetConnect {
     return response;
   }
 
+  Future<http.Response> appleSignIn({
+    required String identityToken,
+    required String role,
+    String? firstName,
+    String? lastName,
+  }) async {
+    final url = Uri.parse('$baseUrl/apple-signin');
+    final body = {
+      'identity_token': identityToken,
+      'role': role,
+      if (firstName != null && firstName.isNotEmpty) 'firstname': firstName,
+      if (lastName != null && lastName.isNotEmpty) 'lastname': lastName,
+    };
+    _logRequest('POST', url, body: body);
+    final response = await authHttpClient.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+    _logResponse(response);
+    return response;
+  }
+
   Future<http.Response> fetchReferal() async {
     var token = await dataBase.getToken();
     final url = Uri.parse('$baseUrl/my-referrals');
@@ -1415,9 +1441,9 @@ class ApiService extends GetConnect {
           _uri('/pin/reset'),
           headers: await _authHeaders(),
           body: jsonEncode({
-            'token': token,
-            'pin': int.tryParse(pin) ?? pin,
-            'confirm_pin': int.tryParse(confirmPin) ?? confirmPin,
+            'otp': token,
+            'pin': pin,
+            'confirm_pin': confirmPin,
           }),
         )
         .timeout(timeout);

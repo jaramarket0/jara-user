@@ -7,15 +7,20 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart';
+import 'package:jara_market/screens/checkout_address_change/models/country_model.dart';
+import 'package:jara_market/screens/checkout_address_change/models/lga_model.dart';
+import 'package:jara_market/screens/checkout_address_change/models/state_model.dart';
 import 'package:jara_market/screens/checkout_screen/atomicWebViewScreen/atomic_webview_screen.dart';
 import 'package:jara_market/screens/checkout_screen/location_servies/location_service.dart';
 import 'package:jara_market/screens/checkout_screen/models/buildOrderPayload.dart';
 import 'package:jara_market/screens/checkout_screen/models/location_model.dart';
 import 'package:jara_market/screens/checkout_screen/models/models.dart';
 import 'package:jara_market/screens/checkout_screen/models/ordersuccess.dart';
+import 'package:jara_market/screens/profile_screen/controller/profile_controller.dart';
 import 'package:jara_market/screens/success_screen/success_screen.dart';
 import 'package:jara_market/services/api_service.dart';
 import 'package:jara_market/utils/app_feedback.dart';
+import 'package:jara_market/utils/json_helpers.dart';
 
 class CheckoutController extends GetxController {
   ApiService _apiService = ApiService(Duration(seconds: 60 * 5));
@@ -231,4 +236,77 @@ class CheckoutController extends GetxController {
   double? get longitude => currentLocation.value?.longitude;
   String get fullAddress => currentLocation.value?.fullAddress ?? '';
   bool get hasLocation => currentLocation.value != null;
+
+  /// Attempts to turn a detected GPS location into a real saved address
+  /// (with a backend-assigned id) by matching its country/state/city names
+  /// against the app's reference lists, then creating the address.
+  ///
+  /// Order creation requires a real `address_id` - a detected location on
+  /// its own is just free text and can't be used to place an order until
+  /// it's saved this way. Returns true and updates [selectedAddressId] on
+  /// success; returns false (with no address saved) if any part of the
+  /// match fails, so the caller can fall back to manual entry.
+  Future<bool> saveDetectedLocationAsAddress(UserLocation location) async {
+    try {
+      final countryResponse = await _apiService.fetchCountry();
+      if (countryResponse.statusCode != 200 &&
+          countryResponse.statusCode != 201) {
+        return false;
+      }
+      final countries = countryModelFromJson(countryResponse.body).data ?? [];
+      final country =
+          findByName(countries, (c) => c.name ?? '', location.country);
+      if (country?.id == null) return false;
+
+      final stateResponse = await _apiService.fetchState();
+      if (stateResponse.statusCode != 200 &&
+          stateResponse.statusCode != 201) {
+        return false;
+      }
+      final states = stateModelFromJson(stateResponse.body).data ?? [];
+      final state = findByName(states, (s) => s.name ?? '', location.state);
+      if (state?.id == null || state?.name == null) return false;
+
+      final lgaResponse = await _apiService.fetchLgas(state!.name!);
+      if (lgaResponse.statusCode != 200 && lgaResponse.statusCode != 201) {
+        return false;
+      }
+      final lgas = lgaModelFromJson(lgaResponse.body).data ?? [];
+      final lga = findByName(lgas, (l) => l.name ?? '', location.city);
+      if (lga?.id == null) return false;
+
+      final profileController = Get.isRegistered<ProfileController>()
+          ? Get.find<ProfileController>()
+          : Get.put(ProfileController());
+      await profileController.fetchUserProfile();
+      final phoneNumber = profileController.data.phoneNumber;
+      if (phoneNumber == null || phoneNumber.isEmpty) return false;
+
+      final response = await _apiService.addCheckoutAddress({
+        'country_id': country!.id,
+        'state_id': state.id,
+        'lga_id': lga!.id,
+        'contact_address': location.fullAddress,
+        'phone_number': phoneNumber,
+        'is_default': false,
+      });
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        return false;
+      }
+
+      final addressId = extractIdFromResponse(response.body);
+      if (addressId == null) return false;
+
+      selectedAddressId.value = addressId;
+      selectedAddress.value = location.fullAddress;
+      selectedCountry.value = country.name ?? '';
+      selectedState.value = state.name ?? '';
+      selectedLga.value = lga.name ?? '';
+      return true;
+    } catch (e) {
+      myLog.log('Failed to auto-save detected location as address: $e',
+          name: 'CheckoutController');
+      return false;
+    }
+  }
 }

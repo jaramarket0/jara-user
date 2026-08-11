@@ -8,6 +8,7 @@ import 'package:jara_market/screens/checkout_screen/controller/checkout_controll
 import 'package:jara_market/screens/checkout_screen/location_servies/location_service.dart';
 import 'package:jara_market/screens/checkout_screen/models/location_model.dart';
 import 'package:jara_market/screens/profile_screen/pinScreen.dart';
+import 'package:overlay_kit/overlay_kit.dart';
 // import '../../models/cart_item.dart';
 
 CheckoutController checkoutController = Get.find<CheckoutController>();
@@ -82,6 +83,25 @@ class CheckoutButtonPaystack extends StatelessWidget {
                     textCancel: 'No, Enter Manually',
                     onConfirm: () async {
                       Navigator.pop(context); // Close the dialog
+
+                      OverlayLoadingProgress.start(
+                          circularProgressColor: Colors.amber);
+                      final saved = await checkoutController
+                          .saveDetectedLocationAsAddress(location);
+                      OverlayLoadingProgress.stop();
+
+                      if (!saved) {
+                        Get.snackbar(
+                          'Address Needed',
+                          'We couldn\'t automatically match your location to a delivery zone. Please enter your address manually.',
+                          backgroundColor: Colors.red,
+                          colorText: Colors.white,
+                        );
+                        Get.to(() => CheckoutAddressChangeScreen(),
+                            arguments: {'isFromProfile': true});
+                        return;
+                      }
+
                       final pinToken = await showPinVerificationDialog(context);
                       if (pinToken.isEmpty) return;
 
@@ -91,7 +111,8 @@ class CheckoutButtonPaystack extends StatelessWidget {
                     },
                     onCancel: () {
                       Navigator.pop(context); // Close the dialog
-                      Get.to(() => CheckoutAddressChangeScreen());
+                      Get.to(() => CheckoutAddressChangeScreen(),
+                          arguments: {'isFromProfile': true});
                     },
                   );
                 }

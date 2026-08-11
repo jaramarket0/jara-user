@@ -23,7 +23,7 @@ class CheckoutAddressChangeScreen extends StatefulWidget {
 
 class _CheckoutAddressChangeScreenState
     extends State<CheckoutAddressChangeScreen> {
-  var isFromProfile = Get.arguments['isFromProfile'] ?? false;
+  var isFromProfile = (Get.arguments as Map?)?['isFromProfile'] ?? false;
   @override
   void initState() {
     // TODO: implement initState
@@ -51,28 +51,17 @@ class _CheckoutAddressChangeScreenState
                 // Get.snackbar('Success', 'Address changed successfully',
                 //     backgroundColor: Colors.green, colorText: Colors.white);
                 if (isFromProfile) {
-                  // Get.snackbar('Success', 'is from profile',
-                  //     backgroundColor: Colors.green,
-                  //     colorText: Colors.white,
-                  //     icon: Icon(
-                  //       Icons.check_circle,
-                  //       color: Colors.white,
-                  //     ));
-                  controller.storeAddress();
-                 // Get.back(result: {'country':'nigeria'});
+                  var result = await controller.storeAddress();
+                  myLog.log('Result from storeAddress: $result');
+                  if (result.isNotEmpty) {
+                    Get.back(result: result);
+                  }
                 } else {
-                  // Get.back(result: {'country':'nigeria'});
                   var result = await controller.processUpdateCheckoutAddress();
                   myLog.log('Result from processUpdateCheckoutAddress: $result');
-                  Get.back(result: result);
-                  // Get.snackbar('Success', 'is not from profile',
-                  //     backgroundColor: Colors.blueGrey,
-                  //     colorText: Colors.white,
-                  //     icon: Icon(
-                  //       Icons.check_circle,
-                  //       color: Colors.white,
-                  //     ));
-                  
+                  if (result.isNotEmpty) {
+                    Get.back(result: result);
+                  }
                 }
                 //Get.back();
               } else {

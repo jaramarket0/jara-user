@@ -6,6 +6,7 @@ import 'package:jara_market/screens/checkout_address_change/models/lga_model.dar
 import 'package:jara_market/screens/checkout_address_change/models/state_model.dart';
 import 'package:jara_market/screens/profile_screen/controller/profile_controller.dart';
 import 'package:jara_market/services/api_service.dart';
+import 'package:jara_market/utils/json_helpers.dart';
 import 'package:overlay_kit/overlay_kit.dart';
 
 class CheckoutAddressChangeController extends GetxController {
@@ -140,14 +141,18 @@ class CheckoutAddressChangeController extends GetxController {
         Get.snackbar('Success', 'Address updated successfully.',
             backgroundColor: Colors.green, colorText: Colors.white);
 
+        final addressId = extractIdFromResponse(response.body);
+        final contactAddressText = contactAddressController.text;
+        final phoneNumberText = contactNumberController.text;
         contactAddressController.text = '';
         contactNumberController.text = '';
         var result = {
+          'id': addressId,
           'country': selectedCountry1,
           'state': selectedState1,
           'lga': selectedLGA1,
-          'contact_address': contactAddressController.text,
-          'phone_number': contactNumberController.text,
+          'contact_address': contactAddressText,
+          'phone_number': phoneNumberText,
           'is_default': isDefault.value.toString(),
         };
         return result;
@@ -173,8 +178,9 @@ class CheckoutAddressChangeController extends GetxController {
 }
 
 
-  storeAddress() {
-    // Store the address data in shared preferences or any local storage
+  Future<Map<dynamic, dynamic>> storeAddress() async {
+    OverlayLoadingProgress.start(circularProgressColor: Colors.amber);
+
     final Map<String, dynamic> addressData = {
       'country_id': selectedCountryId,
       'state_id': selectedStateId,
@@ -185,39 +191,42 @@ class CheckoutAddressChangeController extends GetxController {
     };
 
     myLog.log('Storing address data: $addressData');
-    //  Call a method to save this data
-    _apiService.addCheckoutAddress(addressData).then((response) async {
+
+    try {
+      final response = await _apiService.addCheckoutAddress(addressData);
+      OverlayLoadingProgress.stop();
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         myLog.log('Address stored successfully: ${response.body}');
         Get.snackbar('Success', 'Address stored successfully.',
             backgroundColor: Colors.green, colorText: Colors.white);
-        // Get.back();
-        if (Navigator.canPop(Get.context!)) {
-          print('Can pop the current route');
-          Navigator.pop(
-            Get.context!,
-            {
-              'country': selectedCountry1,
-              'state': selectedState1,
-              'lga': selectedLGA1,
-              'contact_address': contactAddressController.text,
-              'phone_number': contactNumberController.text,
-              'is_default': isDefault.value.toString(),
-            },
-          );
-        } else {
-          print('Cannot pop the current route');
-        }
+
+        final addressId = extractIdFromResponse(response.body);
+        var result = {
+          'id': addressId,
+          'country': selectedCountry1,
+          'state': selectedState1,
+          'lga': selectedLGA1,
+          'contact_address': contactAddressController.text,
+          'phone_number': contactNumberController.text,
+          'is_default': isDefault.value.toString(),
+        };
+
         Future.delayed(Duration(milliseconds: 100), () {
           profileController.fetchUserProfile();
         });
+
+        return result;
       } else {
         Get.snackbar('Error', 'Failed to store address: ${response.body}',
             backgroundColor: Colors.red, colorText: Colors.white);
+        return {};
       }
-    }).catchError((error) {
+    } catch (error) {
+      OverlayLoadingProgress.stop();
       Get.snackbar('Error', 'An error occurred while storing address: $error',
           backgroundColor: Colors.red, colorText: Colors.white);
-    });
+      return {};
+    }
   }
 }

@@ -1,4 +1,5 @@
 // lib/screens/auth/login_screen.dart
+import 'dart:io' show Platform;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -237,10 +238,13 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  SocialButton(
-                    icon: Icons.apple,
-                    onPressed: () {},
-                  ),
+                  if (Platform.isIOS)
+                    SocialButton(
+                      icon: Icons.apple,
+                      onPressed: () {
+                        authController.loginWithApple();
+                      },
+                    ),
                   SocialButton(
                     icon: Icons.g_mobiledata,
                     onPressed: () {

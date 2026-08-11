@@ -721,7 +721,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     const SizedBox(height: 16),
                                     GestureDetector(
                                       onTap: () {
-                                        controller.logOut();
+                                        Get.defaultDialog(
+                                          title: 'Log Out',
+                                          middleText:
+                                              'Are you sure you want to log out?',
+                                          textConfirm: 'Log Out',
+                                          textCancel: 'Cancel',
+                                          confirmTextColor: Colors.white,
+                                          buttonColor: Colors.red,
+                                          onConfirm: () {
+                                            Get.back();
+                                            controller.logOut();
+                                          },
+                                        );
                                       },
                                       child: Row(
                                         mainAxisAlignment:

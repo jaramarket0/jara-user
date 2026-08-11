@@ -1,4 +1,5 @@
 // lib/screens/auth/signup_screen.dart
+import 'dart:io' show Platform;
 import 'dart:convert';
 
 import 'package:flutter/gestures.dart';
@@ -364,10 +365,13 @@ class _SignupScreenState extends State<SignupScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  SocialButton(
-                    icon: Icons.apple,
-                    onPressed: () {},
-                  ),
+                  if (Platform.isIOS)
+                    SocialButton(
+                      icon: Icons.apple,
+                      onPressed: () {
+                        authController.loginWithApple();
+                      },
+                    ),
                   SocialButton(
                     icon: Icons.g_mobiledata,
                     onPressed: () {

@@ -214,14 +214,19 @@ class ProfileController extends GetxController {
   }
 
   void logOut() async {
-    // Clear user data and navigate to login screen
-    var response = await apiService.logOut();
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      myLog.log('User logged out successfully');
-      dataBase.logOut();
-      Get.offAll(() => OnboardingScreen());
-      Get.snackbar("Logged out", "You have been logged out successfully");
+    // Best-effort server-side logout - the local session is always cleared
+    // below regardless of whether this call succeeds, so a network failure
+    // never traps the user in a "logged in" state they explicitly left.
+    try {
+      var response = await apiService.logOut();
+      myLog.log('Logout response: ${response.statusCode}');
+    } catch (e) {
+      myLog.log('Logout API call failed: $e');
     }
+    await dataBase.logOut();
+    Get.offAll(() => OnboardingScreen());
+    Get.snackbar('Logged Out', 'You have been logged out successfully.',
+        backgroundColor: const Color(0xFF22C55E), colorText: Colors.white);
   }
 
   // PIN Management Methods

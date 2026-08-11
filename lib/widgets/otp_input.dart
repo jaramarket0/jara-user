@@ -75,48 +75,64 @@ class _OtpInputState extends State<OtpInput> {
         4,
             (index) => SizedBox(
           width: 64,
-          child: TextField(
-            controller: _controllers[index],
+          child: KeyboardListener(
             focusNode: _focusNodes[index],
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            maxLength: 1,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-            ],
-            decoration: InputDecoration(
-              counterText: '',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                  color: _controllers[index].text.isNotEmpty
-                      ? Colors.amber
-                      : Colors.grey,
-                  width: 2,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Colors.green,
-                  width: 2,
-                ),
-              ),
-            ),
-            onChanged: (value) {
-              // Detect backspace by comparing current and previous values
-              if (value.isEmpty && _previousValues[index].isNotEmpty && index > 0) {
-                // This is likely a backspace on a now-empty field
+            onKeyEvent: (event) {
+              // Backspace on an already-empty box: jump back and clear the
+              // previous box too, so holding backspace deletes continuously
+              // without having to tap each box.
+              if (event is KeyDownEvent &&
+                  event.logicalKey == LogicalKeyboardKey.backspace &&
+                  _controllers[index].text.isEmpty &&
+                  index > 0) {
+                _controllers[index - 1].clear();
+                _previousValues[index - 1] = '';
                 _focusNodes[index - 1].requestFocus();
               }
-              // Move to next field if a digit is entered
-              else if (value.length == 1 && index < 3) {
-                _focusNodes[index + 1].requestFocus();
-              }
-
-              // Update previous value
-              _previousValues[index] = value;
             },
+            child: TextField(
+              controller: _controllers[index],
+              focusNode: _focusNodes[index],
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              maxLength: 1,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              decoration: InputDecoration(
+                counterText: '',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: _controllers[index].text.isNotEmpty
+                        ? Colors.amber
+                        : Colors.grey,
+                    width: 2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Colors.green,
+                    width: 2,
+                  ),
+                ),
+              ),
+              onChanged: (value) {
+                // Detect backspace by comparing current and previous values
+                if (value.isEmpty && _previousValues[index].isNotEmpty && index > 0) {
+                  // This is likely a backspace on a now-empty field
+                  _focusNodes[index - 1].requestFocus();
+                }
+                // Move to next field if a digit is entered
+                else if (value.length == 1 && index < 3) {
+                  _focusNodes[index + 1].requestFocus();
+                }
+
+                // Update previous value
+                _previousValues[index] = value;
+              },
+            ),
           ),
         ),
       ),

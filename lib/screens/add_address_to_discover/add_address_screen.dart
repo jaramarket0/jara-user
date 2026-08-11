@@ -30,7 +30,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               width: 300,
               child: Text(
                 textAlign: TextAlign.center,
-                'Welcome to Jara Market, Which State are you currently shoping from?',
+                'Welcome to Jara Market, Which State are you currently shopping from?',
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 14,

@@ -56,6 +56,7 @@ dependencies:
   cupertino_icons: ^1.0.9
   lucide_icons_flutter: ^3.1.14+2
   font_awesome_flutter: ^11.0.0
+  sign_in_with_apple: ^7.0.1
   # fluttertoast: ^9.0.0
 
 dev_dependencies:

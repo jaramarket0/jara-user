@@ -49,6 +49,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'dart:developer' as myLog;
 
 import 'package:jara_market/config/local_storage.dart';
@@ -81,7 +82,7 @@ class AuthController extends GetxController {
     ever(errorMessage, (String value) {
       if (value.isNotEmpty) {
         Get.snackbar(
-          'Google Sign-In',
+          'Sign-In',
           value,
           backgroundColor: Colors.red,
           colorText: Colors.white,
@@ -146,7 +147,7 @@ class AuthController extends GetxController {
         return;
       }
 
-      // Send payloads to your custom ApiService 
+      // Send payloads to your custom ApiService
       // Note: Backend processes this single endpoint as both Sign In / Sign Up (Upsert)
       final res1 = await apiService.googleSignIn(
         idToken: idToken,
@@ -155,34 +156,14 @@ class AuthController extends GetxController {
         // photoUrl: account.photoUrl,
         role: 'customer',
       );
-      
+
       isLoading.value = false;
-      var res = jsonDecode(res1.body); // Adjust based on your actual response structure
-      myLog.log('Google backend response received: $res');
-      if (res['status'] == true) {
-        final data = res['data'];
-
-        // Persist session tokens locally
-        await _db.saveToken(data['token'] ?? '');
-        await _db.saveRefreshToken(data['refresh_token'] ?? '');
-        await _db.saveUserName(
-            '${data['firstname'] ?? ''} ${data['lastname'] ?? ''}'.trim().isNotEmpty
-                ? '${data['firstname'] ?? ''} ${data['lastname'] ?? ''}'.trim()
-                : account.displayName ?? '');
-        await _db.saveEmail(data['email'] ?? account.email);
-
-        isLoggedIn.value = true;
-
-        // New users go to preferences; returning users go straight to home
-        if (data['is_new_user'] == true) {
-          Get.offAllNamed('/preferences_screen');
-        } else {
-          Get.offAllNamed('/main_screen');
-        }
-        
-      } else {
-        errorMessage.value = res['message'] ?? 'Google authentication rejected.';
-      }
+      await _handleSocialResponse(
+        res1.body,
+        provider: 'Google',
+        fallbackName: account.displayName ?? '',
+        fallbackEmail: account.email,
+      );
     } catch (e) {
       isLoading.value = false;
       if (e is GoogleSignInException) {
@@ -192,6 +173,82 @@ class AuthController extends GetxController {
       } else {
         errorMessage.value = 'Google sign-in error: $e';
       }
+    }
+  }
+
+  /// Sign-In / Sign-Up via Apple (iOS). Same backend upsert contract as Google.
+  Future<void> loginWithApple() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final String? identityToken = credential.identityToken;
+      if (identityToken == null) {
+        errorMessage.value = 'Apple sign-in failed. Token missing.';
+        isLoading.value = false;
+        return;
+      }
+
+      // Apple only provides the name on the FIRST authorization, so pass it
+      // along for the backend to use when it creates the account.
+      final res1 = await apiService.appleSignIn(
+        identityToken: identityToken,
+        role: 'customer',
+        firstName: credential.givenName,
+        lastName: credential.familyName,
+      );
+
+      isLoading.value = false;
+      await _handleSocialResponse(
+        res1.body,
+        provider: 'Apple',
+        fallbackName:
+            '${credential.givenName ?? ''} ${credential.familyName ?? ''}'.trim(),
+        fallbackEmail: credential.email ?? '',
+      );
+    } catch (e) {
+      isLoading.value = false;
+      if (e is SignInWithAppleAuthorizationException) {
+        if (e.code != AuthorizationErrorCode.canceled) {
+          errorMessage.value = 'Apple sign-in error: ${e.message}';
+        }
+      } else {
+        errorMessage.value = 'Apple sign-in error: $e';
+      }
+    }
+  }
+
+  /// Shared backend-response handling for Google/Apple sign-in.
+  Future<void> _handleSocialResponse(
+    String body, {
+    required String provider,
+    required String fallbackName,
+    required String fallbackEmail,
+  }) async {
+    var res = jsonDecode(body);
+    myLog.log('$provider backend response received: $res');
+    if (res['status'] == true) {
+      final data = res['data'];
+
+      // Persist session tokens locally
+      await _db.saveToken(data['token'] ?? '');
+      await _db.saveRefreshToken(data['refresh_token'] ?? '');
+      final backendName =
+          '${data['firstname'] ?? ''} ${data['lastname'] ?? ''}'.trim();
+      await _db.saveUserName(backendName.isNotEmpty ? backendName : fallbackName);
+      await _db.saveEmail(data['email'] ?? fallbackEmail);
+
+      isLoggedIn.value = true;
+      Get.offAllNamed('/main_screen');
+    } else {
+      errorMessage.value = res['message'] ?? '$provider authentication rejected.';
     }
   }
 

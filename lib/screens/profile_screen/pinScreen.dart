@@ -94,13 +94,8 @@ class PinController extends GetxController {
       final res = await _api.requestPinReset();
       final body = jsonDecode(res.body);
       if (res.statusCode == 200 || res.statusCode == 201) {
-        Get.snackbar(
-          'Reset Requested',
-          body['message'] ?? 'Check your email for a reset token.',
-          backgroundColor: const Color(0xFFFFAA00),
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        AppFeedback.showSuccess(
+            body['message'] ?? 'Check your email for a reset token.');
         return true;
       }
       _showError(body['message'] ?? 'Failed to request reset.');
@@ -458,6 +453,15 @@ class _PinVerifySheetState extends State<_PinVerifySheet> {
                     ),
                   )),
           ],
+          if (!_checkingPin && _hasPin)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop('');
+                Get.to(() => const ResetPinScreen());
+              },
+              child: const Text('Forgot PIN? Reset it',
+                  style: TextStyle(color: Color(0xFFFFAA00))),
+            ),
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => Navigator.of(context).pop(''),
@@ -492,6 +496,27 @@ class _ResetPinScreenState extends State<ResetPinScreen> {
   String get _confirmPin => _confirmCtrl.map((c) => c.text).join();
 
   Future<void> _submit() async {
+    if (_tokenCtrl.text.trim().isEmpty) {
+      Get.snackbar('Error', 'Please enter the reset token sent to your email.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    if (_pin.length < 4) {
+      Get.snackbar('Error', 'Please enter your new 4-digit PIN.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    if (_pin != _confirmPin) {
+      Get.snackbar('Error', 'PINs do not match.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
     final success =
         await _ctrl.resetPin(_tokenCtrl.text.trim(), _pin, _confirmPin);
     if (success && mounted) Get.back();
@@ -686,44 +711,57 @@ class _PinRow extends StatelessWidget {
         return SizedBox(
           width: 60,
           height: 60,
-          child: TextField(
-            controller: controllers[i],
+          child: KeyboardListener(
             focusNode: focusNodes[i],
-            obscureText: obscure,
-            textAlign: TextAlign.center,
-            maxLength: 1,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(
-              counterText: '',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: Color(0xFFFFAA00), width: 2),
-              ),
-              filled: true,
-              fillColor: Colors.grey.shade50,
-            ),
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            onChanged: (val) {
-              if (val.length == 1) {
-                if (i < 3) {
-                  FocusScope.of(context).requestFocus(focusNodes[i + 1]);
-                } else if (nextFocusNodes != null) {
-                  FocusScope.of(context).requestFocus(nextFocusNodes![0]);
-                } else {
-                  focusNodes[i].unfocus();
-                }
+            onKeyEvent: (event) {
+              if (event is KeyDownEvent &&
+                  event.logicalKey == LogicalKeyboardKey.backspace &&
+                  controllers[i].text.isEmpty &&
+                  i > 0) {
+                controllers[i - 1].clear();
+                FocusScope.of(context).requestFocus(focusNodes[i - 1]);
               }
             },
+            child: TextField(
+              controller: controllers[i],
+              focusNode: focusNodes[i],
+              obscureText: obscure,
+              textAlign: TextAlign.center,
+              maxLength: 1,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                counterText: '',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: Color(0xFFFFAA00), width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
+              style:
+                  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              onChanged: (val) {
+                if (val.length == 1) {
+                  if (i < 3) {
+                    FocusScope.of(context).requestFocus(focusNodes[i + 1]);
+                  } else if (nextFocusNodes != null) {
+                    FocusScope.of(context).requestFocus(nextFocusNodes![0]);
+                  } else {
+                    focusNodes[i].unfocus();
+                  }
+                }
+              },
+            ),
           ),
         );
       }),
