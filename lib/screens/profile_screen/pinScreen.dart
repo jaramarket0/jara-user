@@ -331,7 +331,10 @@ class _PinVerifySheetState extends State<_PinVerifySheet> {
       List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focus = List.generate(4, (_) => FocusNode());
   bool _obscure = true;
-  bool _checkingPin = true;
+  // Starts showing the PIN form immediately, same as before the "no PIN
+  // yet" notice existed - the hasPin check below runs in the background
+  // and only swaps the UI if it comes back negative, so a slow/failed
+  // request can never block this sheet from opening.
   bool _hasPin = true;
 
   String get _pin => _ctrl4.map((c) => c.text).join();
@@ -343,12 +346,15 @@ class _PinVerifySheetState extends State<_PinVerifySheet> {
   }
 
   Future<void> _checkHasPin() async {
-    await _profileCtrl.fetchUserProfile();
-    if (mounted) {
-      setState(() {
-        _hasPin = _profileCtrl.data.hasPin ?? false;
-        _checkingPin = false;
-      });
+    // Skip the round trip if the profile was already loaded moments ago
+    // (e.g. right before this sheet opened, to resolve a phone number for
+    // an auto-saved address).
+    if (_profileCtrl.data.id == null) {
+      await _profileCtrl.fetchUserProfile();
+    }
+    final hasPin = _profileCtrl.data.hasPin ?? true;
+    if (mounted && hasPin != _hasPin) {
+      setState(() => _hasPin = hasPin);
     }
   }
 
@@ -409,12 +415,7 @@ class _PinVerifySheetState extends State<_PinVerifySheet> {
             style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
           ),
           const SizedBox(height: 28),
-          if (_checkingPin)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: CircularProgressIndicator(color: Color(0xFFFFAA00)),
-            )
-          else if (!_hasPin)
+          if (!_hasPin)
             _NoPinNotice(
               onSetPin: () {
                 Navigator.of(context).pop('');
@@ -453,7 +454,7 @@ class _PinVerifySheetState extends State<_PinVerifySheet> {
                     ),
                   )),
           ],
-          if (!_checkingPin && _hasPin)
+          if (_hasPin)
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop('');

@@ -179,14 +179,16 @@ class ApiService extends GetConnect {
     var token = await dataBase.getToken();
     final url = Uri.parse('$baseUrl/country');
     _logRequest('GET', url);
-    final response = await authHttpClient.get(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final response = await authHttpClient
+        .get(
+          url,
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(timeout);
     _logResponse(response);
     return response;
   }
@@ -333,14 +335,16 @@ class ApiService extends GetConnect {
     var token = await dataBase.getToken();
     final url = Uri.parse('$baseUrl/states');
     _logRequest('GET', url);
-    final response = await authHttpClient.get(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final response = await authHttpClient
+        .get(
+          url,
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(timeout);
     _logResponse(response);
     return response;
   }
@@ -349,14 +353,16 @@ class ApiService extends GetConnect {
     var token = await dataBase.getToken();
     final url = Uri.parse('$baseUrl/lgas?state=$name');
     _logRequest('GET', url);
-    final response = await authHttpClient.get(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final response = await authHttpClient
+        .get(
+          url,
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(timeout);
     _logResponse(response);
     return response;
   }
@@ -487,15 +493,17 @@ class ApiService extends GetConnect {
     var token = await dataBase.getToken();
     final url = Uri.parse('$baseUrl/addresses');
     _logRequest('POST', url, body: addressData);
-    final response = await authHttpClient.post(
-      url,
-      body: jsonEncode(addressData),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final response = await authHttpClient
+        .post(
+          url,
+          body: jsonEncode(addressData),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(timeout);
     _logResponse(response);
     return response;
   }
@@ -749,13 +757,15 @@ class ApiService extends GetConnect {
     _logRequest('GET', url);
     //final prefs = await SharedPreferences.getInstance();
     final token = await dataBase.getToken(); //prefs.getString('token');
-    final response = await authHttpClient.get(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final response = await authHttpClient
+        .get(
+          url,
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(timeout);
     _logResponse(response);
     return response;
   }

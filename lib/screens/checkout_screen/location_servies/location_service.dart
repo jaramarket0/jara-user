@@ -69,10 +69,24 @@ class LocationService {
       return null;
     }
 
-    // 3. Get GPS position
-    final Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
+    // 3. Get GPS position - bounded so a weak/unavailable GPS fix (common
+    // indoors on real devices) fails fast instead of hanging indefinitely.
+    late final Position position;
+    try {
+      position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 20),
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Location Error',
+        'Could not get your current location. Please try again or enter your address manually.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return null;
+    }
 
     // 4. Reverse-geocode to a readable address
     return _reverseGeocode(position);
