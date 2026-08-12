@@ -6,6 +6,7 @@ import 'package:jara_market/screens/checkout_address_change/models/lga_model.dar
 import 'package:jara_market/screens/checkout_address_change/models/state_model.dart';
 import 'package:jara_market/screens/profile_screen/controller/profile_controller.dart';
 import 'package:jara_market/services/api_service.dart';
+import 'package:jara_market/utils/app_feedback.dart';
 import 'package:jara_market/utils/json_helpers.dart';
 import 'package:overlay_kit/overlay_kit.dart';
 
@@ -73,8 +74,8 @@ class CheckoutAddressChangeController extends GetxController {
       myLog.log('Countries: ${countries.join(', ')}');
     } else {
       isCountryLoading.value = false;
-      Get.snackbar('Error', 'Failed to load countries: ${response.body}',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      AppFeedback.showError(null,
+          fallback: 'Failed to load countries: ${response.body}');
     }
   }
 
@@ -91,8 +92,8 @@ class CheckoutAddressChangeController extends GetxController {
       myLog.log('States: ${states.join(', ')}');
     } else {
       isStateLoading.value = false;
-      Get.snackbar('Error', 'Failed to load states: ${response.body}',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      AppFeedback.showError(null,
+          fallback: 'Failed to load states: ${response.body}');
     }
   }
 
@@ -109,8 +110,8 @@ class CheckoutAddressChangeController extends GetxController {
       myLog.log('LGAs: ${lgas.join(', ')}');
     } else {
       isLgaLoading.value = false;
-      Get.snackbar('Error', 'Failed to load LGAs: ${response.body}',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      AppFeedback.showError(null,
+          fallback: 'Failed to load LGAs: ${response.body}');
       myLog.log('Failed to load LGAs: ${response.body}');
     }
   }
@@ -138,8 +139,7 @@ class CheckoutAddressChangeController extends GetxController {
       if (response.statusCode == 200 || response.statusCode == 201) {
         OverlayLoadingProgress.stop();
         myLog.log('Address updated successfully: ${response.body}');
-        Get.snackbar('Success', 'Address updated successfully.',
-            backgroundColor: Colors.green, colorText: Colors.white);
+        AppFeedback.showSuccess('Address updated successfully.');
 
         final addressId = extractIdFromResponse(response.body);
         final contactAddressText = contactAddressController.text;
@@ -158,21 +158,20 @@ class CheckoutAddressChangeController extends GetxController {
         return result;
       } else {
         OverlayLoadingProgress.stop();
-        Get.snackbar('Error', 'Failed to update address: ${response.body}',
-            backgroundColor: Colors.red, colorText: Colors.white);
+        AppFeedback.showError(null,
+            fallback: 'Failed to update address: ${response.body}');
         return {};
       }
     } catch (error) {
       OverlayLoadingProgress.stop();
       isLoading.value = false;
-      Get.snackbar('Error', 'An error occurred: $error',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      AppFeedback.showError(error, fallback: 'An error occurred: $error');
       return {};
     }
   } else {
     OverlayLoadingProgress.stop();
-    Get.snackbar('Error', 'Please select a country, state, and LGA.',
-        backgroundColor: Colors.red, colorText: Colors.white);
+    AppFeedback.showError(null,
+        fallback: 'Please select a country, state, and LGA.');
     return {};
   }
 }
@@ -198,8 +197,7 @@ class CheckoutAddressChangeController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         myLog.log('Address stored successfully: ${response.body}');
-        Get.snackbar('Success', 'Address stored successfully.',
-            backgroundColor: Colors.green, colorText: Colors.white);
+        AppFeedback.showSuccess('Address stored successfully.');
 
         final addressId = extractIdFromResponse(response.body);
         var result = {
@@ -218,14 +216,16 @@ class CheckoutAddressChangeController extends GetxController {
 
         return result;
       } else {
-        Get.snackbar('Error', 'Failed to store address: ${response.body}',
-            backgroundColor: Colors.red, colorText: Colors.white);
+        debugPrint(
+            'Failed to store address (${response.statusCode}): ${response.body}');
+        AppFeedback.showError(null,
+            fallback: 'Failed to store address: ${response.body}');
         return {};
       }
     } catch (error) {
       OverlayLoadingProgress.stop();
-      Get.snackbar('Error', 'An error occurred while storing address: $error',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      AppFeedback.showError(error,
+          fallback: 'An error occurred while storing address: $error');
       return {};
     }
   }
