@@ -123,6 +123,19 @@ class LocationService {
     }
   }
 
+  /// Forward-geocodes a free-text address into coordinates.
+  /// Returns null if no match could be found.
+  static Future<Location?> forwardGeocode(String address) async {
+    if (address.trim().isEmpty) return null;
+    try {
+      final locations = await locationFromAddress(address);
+      if (locations.isEmpty) return null;
+      return locations.first;
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// One-time check: returns true if we already have permission.
   static Future<bool> hasPermission() async {
     final permission = await Geolocator.checkPermission();

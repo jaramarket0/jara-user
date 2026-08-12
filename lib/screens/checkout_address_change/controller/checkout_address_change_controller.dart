@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:jara_market/screens/checkout_address_change/models/country_model.dart';
 import 'package:jara_market/screens/checkout_address_change/models/lga_model.dart';
 import 'package:jara_market/screens/checkout_address_change/models/state_model.dart';
+import 'package:jara_market/screens/checkout_screen/location_servies/location_service.dart';
 import 'package:jara_market/screens/profile_screen/controller/profile_controller.dart';
 import 'package:jara_market/services/api_service.dart';
 import 'package:jara_market/utils/app_feedback.dart';
@@ -45,6 +46,22 @@ class CheckoutAddressChangeController extends GetxController {
     fetchCountries();
     // fetchStates();
     // fetchLgas('Lagos');
+  }
+
+  /// The backend requires latitude/longitude on every address. Since manual
+  /// entry only gives us free-text fields, forward-geocode the typed address
+  /// to resolve coordinates - falling back to a coarser LGA/state/country
+  /// query if the full address can't be matched.
+  Future<Map<String, double>?> _resolveCoordinates() async {
+    final fullQuery =
+        '${contactAddressController.text}, $selectedLGA1, $selectedState1, $selectedCountry1';
+    var location = await LocationService.forwardGeocode(fullQuery);
+
+    location ??= await LocationService.forwardGeocode(
+        '$selectedLGA1, $selectedState1, $selectedCountry1');
+
+    if (location == null) return null;
+    return {'latitude': location.latitude, 'longitude': location.longitude};
   }
 
   isValid() {
@@ -121,6 +138,16 @@ class CheckoutAddressChangeController extends GetxController {
   if (isValid()) {
     isLoading.value = true;
 
+    final coordinates = await _resolveCoordinates();
+    if (coordinates == null) {
+      isLoading.value = false;
+      OverlayLoadingProgress.stop();
+      AppFeedback.showError(null,
+          fallback:
+              'We couldn\'t locate that address. Please check it and try again.');
+      return {};
+    }
+
     final Map<String, dynamic> addressData = {
       'country_id': selectedCountryId,
       'state_id': selectedStateId,
@@ -128,6 +155,8 @@ class CheckoutAddressChangeController extends GetxController {
       'contact_address': contactAddressController.text,
       'phone_number': contactNumberController.text,
       'is_default': isDefault.value,
+      'latitude': coordinates['latitude'],
+      'longitude': coordinates['longitude'],
     };
 
     myLog.log('Updating address data: $addressData');
@@ -180,6 +209,15 @@ class CheckoutAddressChangeController extends GetxController {
   Future<Map<dynamic, dynamic>> storeAddress() async {
     OverlayLoadingProgress.start(circularProgressColor: Colors.amber);
 
+    final coordinates = await _resolveCoordinates();
+    if (coordinates == null) {
+      OverlayLoadingProgress.stop();
+      AppFeedback.showError(null,
+          fallback:
+              'We couldn\'t locate that address. Please check it and try again.');
+      return {};
+    }
+
     final Map<String, dynamic> addressData = {
       'country_id': selectedCountryId,
       'state_id': selectedStateId,
@@ -187,6 +225,8 @@ class CheckoutAddressChangeController extends GetxController {
       'contact_address': contactAddressController.text,
       'phone_number': contactNumberController.text,
       'is_default': isDefault.value,
+      'latitude': coordinates['latitude'],
+      'longitude': coordinates['longitude'],
     };
 
     myLog.log('Storing address data: $addressData');

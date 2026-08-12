@@ -289,6 +289,8 @@ class CheckoutController extends GetxController {
         'contact_address': location.fullAddress,
         'phone_number': phoneNumber,
         'is_default': false,
+        'latitude': location.latitude,
+        'longitude': location.longitude,
       });
       if (response.statusCode != 200 && response.statusCode != 201) {
         return false;
