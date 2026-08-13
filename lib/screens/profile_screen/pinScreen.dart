@@ -712,57 +712,50 @@ class _PinRow extends StatelessWidget {
         return SizedBox(
           width: 60,
           height: 60,
-          child: KeyboardListener(
+          child: TextField(
+            controller: controllers[i],
             focusNode: focusNodes[i],
-            onKeyEvent: (event) {
-              if (event is KeyDownEvent &&
-                  event.logicalKey == LogicalKeyboardKey.backspace &&
-                  controllers[i].text.isEmpty &&
-                  i > 0) {
-                controllers[i - 1].clear();
+            obscureText: obscure,
+            textAlign: TextAlign.center,
+            maxLength: 1,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              counterText: '',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    const BorderSide(color: Color(0xFFFFAA00), width: 2),
+              ),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+            ),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            onChanged: (val) {
+              if (val.length == 1) {
+                if (i < 3) {
+                  FocusScope.of(context).requestFocus(focusNodes[i + 1]);
+                } else if (nextFocusNodes != null) {
+                  FocusScope.of(context).requestFocus(nextFocusNodes![0]);
+                } else {
+                  focusNodes[i].unfocus();
+                }
+              } else if (val.isEmpty && i > 0) {
+                // A maxLength:1 field only ever reports an empty value via
+                // backspace/clear, so this is always a deletion - jump back
+                // so the user can keep backspacing through every box
+                // without re-tapping each one.
                 FocusScope.of(context).requestFocus(focusNodes[i - 1]);
               }
             },
-            child: TextField(
-              controller: controllers[i],
-              focusNode: focusNodes[i],
-              obscureText: obscure,
-              textAlign: TextAlign.center,
-              maxLength: 1,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(
-                counterText: '',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      const BorderSide(color: Color(0xFFFFAA00), width: 2),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-              ),
-              style:
-                  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              onChanged: (val) {
-                if (val.length == 1) {
-                  if (i < 3) {
-                    FocusScope.of(context).requestFocus(focusNodes[i + 1]);
-                  } else if (nextFocusNodes != null) {
-                    FocusScope.of(context).requestFocus(nextFocusNodes![0]);
-                  } else {
-                    focusNodes[i].unfocus();
-                  }
-                }
-              },
-            ),
           ),
         );
       }),
