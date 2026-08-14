@@ -156,7 +156,9 @@ class CheckoutController extends GetxController {
         orderDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
         addressId: selectedAddressId.value,
         deliveryType: 'pickup',
-        shippingFee: 2000,
+        // Display value only -- the backend re-resolves the delivery fee
+        // from the order's address and charges that.
+        shippingFee: cartController.shippingCost.value,
         serviceCharge: cartController.calculatedServiceCharge,
         vat: 0,
         remarks: cartController.messageController.text.isNotEmpty ? cartController.messageController.text : 'This is a sample order',
@@ -304,6 +306,9 @@ class CheckoutController extends GetxController {
       selectedCountry.value = country.name ?? '';
       selectedState.value = state.name ?? '';
       selectedLga.value = lga.name ?? '';
+      // Delivery is priced per location, so re-price against the newly
+      // detected address before the order is placed.
+      await cartController.loadDeliveryFee(stateId: state.id, lgaId: lga.id);
       return true;
     } catch (e) {
       myLog.log('Failed to auto-save detected location as address: $e',

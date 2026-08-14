@@ -18,12 +18,37 @@ class CartController extends GetxController {
   RxDouble? itemsCost;
   var mealCost = 0.0.obs;
   var serviceChargeValue = 0.0.obs;
+  // Delivery fee is location-based and comes from the backend
+  // (fetchDeliveryFee); this is only the pre-fetch placeholder.
   var shippingCost = 2000.0.obs;
   var totalAmount = 0.0.obs;
   RxBool isLoading = false.obs;
   RxBool mealPrep = false.obs;
   RxBool updatePrice = false.obs;
   RxDouble shippingCost1 = 1500.0.obs;
+
+  /// Pull the delivery fee for a location from the backend. Called when the
+  /// cart opens (uses the customer's default address) and again whenever the
+  /// checkout address changes, so the displayed fee matches what the server
+  /// will actually charge for that destination.
+  Future<void> loadDeliveryFee({int? stateId, int? lgaId, int? addressId}) async {
+    try {
+      final response = await _apiService.fetchDeliveryFee(
+        stateId: stateId,
+        lgaId: lgaId,
+        addressId: addressId,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final body = jsonDecode(response.body);
+        final fee = double.tryParse('${body['data']?['delivery_fee']}');
+        // `total` is a getter over shippingCost, so updating it is enough
+        // for every Obx-bound summary to recompute.
+        if (fee != null) shippingCost.value = fee;
+      }
+    } catch (e) {
+      myLog.log('loadDeliveryFee failed, keeping current fee: $e');
+    }
+  }
 
   void updateCosts({
     double? items,
@@ -442,16 +467,18 @@ class CartController extends GetxController {
         var datax = data['data'];
         myLog.log('Checkout address data: $data');
         myLog.log('Checkout address data: ${data['data']}');
-        if (datax.isEmpty)
-          return {};
-        else
-          // var data1 = data;
-          // Parse the response and update the address
-          // For example:
-          // checkoutAddress.value = CheckoutAddress.fromJson(value.data);
-          // Get.toNamed(AppRoutes.checkoutScreen, arguments: data);
+        if (datax.isEmpty) return {};
 
-          return data;
+        // Price delivery against the address the customer is checking out
+        // to, so the fee shown matches what the server will charge.
+        final first = datax is List ? datax.first : datax;
+        if (first is Map) {
+          await loadDeliveryFee(
+            stateId: first['state_id'] as int?,
+            lgaId: first['lga_id'] as int?,
+          );
+        }
+        return data;
       } else {
         isLoading.value = false;
         Get.snackbar(

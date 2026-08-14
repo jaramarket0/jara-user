@@ -53,6 +53,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'dart:developer' as myLog;
 
 import 'package:jara_market/config/local_storage.dart';
+import 'package:jara_market/send_token_service.dart';
 import 'package:jara_market/services/api_service.dart';
 ApiService apiService = ApiService(Duration(seconds: 60 * 5)); // Replace with your actual API service instance
 
@@ -246,6 +247,10 @@ class AuthController extends GetxController {
       await _db.saveEmail(data['email'] ?? fallbackEmail);
 
       isLoggedIn.value = true;
+      // Social sign-in bypasses the login controller, so register here too.
+      if (Get.isRegistered<SendTokenService>()) {
+        await Get.find<SendTokenService>().registerCurrentToken();
+      }
       Get.offAllNamed('/main_screen');
     } else {
       errorMessage.value = res['message'] ?? '$provider authentication rejected.';

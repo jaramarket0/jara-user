@@ -524,6 +524,29 @@ class ApiService extends GetConnect {
     return response;
   }
 
+  /// Delivery fee for a location. The backend resolves it from the
+  /// configured per-state/per-LGA rules (falling back to a default), and
+  /// re-resolves it again at order creation -- so this is for display only.
+  Future<http.Response> fetchDeliveryFee({int? stateId, int? lgaId, int? addressId}) async {
+    var token = await dataBase.getToken();
+    final url = Uri.parse('$baseUrl/delivery-fee').replace(queryParameters: {
+      if (stateId != null) 'state_id': stateId.toString(),
+      if (lgaId != null) 'lga_id': lgaId.toString(),
+      if (addressId != null) 'address_id': addressId.toString(),
+    });
+    _logRequest('GET', url);
+    final response = await authHttpClient.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    _logResponse(response);
+    return response;
+  }
+
   // Validate user signup OTP
   Future<http.Response> validateUserSignupOtp(
       Map<String, dynamic> otpData) async {
@@ -827,6 +850,65 @@ class ApiService extends GetConnect {
   }
 
   // Get order by ID
+  /// Alternatives for an item no market could supply.
+  Future<http.Response> getItemReplacements(int itemId) async {
+    final token = await dataBase.getToken();
+    final url = Uri.parse('$baseUrl/orders/items/$itemId/replacements');
+    _logRequest('GET', url);
+    final response = await authHttpClient.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    _logResponse(response);
+    return response;
+  }
+
+  /// Swap an unavailable item. Any price difference is settled against the
+  /// customer's wallet rather than refunded.
+  Future<http.Response> replaceOrderItem(int itemId, int ingredientId,
+      {int? quantity}) async {
+    final token = await dataBase.getToken();
+    final url = Uri.parse('$baseUrl/orders/items/$itemId/replace');
+    final body = {
+      'ingredient_id': ingredientId,
+      if (quantity != null) 'quantity': quantity,
+    };
+    _logRequest('POST', url, body: body);
+    final response = await authHttpClient.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+    _logResponse(response);
+    return response;
+  }
+
+  /// Customer confirms the order reached them — the final step after admin
+  /// approval has paid the vendors and released it to logistics.
+  Future<http.Response> markOrderReceived(String orderId) async {
+    final token = await dataBase.getToken();
+    final url = Uri.parse('$baseUrl/orders/$orderId/received');
+    _logRequest('POST', url);
+    final response = await authHttpClient.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    _logResponse(response);
+    return response;
+  }
+
   Future<http.Response> getOrder(String orderId) async {
     final url = Uri.parse('$baseUrl/orders/$orderId');
     _logRequest('GET', url);

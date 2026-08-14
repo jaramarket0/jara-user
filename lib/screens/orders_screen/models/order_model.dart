@@ -67,6 +67,7 @@ class OrderData {
   final int? addressId;
   final String createdAt;
   final List<OrderItem> items;
+  final OrderProgress? progress;
 
   OrderData({
     required this.id,
@@ -83,6 +84,7 @@ class OrderData {
     this.addressId,
     required this.createdAt,
     required this.items,
+    this.progress,
   });
 
   factory OrderData.fromJson(Map<String, dynamic> json) {
@@ -108,6 +110,9 @@ class OrderData {
       addressId: json['address_id'] != null ? _int(json['address_id']) : null,
       createdAt: json['created_at']?.toString() ?? '',
       items: items,
+      progress: json['progress'] is Map<String, dynamic>
+          ? OrderProgress.fromJson(json['progress'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -135,6 +140,8 @@ class OrderItem {
   final String? unit;
   final String amount;
   final String status;
+  final String? imageUrl;
+  final bool isUnavailable;
 
   OrderItem({
     required this.id,
@@ -147,6 +154,8 @@ class OrderItem {
     this.unit,
     required this.amount,
     required this.status,
+    this.imageUrl,
+    this.isUnavailable = false,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -162,6 +171,11 @@ class OrderItem {
       unit: json['unit']?.toString(),
       amount: json['amount']?.toString() ?? '0',
       status: json['status']?.toString() ?? 'pending',
+      imageUrl: (json['image_url']?.toString().isNotEmpty ?? false)
+          ? json['image_url'].toString()
+          : null,
+      isUnavailable: json['is_unavailable'] == true ||
+          json['status']?.toString() == 'unavailable',
     );
   }
 
@@ -170,6 +184,51 @@ class OrderItem {
         ? (ingredientName ?? productName ?? 'Item')
         : (productName ?? ingredientName ?? 'Item');
     return quantity > 1 ? '$name ×$quantity' : name;
+  }
+}
+
+/// Server-resolved fulfilment progress for an order. The backend owns the
+/// stage logic (items are accepted and delivered individually), so the app
+/// just renders what it's told rather than inferring from raw statuses.
+class OrderProgress {
+  final String stage;
+  final int stageIndex;
+  final List<String> stages;
+  final int totalItems;
+  final int acceptedItems;
+  final int deliveredItems;
+  final int remainingItems;
+  final bool isActive;
+  final bool canMarkReceived;
+
+  const OrderProgress({
+    required this.stage,
+    required this.stageIndex,
+    required this.stages,
+    required this.totalItems,
+    required this.acceptedItems,
+    required this.deliveredItems,
+    required this.remainingItems,
+    required this.isActive,
+    required this.canMarkReceived,
+  });
+
+  bool get isCancelled => stage == 'cancelled';
+
+  factory OrderProgress.fromJson(Map<String, dynamic> json) {
+    return OrderProgress(
+      stage: json['stage']?.toString() ?? 'placed',
+      stageIndex: _int(json['stage_index']),
+      stages: (json['stages'] as List?)?.map((e) => e.toString()).toList() ??
+          const ['placed', 'shopping', 'vendor_delivered', 'admin_approved',
+                 'logistics', 'delivered'],
+      totalItems: _int(json['total_items']),
+      acceptedItems: _int(json['accepted_items']),
+      deliveredItems: _int(json['delivered_items']),
+      remainingItems: _int(json['remaining_items']),
+      isActive: json['is_active'] != false,
+      canMarkReceived: json['can_mark_received'] == true,
+    );
   }
 }
 

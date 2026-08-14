@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/config/local_storage.dart';
 import 'package:jara_market/config/routes.dart';
+import 'package:jara_market/send_token_service.dart';
 import 'package:jara_market/screens/add_address_to_discover/add_address_screen.dart';
 import 'package:jara_market/screens/login_screen/models/models.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
@@ -71,6 +72,12 @@ class LoginController extends GetxController {
         await dataBase
             .saveReferalCount(data.referralCount?.toString() ?? 'N/A');
         await dataBase.saveRefererId(data.referrerId?.toString() ?? 'N/A');
+
+        // Now that we're authenticated, push the device's FCM token up --
+        // registration at app start is skipped while logged out.
+        if (Get.isRegistered<SendTokenService>()) {
+          await Get.find<SendTokenService>().registerCurrentToken();
+        }
 
         ScaffoldMessenger.of(Get.context!).showSnackBar(
           SnackBar(
