@@ -1362,7 +1362,7 @@ class _GrainsScreenState extends State<GrainsScreen> {
         child: Column(
           children: [
             Text(
-              'Shoping from $lga L.G.A',
+              'Shopping from $lga L.G.A',
               style: TextStyle(fontFamily: 'Poppins'),
             ),
             Padding(

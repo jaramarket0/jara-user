@@ -2597,7 +2597,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             // ),
                                             SizedBox(height: 10),
                                             Text(
-                                              'Shoping From $lgax L.G.A',
+                                              'Shopping From $lgax L.G.A',
                                               style: TextStyle(
                                                   fontFamily: 'Poppins'),
                                             ),
