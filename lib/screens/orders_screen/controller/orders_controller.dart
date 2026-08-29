@@ -3,6 +3,10 @@ import 'dart:developer' as log;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:jara_market/config/routes.dart';
+import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart';
+import 'package:jara_market/screens/cart_screen/models/models.dart';
+import 'package:jara_market/screens/grains_screen/models/models.dart' as grains;
 import 'package:jara_market/screens/orders_screen/models/order_model.dart';
 import 'package:jara_market/services/api_service.dart';
 
@@ -11,6 +15,9 @@ class OrdersController extends GetxController {
 
   final RxBool isLoading = false.obs;
   final RxBool isCancelling = false.obs;
+  // Id of the order currently being rebuilt, so only that card's button
+  // shows a spinner rather than every card at once.
+  final RxInt reorderingId = 0.obs;
   final RxList<OrderData> allOrders = <OrderData>[].obs;
   final RxString selectedStatus = 'all'.obs;
   final RxString errorMessage = ''.obs;
@@ -103,6 +110,108 @@ class OrdersController extends GetxController {
       return false;
     } finally {
       isCancelling.value = false;
+    }
+  }
+
+  /// Puts a past order back in the cart.
+  ///
+  /// The rebuild happens server-side: a food order is stored as one row per
+  /// recipe ingredient scaled by how many of the dish were bought, so only
+  /// the backend (which holds the recipe) can say "that was 3 Atama Soups".
+  /// It also reprices at today's rates and drops anything no longer sold in
+  /// the customer's area.
+  ///
+  /// This fills the cart and opens it -- it does NOT re-place the order.
+  /// Placing an order debits the wallet immediately, so the customer gets to
+  /// review the new prices and confirm for themselves.
+  Future<void> reorder(OrderData order) async {
+    if (reorderingId.value != 0) return; // ignore double taps
+    reorderingId.value = order.id;
+    try {
+      final response = await _api.getReorderItems(order.id.toString());
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        Get.snackbar('Cannot reorder',
+            body['message']?.toString() ?? 'Could not rebuild this order.',
+            backgroundColor: Colors.red, colorText: Colors.white,
+            snackPosition: SnackPosition.TOP);
+        return;
+      }
+
+      final data = body['data'] as Map<String, dynamic>? ?? {};
+      final cart = Get.isRegistered<CartController>()
+          ? Get.find<CartController>()
+          : Get.put(CartController());
+
+      var added = 0;
+      for (final raw in (data['products'] as List? ?? [])) {
+        final p = raw as Map<String, dynamic>;
+        cart.addToCart(CartItem(
+          id: p['id'] as int,
+          name: p['name']?.toString() ?? 'Item',
+          description: p['description']?.toString() ?? 'N/A',
+          price: double.tryParse(p['price']?.toString() ?? '0') ?? 0.0,
+          originalPrice: double.tryParse(p['price']?.toString() ?? '0') ?? 0.0,
+          quantity: (p['order_quantity'] as int?) ?? 1,
+          ingredients: (p['ingredients'] as List? ?? []).map((e) {
+            final i = e as Map<String, dynamic>;
+            final price = double.tryParse(i['price']?.toString() ?? '0') ?? 0.0;
+            return Ingredients(
+              id: i['id'] as int,
+              name: i['name']?.toString(),
+              description: i['description']?.toString(),
+              price: price,
+              basePrice: price,
+              unit: i['unit']?.toString(),
+              imageUrl: i['image_url']?.toString(),
+            );
+          }).toList(),
+        ));
+        added++;
+      }
+
+      for (final raw in (data['ingredients'] as List? ?? [])) {
+        final i = raw as Map<String, dynamic>;
+        cart.addIngredientToCart(grains.Data.fromJson(i)
+          ..quantity = RxInt((i['order_quantity'] as int?) ?? 1));
+        added++;
+      }
+
+      if (added == 0) {
+        Get.snackbar('Cannot reorder',
+            'Nothing from this order is available right now.',
+            backgroundColor: Colors.red, colorText: Colors.white,
+            snackPosition: SnackPosition.TOP);
+        return;
+      }
+
+      // Anything the backend could not bring back is named rather than
+      // silently missing from the cart.
+      final dropped = (data['unavailable'] as List? ?? [])
+          .map((e) => e.toString())
+          .toList();
+      Get.snackbar(
+        dropped.isEmpty ? 'Added to cart' : 'Partly added to cart',
+        dropped.isEmpty
+            ? 'Your order is back in the cart. Prices are today\'s.'
+            : 'No longer available here: ${dropped.join(', ')}.',
+        backgroundColor: dropped.isEmpty
+            ? const Color(0xFF4CAF50)
+            : const Color(0xFFFFAA00),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: Duration(seconds: dropped.isEmpty ? 2 : 4),
+      );
+
+      Get.toNamed(AppRoutes.cartScreen);
+    } catch (e) {
+      log.log('Reorder failed: $e', name: 'OrdersController');
+      Get.snackbar('Error', 'Network error. Please try again.',
+          backgroundColor: Colors.red, colorText: Colors.white,
+          snackPosition: SnackPosition.TOP);
+    } finally {
+      reorderingId.value = 0;
     }
   }
 

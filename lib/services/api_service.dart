@@ -909,6 +909,26 @@ class ApiService extends GetConnect {
     return response;
   }
 
+  /// Rebuilds a past order as a cart payload. The backend resolves it --
+  /// it owns the recipe that says how many of a dish those exploded
+  /// ingredient rows add up to, and it reprices at today's rates for the
+  /// customer's location.
+  Future<http.Response> getReorderItems(String orderId) async {
+    final token = await dataBase.getToken();
+    final url = Uri.parse('$baseUrl/orders/$orderId/reorder');
+    _logRequest('GET', url);
+    final response = await authHttpClient.get(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    _logResponse(response);
+    return response;
+  }
+
   Future<http.Response> getOrder(String orderId) async {
     final url = Uri.parse('$baseUrl/orders/$orderId');
     _logRequest('GET', url);

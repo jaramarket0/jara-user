@@ -182,10 +182,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
       return ListView.builder(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         itemCount: orders.length,
-        itemBuilder: (_, i) => _OrderCard(
-          order: orders[i],
-          onTap: () => _openDetail(orders[i]),
-        ),
+        itemBuilder: (_, i) => Obx(() => _OrderCard(
+              order: orders[i],
+              onTap: () => _openDetail(orders[i]),
+              onReorder: () => _ctrl.reorder(orders[i]),
+              isReordering: _ctrl.reorderingId.value == orders[i].id,
+              // Another reorder mid-flight disables the rest so two orders
+              // can't race into the same cart.
+              reorderEnabled: _ctrl.reorderingId.value == 0,
+            )),
       );
     });
   }
@@ -322,11 +327,23 @@ String _formatDate(String raw) {
 class _OrderCard extends StatelessWidget {
   final OrderData order;
   final VoidCallback onTap;
+  final VoidCallback onReorder;
+  final bool isReordering;
+  final bool reorderEnabled;
 
   const _OrderCard({
     required this.order,
     required this.onTap,
+    required this.onReorder,
+    this.isReordering = false,
+    this.reorderEnabled = true,
   });
+
+  /// Reordering is offered once an order is done with -- the customer has it
+  /// in hand, so buying the same thing again is a sensible next step. An
+  /// order still being shopped or delivered is not.
+  bool get _isFinished => const {'completed', 'received', 'delivered'}
+      .contains(order.status.toLowerCase());
 
   @override
   Widget build(BuildContext context) {
@@ -463,11 +480,28 @@ class _OrderCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      _ActionButton(
-                        label: 'Details',
-                        color: const Color(0xFFFFAA00),
-                        outline: false,
-                        onTap: onTap,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_isFinished) ...[
+                            _ActionButton(
+                              label: 'Reorder',
+                              color: const Color(0xFFFFAA00),
+                              outline: true,
+                              loading: isReordering,
+                              enabled: reorderEnabled,
+                              icon: Icons.refresh_rounded,
+                              onTap: onReorder,
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          _ActionButton(
+                            label: 'Details',
+                            color: const Color(0xFFFFAA00),
+                            outline: false,
+                            onTap: onTap,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -529,32 +563,60 @@ class _ActionButton extends StatelessWidget {
   final Color color;
   final bool outline;
   final VoidCallback onTap;
+  final bool loading;
+  final bool enabled;
+  final IconData? icon;
 
   const _ActionButton({
     required this.label,
     required this.color,
     required this.outline,
     required this.onTap,
+    this.loading = false,
+    this.enabled = true,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
+    final active = enabled && !loading;
+    final tint = active ? color : color.withOpacity(0.4);
+    final foreground = outline ? tint : Colors.white;
+
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: outline ? Colors.transparent : color,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-              color: outline ? color : Colors.transparent),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: outline ? color : Colors.white,
+      onTap: active ? onTap : null,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 150),
+        opacity: active ? 1 : 0.6,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: outline ? Colors.transparent : tint,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: outline ? tint : Colors.transparent),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (loading)
+                SizedBox(
+                  width: 13,
+                  height: 13,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: foreground),
+                )
+              else if (icon != null)
+                Icon(icon, size: 15, color: foreground),
+              if (loading || icon != null) const SizedBox(width: 6),
+              Text(
+                loading ? 'Adding…' : label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: foreground,
+                ),
+              ),
+            ],
           ),
         ),
       ),
