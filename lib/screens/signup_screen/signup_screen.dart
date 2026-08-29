@@ -366,18 +366,21 @@ class _SignupScreenState extends State<SignupScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   if (Platform.isIOS)
-                    SocialButton(
-                      icon: Icons.apple,
-                      onPressed: () {
-                        authController.loginWithApple();
-                      },
-                    ),
-                  SocialButton(
-                    icon: Icons.g_mobiledata,
-                    onPressed: () {
-                      authController.loginWithGoogle();
-                    },
-                  ),
+                    Obx(() => SocialButton(
+                          icon: Icons.apple,
+                          isLoading:
+                              authController.loadingProvider.value == 'apple',
+                          enabled:
+                              authController.loadingProvider.value.isEmpty,
+                          onPressed: authController.loginWithApple,
+                        )),
+                  Obx(() => SocialButton(
+                        icon: Icons.g_mobiledata,
+                        isLoading:
+                            authController.loadingProvider.value == 'google',
+                        enabled: authController.loadingProvider.value.isEmpty,
+                        onPressed: authController.loginWithGoogle,
+                      )),
                   SocialButton(
                     icon: Icons.facebook,
                     onPressed: () {},
