@@ -16,6 +16,8 @@ import 'package:jara_market/firebase_options.dart';
 import 'package:jara_market/send_token_service.dart';
 import 'package:overlay_kit/overlay_kit.dart';
 import 'dart:developer' as myLog;
+
+import 'package:jara_market/services/push_navigation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 // import 'screens/splash/splash_screen.dart';
 // 'https://github.com/DANIEL-EKWERE/jara-customer.git/'
@@ -226,12 +228,15 @@ Future<void> _setupFcmInBackground(SendTokenService sendTokenService) async {
       myLog.log(
         'App launched from terminated state: ${initialMessage.messageId}',
       );
+      // Opened by tapping a push while the app was killed -- route it too.
+      handlePushTap(initialMessage.data);
     }
 
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-    FirebaseMessaging.onMessageOpenedApp.listen(
-      (msg) => myLog.log('Message clicked!: $msg'),
-    );
+    FirebaseMessaging.onMessageOpenedApp.listen((msg) {
+      myLog.log('Message clicked!: $msg');
+      handlePushTap(msg.data);
+    });
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
       myLog.log('FCM Token refreshed: $newToken');
       sendTokenService.registerToken(newToken, null, null);

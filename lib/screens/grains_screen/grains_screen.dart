@@ -1250,7 +1250,7 @@ class _GrainsScreenState extends State<GrainsScreen> {
             left: 16,
             right: 16,
             top: 20,
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 50,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

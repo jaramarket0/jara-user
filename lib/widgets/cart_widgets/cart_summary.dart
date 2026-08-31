@@ -96,7 +96,8 @@ class CartSummary extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Shipping',
+              //shipping
+              'Dispatch',
               style: TextStyle(
                 fontSize: 12,
                 fontFamily: 'Poppins',

@@ -206,6 +206,7 @@ class Products {
   String? preparationSteps;
   String? rating;
   String? imageUrl;
+  String? youtubeUrl;
   List<Ingredients>? ingredients;
   String? createdAt;
 
@@ -220,8 +221,12 @@ class Products {
       this.preparationSteps,
       this.rating,
       this.imageUrl,
+      this.youtubeUrl,
       this.ingredients,
       this.createdAt});
+
+  /// Whether this dish has a recipe video to offer.
+  bool get hasVideo => (youtubeUrl ?? '').trim().isNotEmpty;
 
   Products.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -234,6 +239,7 @@ class Products {
     preparationSteps = json['preparation_steps']?.toString();
     rating = json['rating']?.toString();
     imageUrl = getImageUrl(json['image_url']);
+    youtubeUrl = json['youtube_url']?.toString();
     if (json['ingredients'] != null) {
       ingredients = <Ingredients>[];
       json['ingredients'].forEach((v) {
@@ -255,6 +261,7 @@ class Products {
     data['preparation_steps'] = this.preparationSteps;
     data['rating'] = this.rating;
     data['image_url'] = this.imageUrl;
+    data['youtube_url'] = this.youtubeUrl;
     if (this.ingredients != null) {
       data['ingredients'] = this.ingredients!.map((v) => v.toJson()).toList();
     }

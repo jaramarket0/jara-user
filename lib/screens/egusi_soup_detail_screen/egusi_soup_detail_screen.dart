@@ -11,6 +11,7 @@ import 'package:jara_market/screens/cart_screen/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 // import 'package:jara_market/models/cart_item.dart';
 import 'package:jara_market/screens/cart_screen/cart_screen.dart';
 import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart';
@@ -177,6 +178,27 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     Get.snackbar('Downloaded', 'Your recipe steps are ready!');
   }
 
+  /// Opens the dish's recipe video. externalApplication hands it to the
+  /// YouTube app when it's installed and falls back to the browser, which is
+  /// what people expect from a "Watch Video" button.
+  Future<void> _openRecipeVideo() async {
+    final raw = widget.item.youtubeUrl?.trim() ?? '';
+    final uri = Uri.tryParse(raw);
+    if (uri == null || raw.isEmpty) {
+      Get.snackbar('No video', 'This recipe has no video yet.',
+          snackPosition: SnackPosition.TOP);
+      return;
+    }
+    final opened =
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened) {
+      Get.snackbar('Could not open video', 'Please try again.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // int selectedCount = ingredientSelected.where((selected) => selected).length;
@@ -192,9 +214,9 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
             height: 52,
             width: 162.5,
             child: ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Implement video playback
-              },
+              // Greyed out rather than hidden when the dish has no video, so
+              // the two buttons keep their layout on every food.
+              onPressed: widget.item.hasVideo ? _openRecipeVideo : null,
               icon: SvgPicture.asset('assets/images/camera.svg'),
               label: const Text(
                 'Watch Video',
@@ -209,6 +231,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                     side: BorderSide(width: 1, color: Color(0xff9F9F9F))),
                 foregroundColor: Colors.black,
                 backgroundColor: Colors.grey[300],
+                disabledBackgroundColor: Colors.grey[200],
+                disabledForegroundColor: Colors.grey[400],
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),

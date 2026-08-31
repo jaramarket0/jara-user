@@ -50,7 +50,7 @@ class CheckoutButtonPaystack extends StatelessWidget {
           // );
           Get.defaultDialog(
             textConfirm: 'Proceed',
-            textCancel: 'No use My Current Location',
+            textCancel: 'No, Use My Current Location',
             title: 'Confirm Address',
             content: Text(
                 'We Will Deliver your order to this address.\n\n$address \n Confirm To CheckOut',
