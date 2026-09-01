@@ -1,6 +1,6 @@
 name: jara_market
 description: A new Flutter project
-version: 1.0.0+5
+version: 1.0.0+6
 
 environment:
   sdk: ">=3.4.4 <4.0.0"

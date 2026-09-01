@@ -2883,7 +2883,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // The grid is fixed-height because it sits in a scrolling column, so the
+  // height reserved for it and the height its rows actually take up have to
+  // come from the same numbers. Deriving row height from childAspectRatio
+  // while hard-coding 70.0 per row is what clipped the second row of labels
+  // once the screen was wide enough to make a cell taller than 70.
+  static const int _gridColumns = 4;
+  static const int _gridMaxItems = 8;
+  static const double _gridRowExtent = 80.0;
+  static const double _gridRowSpacing = 8.0;
+
   Widget _buildCategorySection(int categoryIndex) {
+    final products = controller.category[categoryIndex].products ?? const [];
+    final itemCount =
+        products.length > _gridMaxItems ? _gridMaxItems : products.length;
+    final rowCount = (itemCount / _gridColumns).ceil();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -2931,7 +2946,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           SizedBox(height: 10),
-          controller.category[categoryIndex].products!.isEmpty
+          products.isEmpty
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -2946,52 +2961,46 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               : SizedBox(
-                  height: ((controller.category[categoryIndex].products!.length > 8
-                              ? 8
-                              : controller.category[categoryIndex].products!.length) /
-                          4)
-                      .ceil() *
-                      70.0,
+                  height: rowCount * _gridRowExtent +
+                      (rowCount - 1) * _gridRowSpacing,
                   child: GridView.builder(
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount:
-                        controller.category[categoryIndex].products!.length > 8
-                            ? 8
-                            : controller
-                                .category[categoryIndex].products!.length,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    itemCount: itemCount,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
+                      crossAxisCount: _gridColumns,
                       crossAxisSpacing: 4.0,
-                      mainAxisSpacing: 7.0,
-                      childAspectRatio: 1.2,
+                      mainAxisSpacing: _gridRowSpacing,
+                      // Pinning the row height outright, instead of letting it
+                      // fall out of childAspectRatio and the screen width, is
+                      // what keeps it in step with the SizedBox above.
+                      mainAxisExtent: _gridRowExtent,
                     ),
                     itemBuilder: (context, index) {
-                      final category =
-                          controller.category[categoryIndex].products;
+                      final product = products[index];
 
                       return GestureDetector(
                         onTap: () {
-                          _showProductDialog(context, category!, index);
+                          _showProductDialog(context, products, index);
                         },
                         child: Column(
                           children: [
                             Container(
+                              width: 44,
+                              height: 44,
                               padding: EdgeInsets.all(
-                                category![index].imageUrl != null ? 0 : 5,
+                                product.imageUrl != null ? 0 : 5,
                               ),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.grey[200],
                               ),
                               child: Center(
-                                child: category[index].imageUrl != null
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(20),
+                                child: product.imageUrl != null
+                                    ? ClipOval(
                                         child: CachedNetworkImage(
-                                          imageUrl: category[index]
-                                              .imageUrl
-                                              .toString(),
+                                          imageUrl: product.imageUrl.toString(),
                                           placeholder: (context, url) =>
                                               const Padding(
                                             padding: EdgeInsets.all(8.0),
@@ -3004,8 +3013,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                           errorWidget: (context, url, error) =>
                                               const Icon(Icons.error),
-                                          width: 40,
-                                          height: 40,
+                                          width: 44,
+                                          height: 44,
                                           fit: BoxFit.cover,
                                         ),
                                       )
@@ -3013,15 +3022,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                         'assets/images/product_image.svg'),
                               ),
                             ),
-                            SizedBox(height: 5),
-                            Text(
-                              category[index].name.toString().length > 10
-                                  ? '${category[index].name!.substring(0, 7)}...'
-                                  : category[index].name.toString(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: 'Roboto',
+                            const SizedBox(height: 4),
+                            // Two lines with a real ellipsis, rather than
+                            // chopping every name at 7 characters whatever
+                            // room the cell actually has.
+                            Expanded(
+                              child: Text(
+                                product.name.toString(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.15,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Roboto',
+                                ),
                               ),
                             ),
                           ],
