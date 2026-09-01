@@ -27,6 +27,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   void initState() {
     super.initState();
     _order = widget.order;
+    // The list data can be minutes old, so pull the live order straight
+    // away rather than showing a stale stage until the first tick.
+    _refresh(silent: true);
     _startPolling();
   }
 
@@ -61,9 +64,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           setState(() => _order = OrderData.fromJson(data));
           if (!_isActive) _poller?.cancel();
         }
+      } else {
+        // A silently-dropped non-200 here is why a stale order can look
+        // like a stalled one, so say it out loud in debug builds.
+        debugPrint('Order refresh failed (${res.statusCode}): ${res.body}');
       }
-    } catch (_) {
+    } catch (e) {
       // Keep showing the last known state; the next tick will retry.
+      debugPrint('Order refresh error: $e');
     } finally {
       _refreshing = false;
       if (!silent && mounted) setState(() {});
