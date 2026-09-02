@@ -35,13 +35,17 @@ class StateModel {
 class StateData {
   int? id;
   String? name;
+  // The API already tags each state with its country, so the address payload
+  // can carry a country_id without asking the customer to pick one.
+  int? countryId;
   List<Lgas>? lgas;
 
-  StateData({this.id, this.name, this.lgas});
+  StateData({this.id, this.name, this.countryId, this.lgas});
 
   StateData.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     name = json['name'];
+    countryId = json['country_id'];
     if (json['lgas'] != null) {
       lgas = <Lgas>[];
       json['lgas'].forEach((v) {
@@ -54,6 +58,7 @@ class StateData {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['id'] = this.id;
     data['name'] = this.name;
+    data['country_id'] = this.countryId;
     if (this.lgas != null) {
       data['lgas'] = this.lgas!.map((v) => v.toJson()).toList();
     }

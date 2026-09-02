@@ -178,24 +178,46 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     Get.snackbar('Downloaded', 'Your recipe steps are ready!');
   }
 
+  void _showVideoMessage(String title, String message) {
+    Get.snackbar(title, message,
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP);
+  }
+
+  /// Most dishes have no `youtube_url` set yet, so the link is parsed
+  /// defensively: an admin can save a bare "youtube.com/watch?v=..." with no
+  /// scheme, which Uri.tryParse accepts happily but launchUrl cannot open.
+  Uri? _recipeVideoUri() {
+    final raw = widget.item.youtubeUrl?.trim() ?? '';
+    if (raw.isEmpty) return null;
+
+    final uri = Uri.tryParse(raw.contains('://') ? raw : 'https://$raw');
+    if (uri == null || uri.host.isEmpty) return null;
+    if (uri.scheme != 'http' && uri.scheme != 'https') return null;
+    return uri;
+  }
+
   /// Opens the dish's recipe video. externalApplication hands it to the
   /// YouTube app when it's installed and falls back to the browser, which is
   /// what people expect from a "Watch Video" button.
   Future<void> _openRecipeVideo() async {
-    final raw = widget.item.youtubeUrl?.trim() ?? '';
-    final uri = Uri.tryParse(raw);
-    if (uri == null || raw.isEmpty) {
-      Get.snackbar('No video', 'This recipe has no video yet.',
-          snackPosition: SnackPosition.TOP);
+    final uri = _recipeVideoUri();
+    if (uri == null) {
+      _showVideoMessage('Video not available', 'This recipe has no video yet.');
       return;
     }
-    final opened =
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened) {
-      Get.snackbar('Could not open video', 'Please try again.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP);
+
+    // launchUrl throws rather than returning false when no app can handle the
+    // link, so a bad URL must not be allowed to take the screen down.
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened) {
+        _showVideoMessage('Video not available', 'Couldn\'t open the video.');
+      }
+    } catch (e) {
+      debugPrint('Failed to open recipe video ($uri): $e');
+      _showVideoMessage('Video not available', 'Couldn\'t open the video.');
     }
   }
 
@@ -214,9 +236,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
             height: 52,
             width: 162.5,
             child: ElevatedButton.icon(
-              // Greyed out rather than hidden when the dish has no video, so
-              // the two buttons keep their layout on every food.
-              onPressed: widget.item.hasVideo ? _openRecipeVideo : null,
+              onPressed: _openRecipeVideo,
               icon: SvgPicture.asset('assets/images/camera.svg'),
               label: const Text(
                 'Watch Video',
@@ -231,8 +251,6 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                     side: BorderSide(width: 1, color: Color(0xff9F9F9F))),
                 foregroundColor: Colors.black,
                 backgroundColor: Colors.grey[300],
-                disabledBackgroundColor: Colors.grey[200],
-                disabledForegroundColor: Colors.grey[400],
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),

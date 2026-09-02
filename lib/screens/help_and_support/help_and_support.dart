@@ -759,36 +759,300 @@ class _HelpAndSupportState extends State<HelpAndSupport> {
     }
   }
 
+  /// A ticket is a conversation, not a record card -- the opening message and
+  /// every reply belong on one thread, with somewhere to answer at the bottom.
   void _showTicketDetails(SupportTicket ticket) {
-    showDialog(
+    final replyController = TextEditingController();
+    var sending = false;
+    var current = ticket;
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Ticket #${ticket.id}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Subject: ${ticket.subject}'),
-              const SizedBox(height: 8),
-              Text('Status: ${ticket.status}'),
-              const SizedBox(height: 8),
-              Text('Message: ${ticket.message}'),
-              if (ticket.attachmentUrl != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text('Attachment: ${ticket.attachmentUrl}'),
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            Future<void> sendReply() async {
+              final text = replyController.text.trim();
+              if (text.isEmpty || sending) return;
+              setSheetState(() => sending = true);
+              try {
+                final response =
+                    await _apiService.replyToSupportTicket(current.id, text);
+                if (response.statusCode == 200 || response.statusCode == 201) {
+                  final body = jsonDecode(response.body);
+                  if (body['data'] is Map<String, dynamic>) {
+                    setSheetState(() {
+                      current = SupportTicket.fromJson(body['data']);
+                      replyController.clear();
+                    });
+                  }
+                  _fetchTickets(); // keep the list behind the sheet honest
+                } else {
+                  String message = 'Could not send your reply.';
+                  try {
+                    message = jsonDecode(response.body)['message']?.toString() ??
+                        message;
+                  } catch (_) {}
+                  if (sheetContext.mounted) {
+                    ScaffoldMessenger.of(sheetContext).showSnackBar(
+                      SnackBar(content: Text(message)),
+                    );
+                  }
+                }
+              } catch (_) {
+                if (sheetContext.mounted) {
+                  ScaffoldMessenger.of(sheetContext).showSnackBar(
+                    const SnackBar(content: Text('Network error. Please try again.')),
+                  );
+                }
+              } finally {
+                setSheetState(() => sending = false);
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+              ),
+              child: DraggableScrollableSheet(
+                expand: false,
+                initialChildSize: 0.85,
+                maxChildSize: 0.95,
+                builder: (_, scrollController) => Column(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 4,
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0E0E0),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  current.subject,
+                                  style: const TextStyle(
+                                      fontSize: 17, fontWeight: FontWeight.w700),
+                                ),
+                                Text(
+                                  'Ticket #${current.id}',
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Color(0xFF888888)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _ticketStatusChip(current.status),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                        children: [
+                          _bubble(
+                            text: current.message,
+                            isStaff: false,
+                            author: 'You',
+                            time: current.createdAt,
+                          ),
+                          if (current.attachmentUrl != null &&
+                              current.attachmentUrl!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, bottom: 4),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  const Icon(Icons.attach_file,
+                                      size: 14, color: Color(0xFF888888)),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      current.attachmentUrl!.split('/').last,
+                                      style: const TextStyle(
+                                          fontSize: 11, color: Color(0xFF888888)),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          for (final r in current.replies)
+                            _bubble(
+                              text: r.message,
+                              isStaff: r.isStaff,
+                              author: r.isStaff ? r.authorName : 'You',
+                              time: r.createdAt,
+                            ),
+                          if (current.replies.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 24),
+                              child: Text(
+                                'Our support team has not replied yet. '
+                                'We will notify you as soon as they do.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 12, color: Color(0xFF9E9E9E)),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    SafeArea(
+                      top: false,
+                      child: current.isClosed
+                          ? const Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Text(
+                                'This ticket is closed. Raise a new one if you '
+                                'still need help.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 12, color: Color(0xFF9E9E9E)),
+                              ),
+                            )
+                          : Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: replyController,
+                                      minLines: 1,
+                                      maxLines: 4,
+                                      decoration: InputDecoration(
+                                        hintText: 'Write a reply…',
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 14, vertical: 10),
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(24),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: const Color(0xFFFFAA00),
+                                    child: sending
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white),
+                                          )
+                                        : IconButton(
+                                            icon: const Icon(Icons.send,
+                                                size: 18, color: Colors.white),
+                                            onPressed: sendReply,
+                                          ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ],
                 ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
+              ),
+            );
+          },
         );
       },
+    ).whenComplete(replyController.dispose);
+  }
+
+  Widget _bubble({
+    required String text,
+    required bool isStaff,
+    required String author,
+    String? time,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment:
+            isStaff ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        children: [
+          Text(
+            time == null || time.isEmpty ? author : '$author · ${_shortDate(time)}',
+            style: const TextStyle(fontSize: 10.5, color: Color(0xFF9E9E9E)),
+          ),
+          const SizedBox(height: 3),
+          Container(
+            constraints: const BoxConstraints(maxWidth: 280),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: isStaff ? const Color(0xFFF1F1F1) : const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isStaff
+                    ? const Color(0xFFE0E0E0)
+                    : const Color(0xFFFFE0A3),
+              ),
+            ),
+            child: Text(text, style: const TextStyle(fontSize: 13.5, height: 1.4)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _shortDate(String raw) {
+    try {
+      final d = DateTime.parse(raw).toLocal();
+      const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final h = d.hour.toString().padLeft(2, '0');
+      final m = d.minute.toString().padLeft(2, '0');
+      return '${months[d.month]} ${d.day}, $h:$m';
+    } catch (_) {
+      return raw.length > 10 ? raw.substring(0, 10) : raw;
+    }
+  }
+
+  Widget _ticketStatusChip(String status) {
+    final s = status.toLowerCase();
+    final color = s == 'resolved'
+        ? const Color(0xFF2E7D32)
+        : s == 'closed'
+            ? const Color(0xFF9E9E9E)
+            : s == 'in_progress'
+                ? const Color(0xFF1565C0)
+                : const Color(0xFFE65100);
+    final label = s == 'in_progress'
+        ? 'In progress'
+        : s.isEmpty
+            ? 'Open'
+            : s[0].toUpperCase() + s.substring(1);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Text(label,
+          style: TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w700, color: color)),
     );
   }
 

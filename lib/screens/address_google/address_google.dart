@@ -32,7 +32,6 @@ class _AddressGoogleChangeScreenState extends State<AddressGoogleChangeScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    controller.fetchCountries();
     controller.fetchStates();
   }
 
@@ -224,6 +223,7 @@ class _AddressGoogleChangeScreenState extends State<AddressGoogleChangeScreen> {
                   padding: const EdgeInsets.symmetric(
                       vertical: 10, horizontal: 16.0),
                   child: DropdownSearch<lga.LgaData>(
+                    key: ValueKey('lga-${controller.selectedStateId}'),
                     onChanged: (value) async {
                       if (value == null) return;
                       setState(() {

@@ -43,30 +43,28 @@ class CheckoutAddressChangeController extends GetxController {
   void onInit() {
     super.onInit();
     myLog.log('CheckoutAddressChangeController initialized');
-    fetchCountries();
     // fetchStates();
     // fetchLgas('Lagos');
   }
 
   /// The backend requires latitude/longitude on every address. Since manual
   /// entry only gives us free-text fields, forward-geocode the typed address
-  /// to resolve coordinates - falling back to a coarser LGA/state/country
-  /// query if the full address can't be matched.
+  /// to resolve coordinates - falling back to a coarser LGA/state query if
+  /// the full address can't be matched.
   Future<Map<String, double>?> _resolveCoordinates() async {
     final fullQuery =
-        '${contactAddressController.text}, $selectedLGA1, $selectedState1, $selectedCountry1';
+        '${contactAddressController.text}, $selectedLGA1, $selectedState1';
     var location = await LocationService.forwardGeocode(fullQuery);
 
-    location ??= await LocationService.forwardGeocode(
-        '$selectedLGA1, $selectedState1, $selectedCountry1');
+    location ??=
+        await LocationService.forwardGeocode('$selectedLGA1, $selectedState1');
 
     if (location == null) return null;
     return {'latitude': location.latitude, 'longitude': location.longitude};
   }
 
   isValid() {
-    return selectedCountryId != null &&
-        selectedStateId != null &&
+    return selectedStateId != null &&
         selectedLGAId != null &&
         contactAddressController.text.isNotEmpty &&
         contactNumberController.text.isNotEmpty;
@@ -177,7 +175,6 @@ class CheckoutAddressChangeController extends GetxController {
         contactNumberController.text = '';
         var result = {
           'id': addressId,
-          'country': selectedCountry1,
           'state': selectedState1,
           'lga': selectedLGA1,
           'contact_address': contactAddressText,
@@ -200,7 +197,7 @@ class CheckoutAddressChangeController extends GetxController {
   } else {
     OverlayLoadingProgress.stop();
     AppFeedback.showError(null,
-        fallback: 'Please select a country, state, and LGA.');
+        fallback: 'Please select a state and LGA.');
     return {};
   }
 }
@@ -242,7 +239,6 @@ class CheckoutAddressChangeController extends GetxController {
         final addressId = extractIdFromResponse(response.body);
         var result = {
           'id': addressId,
-          'country': selectedCountry1,
           'state': selectedState1,
           'lga': selectedLGA1,
           'contact_address': contactAddressController.text,

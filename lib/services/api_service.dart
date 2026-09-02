@@ -452,6 +452,25 @@ class ApiService extends GetConnect {
     return response;
   }
 
+  /// Customer's follow-up on their own ticket. A reply to a resolved ticket
+  /// reopens it server-side -- they clearly don't consider it settled.
+  Future<http.Response> replyToSupportTicket(int id, String message) async {
+    final token = await dataBase.getToken();
+    final url = Uri.parse('$baseUrl/support/$id/reply');
+    _logRequest('POST', url, body: {'message': message});
+    final response = await authHttpClient.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'message': message}),
+    );
+    _logResponse(response);
+    return response;
+  }
+
   Future<http.Response> fetchSupportTicket(int id) async {
     final token = await dataBase.getToken();
     final url = Uri.parse('$baseUrl/support/$id');

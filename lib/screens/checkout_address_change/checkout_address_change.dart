@@ -3,7 +3,6 @@ import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/screens/checkout_address_change/controller/checkout_address_change_controller.dart';
-import 'package:jara_market/screens/checkout_address_change/models/country_model.dart';
 import 'package:jara_market/screens/checkout_address_change/models/lga_model.dart'
     as lgaData;
 import 'package:jara_market/screens/checkout_address_change/models/state_model.dart';
@@ -28,7 +27,7 @@ class _CheckoutAddressChangeScreenState
   void initState() {
     // TODO: implement initState
     super.initState();
-    controller.fetchCountries();
+    controller.fetchStates();
   }
 
   @override
@@ -125,131 +124,22 @@ class _CheckoutAddressChangeScreenState
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       vertical: 10, horizontal: 16.0),
-                  child: DropdownSearch<CountryData>(
-                    onChanged: (value) async {
-                      setState(() {
-                        controller.selectedCountry1 = value!.name;
-                        controller.selectedCountryId = value.id;
-                      });
-                      print('selected item is: ${controller.selectedCountry1}');
-                      print(
-                          'selected item Id is: ${controller.selectedCountryId}');
-
-                      assert(
-                        controller.selectedCountry1 != null,
-                        'Selected country should not be null',
-                      );
-
-                      await controller.fetchStates();
-                      myLog.log(
-                          'Selected country: ${controller.selectedCountry1}');
-                    },
-                    selectedItem: controller.selectedCountry,
-                    suffixProps: DropdownSuffixProps(),
-                    compareFn: (item1, item2) {
-                      return item1 == item2;
-                    },
-
-                    decoratorProps: DropDownDecoratorProps(
-                        baseStyle: TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Color(0xffF5F5F5),
-                            alignLabelWithHint: true,
-                            suffixIconColor: Colors.amberAccent,
-                            focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    style: BorderStyle.solid,
-                                    color: Colors.amber,
-                                    width: 1),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(8))),
-                            enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    style: BorderStyle.solid,
-                                    color: Color(0xffD9D9D9),
-                                    width: 1),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(12))),
-                            border: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    style: BorderStyle.solid,
-                                    color: Color(0xffD9D9D9),
-                                    width: 1),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(12))))),
-                    dropdownBuilder: (context, selectedItem) {
-                      if (selectedItem != null) {
-                        return Text(selectedItem.name!);
-                      } else {
-                        return Text(
-                          'Enter Your Country',
-                          style: TextStyle(
-                            color: Colors.grey[300],
-                            fontSize: 16,
-                          ),
-                        );
-                      }
-                    },
-                    items: (f, cs) => controller.isCountryLoading.value
-                        ? []
-                        : controller.countryDataList,
-                    //
-                    itemAsString: (item) {
-                      return item.name ?? '';
-                    },
-                    popupProps: PopupProps.menu(
-                        showSelectedItems: true,
-                        searchDelay: Duration(seconds: 0),
-                        emptyBuilder: (context, searchEntry) {
-                          return controller.isCountryLoading.value
-                              ? const Center(
-                                  child: CircularProgressIndicator(
-                                  color: Colors.amber,
-                                ))
-                              : Center(
-                                  child: Text(
-                                    'No countries found',
-                                    style: TextStyle(
-                                        color: Colors.grey,
-                                        fontFamily: 'Poppins',
-                                        fontSize: 12),
-                                  ),
-                                );
-                        },
-                        title: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text('Search Country',
-                              style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 12,
-                                  color: Colors.black)),
-                        ),
-                        onDismissed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("move to the next item")),
-                          );
-                          myLog.log('Next items found.');
-                        },
-                        onItemsLoaded: (value) {
-                          myLog.log(
-                              'Items loaded: ${value.length} items found.');
-                        },
-                        scrollbarProps: ScrollbarProps(),
-                        showSearchBox: true,
-                        searchFieldProps: TextFieldProps(),
-                        disabledItemFn: (item) => item == 'Item 3',
-                        fit: FlexFit.loose),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10, horizontal: 16.0),
                   child: DropdownSearch<StateData>(
                     onChanged: (value) async {
                       setState(() {
                         controller.selectedState1 = value!.name;
                         controller.selectedStateId = value.id;
+                        // With the country picker gone, the country comes
+                        // from whichever state the customer chose.
+                        controller.selectedCountryId = value.countryId;
+                        // The LGA list is about to be replaced, so whatever
+                        // was picked under the previous state is no longer a
+                        // valid choice -- clear it rather than save an LGA
+                        // that belongs to a different state.
+                        controller.selectedLGA = null;
+                        controller.selectedLGA1 = null;
+                        controller.selectedLGAId = null;
+                        controller.lgaDataList = [];
                       });
                       print('selected item is: ${controller.selectedState1}');
                       await controller.fetchLgas(controller.selectedState1!);
@@ -357,8 +247,10 @@ class _CheckoutAddressChangeScreenState
                   padding: const EdgeInsets.symmetric(
                       vertical: 10, horizontal: 16.0),
                   child: DropdownSearch<lgaData.LgaData>(
+                    key: ValueKey('lga-${controller.selectedStateId}'),
                     onChanged: (value) {
                       setState(() {
+                        controller.selectedLGA = value;
                         controller.selectedLGA1 = value!.name;
                         controller.selectedLGAId = value.id;
                       });

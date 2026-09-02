@@ -63,7 +63,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   /// address on the backend) produced a literal "null,null,null,null."
   String get _selectedAddressText {
     if (result.isNotEmpty) {
-      return '${controller.selectedAddress},${controller.selectedState},${controller.selectedCountry} ';
+      return '${controller.selectedAddress},${controller.selectedLga},${controller.selectedState}';
     }
     if (widget.orderAddress.isNotEmpty) {
       return '${widget.orderAddress['contact_address']},${widget.orderAddress['lga']},${widget.orderAddress['state']},${widget.orderAddress['country']}.';
@@ -669,7 +669,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   controller.selectedAddress.value =
                                       result['contact_address'];
                                   controller.selectedCountry.value =
-                                      result['country'];
+                                      result['country'] ?? '';
                                   controller.selectedState.value =
                                       result['state'];
                                   controller.selectedLga.value = result['lga'];
