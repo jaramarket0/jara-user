@@ -888,6 +888,24 @@ class ApiService extends GetConnect {
 
   /// Swap an unavailable item. Any price difference is settled against the
   /// customer's wallet rather than refunded.
+  /// Drop an unavailable item instead of replacing it. The backend refunds
+  /// the line plus any service-fee difference and returns the updated order.
+  Future<http.Response> forgoOrderItem(int itemId) async {
+    final token = await dataBase.getToken();
+    final url = Uri.parse('$baseUrl/orders/items/$itemId/forgo');
+    _logRequest('POST', url);
+    final response = await authHttpClient.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    _logResponse(response);
+    return response;
+  }
+
   Future<http.Response> replaceOrderItem(int itemId, int ingredientId,
       {int? quantity}) async {
     final token = await dataBase.getToken();

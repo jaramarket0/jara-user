@@ -178,6 +178,12 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     Get.snackbar('Downloaded', 'Your recipe steps are ready!');
   }
 
+  /// The Watch Video / Buy Ingredients buttons float over the scroll view,
+  /// so their height is also the amount of room the scrolling content has to
+  /// leave at its end. Kept in one place so the two can't drift apart.
+  static const double _fabHeight = 52;
+  static const double _fabBottomMargin = 16;
+
   void _showVideoMessage(String title, String message) {
     Get.snackbar(title, message,
         backgroundColor: Colors.black87,
@@ -233,7 +239,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
             width: 30,
           ),
           SizedBox(
-            height: 52,
+            height: _fabHeight,
             width: 162.5,
             child: ElevatedButton.icon(
               onPressed: _openRecipeVideo,
@@ -257,7 +263,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
           ),
           const SizedBox(width: 15),
           SizedBox(
-            height: 52,
+            height: _fabHeight,
             width: 162.5,
             child: ElevatedButton(
               onPressed: () {
@@ -570,7 +576,12 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(
+              height: 24 +
+                  _fabHeight +
+                  _fabBottomMargin +
+                  MediaQuery.of(context).padding.bottom,
+            ),
           ],
         ),
       ),

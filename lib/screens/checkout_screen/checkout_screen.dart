@@ -55,20 +55,79 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
+  static const String _noAddressText = 'Set Address to recieve your order.';
+
+  /// The address passed in at construction is a snapshot taken before this
+  /// screen opened. Once the customer adds or changes one it goes stale, so
+  /// it's held in state and re-read from the server rather than read straight
+  /// off the widget.
+  late Map<dynamic, dynamic> _orderAddress = widget.orderAddress;
+
+  /// One piece of an address row. The backend may send a location as a plain
+  /// name, as a nested relation object, or not at all — and interpolating a
+  /// missing one straight into a string is what produced "null,null,null".
+  static String? _addressPart(Map<dynamic, dynamic> src, String key) {
+    final value = src[key];
+    if (value == null) return null;
+    if (value is Map) {
+      final name = value['name']?.toString().trim();
+      return (name == null || name.isEmpty) ? null : name;
+    }
+    final text = value.toString().trim();
+    return (text.isEmpty || text == 'null') ? null : text;
+  }
+
+  /// Joins whichever parts of an address row actually carry a value, so a
+  /// gap in the data shows up as a shorter address instead of the word null.
+  static String _formatAddress(Map<dynamic, dynamic> src) {
+    final parts = const ['contact_address', 'lga', 'state', 'country']
+        .map((key) => _addressPart(src, key))
+        .whereType<String>()
+        .toList();
+    return parts.isEmpty ? _noAddressText : parts.join(', ');
+  }
+
   /// The address text shown in the "Confirm Address" popup and the address
-  /// card — mirrors the same fallback chain used for the AddressCard below:
-  /// a freshly picked/changed address takes priority, then the address
-  /// passed into this screen, then a "no address set" message. Without this,
-  /// reading straight from `widget.orderAddress` when it's `{}` (no saved
-  /// address on the backend) produced a literal "null,null,null,null."
+  /// card: a freshly picked/changed address takes priority, then the address
+  /// this screen knows about, then a "no address set" message.
   String get _selectedAddressText {
     if (result.isNotEmpty) {
-      return '${controller.selectedAddress},${controller.selectedLga},${controller.selectedState}';
+      final picked = _formatAddress(result);
+      if (picked != _noAddressText) return picked;
     }
-    if (widget.orderAddress.isNotEmpty) {
-      return '${widget.orderAddress['contact_address']},${widget.orderAddress['lga']},${widget.orderAddress['state']},${widget.orderAddress['country']}.';
+    if (_orderAddress.isNotEmpty) return _formatAddress(_orderAddress);
+    return _noAddressText;
+  }
+
+  /// Re-reads the stored address after the customer adds or changes one.
+  /// Saving happens on another screen, so without this the card keeps showing
+  /// the snapshot from before — which is why a newly added address only
+  /// appeared after leaving checkout and coming back.
+  Future<void> _reloadAddress() async {
+    try {
+      final fetched = await cartController.getCheckoutAddress();
+      final rows = fetched is Map ? fetched['data'] : null;
+      if (rows is! List || rows.isEmpty || rows.first is! Map) return;
+      if (!mounted) return;
+
+      final row = rows.first as Map;
+      setState(() {
+        _orderAddress = row;
+        // The stored row is now the source of truth, so drop the in-memory
+        // one the address screen handed back.
+        result = {};
+        final id = row['id'];
+        if (id is int) controller.selectedAddressId.value = id;
+        controller.selectedAddress.value =
+            _addressPart(row, 'contact_address') ?? '';
+        controller.selectedLga.value = _addressPart(row, 'lga') ?? '';
+        controller.selectedState.value = _addressPart(row, 'state') ?? '';
+        controller.selectedCountry.value = _addressPart(row, 'country') ?? '';
+        controller.number.value = _addressPart(row, 'phone_number') ?? '';
+      });
+    } catch (e) {
+      debugPrint('Could not reload checkout address: $e');
     }
-    return 'Set Address to recieve your order.';
   }
 
   //final TextEditingController _messageController = TextEditingController();
@@ -95,8 +154,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     _initializeRecorder();
     getName();
-    if (widget.orderAddress.containsKey('id') && widget.orderAddress['id'] != null) {
-      controller.selectedAddressId.value = widget.orderAddress['id'] as int;
+    if (_orderAddress['id'] is int) {
+      controller.selectedAddressId.value = _orderAddress['id'] as int;
     }
   }
 
@@ -561,6 +620,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                                 setState(() {}); // refresh UI
                               },
+                              onAddressChanged: _reloadAddress,
                               address: _selectedAddressText,
                               audio: widget.path,
                               color: Colors.grey[400],
@@ -581,6 +641,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                               setState(() {}); // refresh UI
                             },
+                            onAddressChanged: _reloadAddress,
                             address: _selectedAddressText,
                             // != null
                             //        ? widget.orderAddress['contact_address']
@@ -647,8 +708,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           return AddressCard(
                             name: fullName,
                             action: 'Change',
-                            address:
-                                '${controller.selectedAddress},${controller.selectedState},${controller.selectedCountry} ',
+                            address: _selectedAddressText,
                             onChangePressed: () async {
                               print('change address pressed');
                               //Get.toNamed(AppRoutes.checkoutAddressChange);
@@ -657,49 +717,47 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               //     builder: (context) => CheckoutAddressChangeScreen(),
                               //   ),
                               // );
-                              result = await Get.toNamed(
+                              final changed = await Get.toNamed(
                                   AppRoutes.checkoutAddressChange,
                                   arguments: {
-                                    'isFromProfile': widget.orderAddress.isEmpty
-                                        ? true
-                                        : false,
+                                    'isFromProfile':
+                                        _orderAddress.isEmpty ? true : false,
                                   });
-                              if (result.isNotEmpty) {
+                              if (changed is Map && changed.isNotEmpty) {
                                 setState(() {
+                                  result = changed;
                                   controller.selectedAddress.value =
-                                      result['contact_address'];
+                                      changed['contact_address'] ?? '';
                                   controller.selectedCountry.value =
-                                      result['country'] ?? '';
+                                      changed['country'] ?? '';
                                   controller.selectedState.value =
-                                      result['state'];
-                                  controller.selectedLga.value = result['lga'];
+                                      changed['state'] ?? '';
+                                  controller.selectedLga.value =
+                                      changed['lga'] ?? '';
                                   controller.number.value =
-                                      result['phone_number'];
-                                  if (result['id'] != null) {
+                                      changed['phone_number'] ?? '';
+                                  if (changed['id'] is int) {
                                     controller.selectedAddressId.value =
-                                        result['id'] as int;
+                                        changed['id'] as int;
                                   }
                                 });
+                                await _reloadAddress();
                               }
                             },
                           );
                         })
                       : AddressCard(
                           name: fullName,
-                          action:
-                              widget.orderAddress.isNotEmpty ? 'Change' : 'Add',
-                          address: widget.orderAddress.isNotEmpty
-                              ? '${widget.orderAddress['contact_address']},${widget.orderAddress['lga']},${widget.orderAddress['state']},${widget.orderAddress['country']}.'
-                              : 'Set Address to recieve your order.',
+                          action: _orderAddress.isNotEmpty ? 'Change' : 'Add',
+                          address: _selectedAddressText,
                           onChangePressed: () async {
                             final newAddress = await Get.toNamed(
                                 AppRoutes.checkoutAddressChange,
                                 arguments: {
-                                  'isFromProfile': widget.orderAddress.isEmpty
-                                      ? true
-                                      : false,
+                                  'isFromProfile':
+                                      _orderAddress.isEmpty ? true : false,
                                 });
-                            if (newAddress != null && newAddress.isNotEmpty) {
+                            if (newAddress is Map && newAddress.isNotEmpty) {
                               setState(() {
                                 result = newAddress;
                                 controller.selectedAddress.value =
@@ -712,11 +770,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     newAddress['lga'] ?? '';
                                 controller.number.value =
                                     newAddress['phone_number'] ?? '';
-                                if (newAddress['id'] != null) {
+                                if (newAddress['id'] is int) {
                                   controller.selectedAddressId.value =
                                       newAddress['id'] as int;
                                 }
                               });
+                              await _reloadAddress();
                             }
                           },
                         ),

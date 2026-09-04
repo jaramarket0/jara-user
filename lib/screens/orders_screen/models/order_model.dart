@@ -143,6 +143,14 @@ class OrderItem {
   final String? imageUrl;
   final bool isUnavailable;
 
+  /// Dropped by the customer and refunded. Kept in the list, struck through,
+  /// so the order still explains why the total changed.
+  final bool isForgone;
+
+  /// When the chance to replace this item runs out. Past it the backend drops
+  /// and refunds the item on the customer's behalf.
+  final String? replaceDeadline;
+
   OrderItem({
     required this.id,
     this.ingredientId,
@@ -156,6 +164,8 @@ class OrderItem {
     required this.status,
     this.imageUrl,
     this.isUnavailable = false,
+    this.isForgone = false,
+    this.replaceDeadline,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -176,6 +186,9 @@ class OrderItem {
           : null,
       isUnavailable: json['is_unavailable'] == true ||
           json['status']?.toString() == 'unavailable',
+      isForgone: json['is_forgone'] == true ||
+          json['status']?.toString() == 'cancelled',
+      replaceDeadline: json['replace_deadline']?.toString(),
     );
   }
 
@@ -201,6 +214,11 @@ class OrderProgress {
   final bool isActive;
   final bool canMarkReceived;
 
+  /// Placed after the day's dispatch cutoff, so nothing is sourced until
+  /// markets reopen. Without this the order sits on "Placed" looking stuck.
+  final bool isScheduled;
+  final String? resumesAt;
+
   const OrderProgress({
     required this.stage,
     required this.stageIndex,
@@ -211,6 +229,8 @@ class OrderProgress {
     required this.remainingItems,
     required this.isActive,
     required this.canMarkReceived,
+    this.isScheduled = false,
+    this.resumesAt,
   });
 
   bool get isCancelled => stage == 'cancelled';
@@ -228,6 +248,8 @@ class OrderProgress {
       remainingItems: _int(json['remaining_items']),
       isActive: json['is_active'] != false,
       canMarkReceived: json['can_mark_received'] == true,
+      isScheduled: json['is_scheduled'] == true,
+      resumesAt: json['resumes_at']?.toString(),
     );
   }
 }

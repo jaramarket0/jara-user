@@ -15,6 +15,11 @@ CheckoutController checkoutController = Get.find<CheckoutController>();
 
 class CheckoutButtonPaystack extends StatelessWidget {
   final void Function(UserLocation location) onLocationDetected;
+
+  /// Fired once the customer has entered an address manually. The address is
+  /// saved on another screen, so checkout has to be told to re-read it -
+  /// otherwise the card keeps showing whatever it was built with.
+  final Future<void> Function()? onAddressChanged;
   final String title;
   final double amount;
   final Color? color;
@@ -28,6 +33,7 @@ class CheckoutButtonPaystack extends StatelessWidget {
       this.color,
       required this.address,
       required this.onLocationDetected,
+      this.onAddressChanged,
       required this.audio});
 
   @override
@@ -97,8 +103,9 @@ class CheckoutButtonPaystack extends StatelessWidget {
                           backgroundColor: Colors.red,
                           colorText: Colors.white,
                         );
-                        Get.to(() => CheckoutAddressChangeScreen(),
+                        await Get.to(() => CheckoutAddressChangeScreen(),
                             arguments: {'isFromProfile': true});
+                        await onAddressChanged?.call();
                         return;
                       }
 
@@ -109,10 +116,11 @@ class CheckoutButtonPaystack extends StatelessWidget {
                       await checkoutController.createOrder(audio);
                       //if (success && context.mounted) Get.back();
                     },
-                    onCancel: () {
+                    onCancel: () async {
                       Navigator.pop(context); // Close the dialog
-                      Get.to(() => CheckoutAddressChangeScreen(),
+                      await Get.to(() => CheckoutAddressChangeScreen(),
                           arguments: {'isFromProfile': true});
+                      await onAddressChanged?.call();
                     },
                   );
                 }

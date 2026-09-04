@@ -56,7 +56,49 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  /// Meal Plan is the one tab with nothing behind it yet.
+  static const int _mealPlanTabIndex = 1;
+
+  /// Explains that Meal Plan isn't ready instead of opening an unfinished
+  /// screen. Neither the barrier nor the back button closes it, so it can
+  /// only go away through its own button.
+  Future<void> _showMealPlanComingSoon() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Coming Soon',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          content: const Text(
+            'AI Meal Plan isn\'t ready just yet. We\'ll let you know as soon '
+            'as it is.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFFFAA00)),
+              child: const Text('Got it'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _onTabTapped(int index) {
+    if (index == _mealPlanTabIndex) {
+      // Leave the selection where it was so the customer stays on whatever
+      // they were looking at rather than landing on an empty tab.
+      _showMealPlanComingSoon();
+      return;
+    }
     if (_currentIndex != index) {
       setState(() {
         _currentIndex = index;

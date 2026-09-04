@@ -246,6 +246,45 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             _statusSubtitle(),
             style: const TextStyle(fontSize: 13, color: Color(0xFF888888)),
           ),
+          // Paused orders sit on "Placed" doing nothing until markets reopen.
+          // Say why, rather than leaving the tracker looking stuck.
+          if (_order.progress?.isScheduled == true) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8E7),
+                border: Border.all(color: const Color(0xFFFFE0A3)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.bedtime_outlined,
+                      size: 18, color: Color(0xFFB07400)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Shopping starts later',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFB07400))),
+                        const SizedBox(height: 2),
+                        Text(
+                          _resumeMessage(),
+                          style: const TextStyle(
+                              fontSize: 12, height: 1.4, color: Color(0xFF5C4300)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (_order.status.toLowerCase() != 'cancelled') ...[
             const SizedBox(height: 20),
             _buildTracker(),
@@ -253,6 +292,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ],
       ),
     );
+  }
+
+  /// Reads the server-sent resume time. The backend owns the schedule, so the
+  /// app never computes the window itself.
+  String _resumeMessage() {
+    final raw = _order.progress?.resumesAt;
+    if (raw == null || raw.isEmpty) {
+      return 'Markets are closed right now. Your order will be sent to vendors '
+          'when they reopen.';
+    }
+    try {
+      final at = DateTime.parse(raw).toLocal();
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final thatDay = DateTime(at.year, at.month, at.day);
+      final days = thatDay.difference(today).inDays;
+      final when = days <= 0
+          ? 'today'
+          : days == 1
+              ? 'tomorrow'
+              : 'on ${_formatDate(raw)}';
+      final hour12 = at.hour % 12 == 0 ? 12 : at.hour % 12;
+      final period = at.hour < 12 ? 'am' : 'pm';
+      final minute = at.minute.toString().padLeft(2, '0');
+      return 'Markets are closed right now. We\'ll send your order to vendors '
+          '$when at $hour12:$minute$period.';
+    } catch (_) {
+      return 'Markets are closed right now. Your order will be sent to vendors '
+          'when they reopen.';
+    }
   }
 
   String _statusSubtitle() {
@@ -723,6 +792,62 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  /// Drop an unavailable item rather than swapping it. The refund is the
+  /// line amount plus any service-fee difference, so the amount is only
+  /// known server-side -- the dialog promises "refunded", not a figure.
+  Future<void> _confirmForgo(OrderItem item) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Remove this item?'),
+        content: Text(
+          '${item.displayName} will be removed from your order and refunded '
+          'to your wallet.\n\nThe rest of your order continues as normal.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Keep it')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F)),
+            child: const Text('Remove & refund'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      final res = await _api.forgoOrderItem(item.id);
+      final body = jsonDecode(res.body);
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final data = body['data']?['order'];
+        if (data is Map<String, dynamic> && mounted) {
+          setState(() => _order = OrderData.fromJson(data));
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(body['message']?.toString() ?? 'Item removed.'),
+            backgroundColor: const Color(0xFF4CAF50),
+          ));
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(body['message']?.toString() ?? 'Could not remove item.'),
+          backgroundColor: const Color(0xFFF44336),
+        ));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Network error — please try again.'),
+          backgroundColor: Color(0xFFF44336),
+        ));
+      }
+    }
+  }
+
   static int _int(dynamic v) =>
       v is int ? v : int.tryParse(v?.toString() ?? '0') ?? 0;
 
@@ -767,6 +892,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             item: item,
             isLast: i == _order.items.length - 1,
             onReplace: item.isUnavailable ? () => _openReplaceSheet(item) : null,
+            onForgo: item.isUnavailable ? () => _confirmForgo(item) : null,
           );
         }),
       ),
@@ -905,8 +1031,32 @@ class _ItemRow extends StatelessWidget {
   final OrderItem item;
   final bool isLast;
   final VoidCallback? onReplace;
+  final VoidCallback? onForgo;
 
-  const _ItemRow({required this.item, this.isLast = false, this.onReplace});
+  const _ItemRow({required this.item, this.isLast = false, this.onReplace,
+      this.onForgo});
+
+  /// Says how long is left to act. The window is short and the backend drops
+  /// the item when it expires, so the customer needs the deadline, not just
+  /// the fact that something went wrong.
+  String _unavailableNotice(OrderItem item) {
+    const base = 'Unavailable — no market near you can supply this.';
+    final raw = item.replaceDeadline;
+    if (raw == null || raw.isEmpty) return base;
+    try {
+      final left = DateTime.parse(raw).toLocal().difference(DateTime.now());
+      if (left.isNegative) {
+        return '$base Being removed and refunded now.';
+      }
+      final mins = left.inMinutes;
+      final when = mins >= 1
+          ? '$mins minute${mins == 1 ? '' : 's'}'
+          : '${left.inSeconds} second${left.inSeconds == 1 ? '' : 's'}';
+      return '$base Replace within $when or we\'ll refund it automatically.';
+    } catch (_) {
+      return base;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -918,6 +1068,7 @@ class _ItemRow extends StatelessWidget {
     final price = double.tryParse(item.price) ?? 0;
 
     final unavailable = item.isUnavailable;
+    final forgone = item.isForgone;
 
     return Column(
       children: [
@@ -945,10 +1096,18 @@ class _ItemRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(name,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF212429))),
+                            decoration:
+                                forgone ? TextDecoration.lineThrough : null,
+                            color: forgone
+                                ? const Color(0xFF9E9E9E)
+                                : const Color(0xFF212429))),
+                    if (forgone)
+                      const Text('Removed — refunded to your wallet',
+                          style: TextStyle(
+                              fontSize: 11, color: Color(0xFF9E9E9E))),
                     Text(
                       '₦${price.toStringAsFixed(2)} × ${item.quantity}${item.unit != null ? ' ${item.unit}' : ''}',
                       style: const TextStyle(
@@ -959,10 +1118,13 @@ class _ItemRow extends StatelessWidget {
               ),
               Text(
                 '₦${amount.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF212429)),
+                    decoration: forgone ? TextDecoration.lineThrough : null,
+                    color: forgone
+                        ? const Color(0xFF9E9E9E)
+                        : const Color(0xFF212429)),
               ),
             ],
           ),
@@ -973,10 +1135,10 @@ class _ItemRow extends StatelessWidget {
                     const Icon(Icons.error_outline,
                         size: 15, color: Color(0xFFF44336)),
                     const SizedBox(width: 6),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Unavailable — no market near you can supply this.',
-                        style: TextStyle(
+                        _unavailableNotice(item),
+                        style: const TextStyle(
                             fontSize: 11.5,
                             color: Color(0xFFD32F2F),
                             height: 1.3),
@@ -985,22 +1147,45 @@ class _ItemRow extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: onReplace,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFD32F2F),
-                      side: const BorderSide(color: Color(0xFFF44336)),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9)),
+                // Two ways out of a dead end: swap it, or drop it and take
+                // the money back. Replace leads, since keeping the order
+                // whole is usually what the customer wants.
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: onReplace,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFD32F2F),
+                          side: const BorderSide(color: Color(0xFFF44336)),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9)),
+                        ),
+                        icon: const Icon(Icons.swap_horiz_rounded, size: 17),
+                        label: const Text('Replace',
+                            style: TextStyle(
+                                fontSize: 12.5, fontWeight: FontWeight.w700)),
+                      ),
                     ),
-                    icon: const Icon(Icons.swap_horiz_rounded, size: 17),
-                    label: const Text('Replace this item',
-                        style: TextStyle(
-                            fontSize: 12.5, fontWeight: FontWeight.w700)),
-                  ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: onForgo,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF757575),
+                          side: const BorderSide(color: Color(0xFFBDBDBD)),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9)),
+                        ),
+                        icon: const Icon(Icons.remove_circle_outline, size: 17),
+                        label: const Text('Forgo',
+                            style: TextStyle(
+                                fontSize: 12.5, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ],
