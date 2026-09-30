@@ -1,9 +1,7 @@
 // lib/screens/auth/login_screen.dart
-import 'dart:io' show Platform;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:jara_market/config/auth_service.dart';
 import 'package:jara_market/screens/login_screen/controller/login_controller.dart';
 import 'package:jara_market/screens/signup_screen/signup_screen.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
@@ -13,7 +11,7 @@ import '../../services/api_service.dart';
 // import '../home_screen/home_screen.dart';
 import '../forget_password_screen/forget_password_screen.dart';
 import '../../widgets/custom_text_field.dart';
-import '../../widgets/social_button.dart';
+import '../../widgets/social_auth_buttons.dart';
 //import 'package:jara_market/screens/email_verification/email_verification.dart'; // Import EmailVerificationScreen
 
 LoginController controller = Get.put(LoginController());
@@ -141,7 +139,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    AuthController authController = Get.find<AuthController>();
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -235,31 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  if (Platform.isIOS)
-                    Obx(() => SocialButton(
-                          icon: Icons.apple,
-                          isLoading:
-                              authController.loadingProvider.value == 'apple',
-                          enabled:
-                              authController.loadingProvider.value.isEmpty,
-                          onPressed: authController.loginWithApple,
-                        )),
-                  Obx(() => SocialButton(
-                        icon: Icons.g_mobiledata,
-                        isLoading:
-                            authController.loadingProvider.value == 'google',
-                        enabled: authController.loadingProvider.value.isEmpty,
-                        onPressed: authController.loginWithGoogle,
-                      )),
-                  SocialButton(
-                    icon: Icons.facebook,
-                    onPressed: () {},
-                  ),
-                ],
-              ),
+              const SocialAuthButtons(),
               const SizedBox(height: 40),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -267,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text("I don't have an account?"),
                   TextButton(
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const SignupScreen()),

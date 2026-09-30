@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer' as myLog;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:jara_market/utils/guest_guard.dart';
 import 'package:jara_market/services/api_service.dart';
 
 ApiService _apiService = ApiService(Duration(seconds: 60 * 5));
@@ -95,7 +96,7 @@ Future<void> resendOtp(Map<String, String> resendData) async {
         ScaffoldMessenger.of(Get.context!).showSnackBar(
           SnackBar(content: Text('Success: \n${message}'),backgroundColor: Colors.green,),
         );
-        Get.offAllNamed('/login_screen');
+        openLoginOverHome();
         
       } else {
         var  responseBody = jsonDecode(response.body);
@@ -141,7 +142,7 @@ Future<void> resendOtp(Map<String, String> resendData) async {
         ScaffoldMessenger.of(Get.context!).showSnackBar(
           SnackBar(content: Text('Success: \n${message}'),backgroundColor: Colors.green,),
         );
-        Get.offAllNamed('/login_screen');
+        openLoginOverHome();
         
       } else {
         var  responseBody = jsonDecode(response.body);

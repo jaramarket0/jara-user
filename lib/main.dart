@@ -18,6 +18,7 @@ import 'package:overlay_kit/overlay_kit.dart';
 import 'dart:developer' as myLog;
 
 import 'package:jara_market/services/push_navigation.dart';
+import 'package:jara_market/utils/guest_guard.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 // import 'screens/splash/splash_screen.dart';
 // 'https://github.com/DANIEL-EKWERE/jara-customer.git/'
@@ -312,6 +313,7 @@ void main() async {
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   DataBase dataBase = Get.put(DataBase());
   var token = await dataBase.getToken();
+  Session.isGuest.value = token.isEmpty;
   String initialRoute = token.isNotEmpty ? '/main_screen' : '/splash_screen';
   runApp(MyApp(initialRoute: initialRoute));
 

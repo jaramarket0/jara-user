@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jara_market/utils/guest_guard.dart';
 
 //DataBase dataBase = Get.put(DataBase());
 
@@ -159,6 +160,7 @@ class DataBase extends GetxController {
   saveToken(String token) async {
     SharedPreferences sharedPreferences = await _pref;
     await sharedPreferences.setString('token', token);
+    Session.isGuest.value = token.isEmpty;
 
     return true;
   }
@@ -177,7 +179,8 @@ class DataBase extends GetxController {
     // await sharedPreferences.remove('refreshToken');
     // await sharedPreferences.remove('userName');
     // await sharedPreferences.remove('email');
-    sharedPreferences.clear(); // Clears all keys and values from SharedPreferences
+    await sharedPreferences.clear(); // Clears all keys and values from SharedPreferences
+    Session.isGuest.value = true;
     // Remove any other session-related keys as needed
 
     return true;
@@ -1083,7 +1086,8 @@ class DataBase extends GetxController {
     // _isLoading = true;
 
     final sharedPreferences = await _pref;
-    sharedPreferences.clear();
+    await sharedPreferences.clear();
+    Session.isGuest.value = true;
 
     // _isLoading = false;
     // _reqMessage = 'Log Out Successfull';

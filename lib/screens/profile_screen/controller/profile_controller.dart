@@ -1,5 +1,4 @@
 import 'package:alert_info/alert_info.dart';
-import 'package:jara_market/screens/splash/onboarding_screen.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart';
 import 'package:http_parser/http_parser.dart';
@@ -7,6 +6,7 @@ import 'dart:developer' as myLog;
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:jara_market/config/routes.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
 import 'package:jara_market/screens/profile_screen/models/model.dart';
@@ -224,7 +224,7 @@ class ProfileController extends GetxController {
       myLog.log('Logout API call failed: $e');
     }
     await dataBase.logOut();
-    Get.offAll(() => OnboardingScreen());
+    Get.offAllNamed(AppRoutes.mainScreen);
     Get.snackbar('Logged Out', 'You have been logged out successfully.',
         backgroundColor: const Color(0xFF22C55E), colorText: Colors.white);
   }

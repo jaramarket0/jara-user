@@ -5,6 +5,7 @@ import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart'
 import 'package:jara_market/screens/home_screen/controller/home_controller.dart';
 import 'package:jara_market/screens/main_screen/controller/main_controller.dart';
 import 'package:jara_market/screens/orders_screen/orders_screen.dart';
+import 'package:jara_market/utils/guest_guard.dart';
 import '../../widgets/custom_bottom_nav.dart';
 import '../home_screen/home_screen.dart';
 import '../favorites_screen/favorites_screen.dart';
@@ -29,6 +30,7 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     controller.fetchFoodCategoriesByCondition();
     cartController = Get.find<CartController>();
+    Session.refresh();
     //controller.fetchFoods();
   }
 
@@ -40,6 +42,9 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   Widget _getCurrentScreen() {
+    // Read up front so the surrounding Obx always has a dependency, whatever
+    // tab is showing.
+    final isGuest = Session.isGuest.value;
     switch (_currentIndex) {
       case 0:
         return const HomeScreen();
@@ -48,9 +53,21 @@ class _MainScreenState extends State<MainScreen> {
       case 2:
         return const CartScreen();
       case 3:
-        return const OrdersScreen();
+        return isGuest
+            ? const GuestPlaceholder(
+                title: 'Your Orders',
+                message: 'Sign in to place orders and track your deliveries.',
+                icon: Icons.receipt_long_outlined,
+              )
+            : const OrdersScreen();
       case 4:
-        return const ProfileScreen();
+        return isGuest
+            ? const GuestPlaceholder(
+                title: 'Your Profile',
+                message:
+                    'Sign in to manage your profile, wallet, addresses and favorites.',
+              )
+            : const ProfileScreen();
       default:
         return const HomeScreen();
     }
@@ -119,7 +136,7 @@ class _MainScreenState extends State<MainScreen> {
         return true;
       },
       child: Scaffold(
-        body: _getCurrentScreen(),
+        body: Obx(() => _getCurrentScreen()),
         bottomNavigationBar: CustomBottomNav(
           currentIndex: _currentIndex,
           onTap: _onTabTapped,

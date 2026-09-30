@@ -18,6 +18,17 @@ class AuthHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    // Guests have no token, so callers build `Bearer ` (or `Bearer null`).
+    // The backend rejects that outright even on public endpoints, so drop
+    // the header and let the request go out anonymously.
+    final auth = request.headers['Authorization'];
+    if (auth != null) {
+      final token = auth.replaceFirst(RegExp(r'^Bearer\s*'), '').trim();
+      if (token.isEmpty || token == 'null') {
+        request.headers.remove('Authorization');
+      }
+    }
+
     final response = await _inner.send(request);
 
     if (response.statusCode == 401 &&

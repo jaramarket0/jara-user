@@ -1550,6 +1550,7 @@ import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.d
 import 'package:jara_market/screens/home_screen/models/advertisement_model.dart';
 import 'package:jara_market/widgets/custom_button.dart';
 import 'package:jara_market/widgets/custom_image_view.dart';
+import 'package:jara_market/utils/guest_guard.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 import '../soup_list_screen/soup_list_screen.dart';
@@ -2154,10 +2155,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController.addListener(_onSearchChanged);
     controller1.fetchStates();
     getState();
-    walletController.fetchWallet();
+    // Wallet and the PIN/wallet welcome tips only apply to signed-in users.
+    if (!Session.isGuest.value) {
+      walletController.fetchWallet();
+      _maybeShowWelcomeDialog();
+    }
     setLGA();
     carouselController = CarouselSliderController();
-    _maybeShowWelcomeDialog();
   }
 
   Future<void> _maybeShowWelcomeDialog() async {
@@ -2335,7 +2339,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               //   },
                               //   child: 
                                 Text(
-                                  'Hello ${name ?? "User"},',
+                                  Session.isGuest.value
+                                      ? 'Hello Guest,'
+                                      : 'Hello ${name ?? "User"},',
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -2346,6 +2352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           // Wallet Balance
+                          if (!Session.isGuest.value)
                           GestureDetector(
                             onTap: () {
                               Navigator.push(

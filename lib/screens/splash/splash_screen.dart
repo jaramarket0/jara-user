@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
 import 'dart:async';
-import 'onboarding_screen.dart';
+import 'package:jara_market/config/routes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
       //   context,
       //   MaterialPageRoute(builder: (context) => const OnboardingScreen()),
       // ),
-      () => Get.offAll(() => const OnboardingScreen()),
+      () => Get.offAllNamed(AppRoutes.mainScreen),
     );
 
   }

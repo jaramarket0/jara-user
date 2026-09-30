@@ -52,6 +52,10 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Jara Market needs access to your photo library so you can choose a profile picture or attach images to support requests.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Jara Market needs access to your camera so you can take a profile picture.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>This app needs access to your microphone to record voice notes.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>

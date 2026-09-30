@@ -6,6 +6,7 @@ import 'package:jara_market/screens/cart_screen/models/models.dart';
 import 'package:jara_market/screens/checkout_screen/checkout_flow.dart';
 import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
 import 'package:jara_market/screens/wallet_screen/models/models.dart';
+import 'package:jara_market/utils/guest_guard.dart';
 import '../../screens/checkout_screen/checkout_screen.dart';
 // import '../../models/cart_item.dart';
 
@@ -43,6 +44,10 @@ class _CheckoutButtonState extends State<CheckoutButton> {
       child: ElevatedButton(
         onPressed: widget.isEnabled
             ? () async {
+                if (!await requireAccount(context,
+                    message: 'Sign in or create an account to place your order.')) {
+                  return;
+                }
                 //  Navigate to the CheckoutScreen
                 var checkoutAddress = await controller.getCheckoutAddress();
                 var balance = await walletController.fetchBalance();

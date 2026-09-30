@@ -1,5 +1,6 @@
 // lib/screens/soup_list_screen.dart
 import 'package:flutter/material.dart';
+import 'package:jara_market/utils/guest_guard.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/screens/egusi_soup_detail_screen/egusi_soup_detail_screen.dart';
 import 'package:jara_market/screens/home_screen/models/models.dart';
@@ -54,6 +55,10 @@ class _SoupListScreenState extends State<SoupListScreen> {
   }
 
   Future<void> _toggleFavorite(int productId, bool isCurrentlyFavorite) async {
+    if (!await requireAccount(context,
+        message: 'Sign in or create an account to save favorites.')) {
+      return;
+    }
     try {
       if (isCurrentlyFavorite) {
         final favorite = _favorites.firstWhere(

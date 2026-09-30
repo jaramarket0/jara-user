@@ -288,8 +288,8 @@ class AuthController extends GetxController {
       isLoggedIn.value = false;
       isLoading.value = false;
 
-      // 3. Kick user out back to the authentication portal
-      Get.offAllNamed('/login_screen');
+      // 3. Back to browsing signed out
+      Get.offAllNamed('/main_screen');
     } catch (e) {
       isLoading.value = false;
       errorMessage.value = 'Error logging out: $e';

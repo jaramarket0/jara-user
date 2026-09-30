@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/page_indicator.dart';
-import 'package:jara_market/screens/login_screen/login_screen.dart';
+import 'package:jara_market/utils/guest_guard.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -97,10 +97,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     children: [
                       TextButton(
                         onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginScreen()),
-                          );
+                          Get.offAllNamed('/main_screen');
                         },
                         child: const Text(
                           'Skip',
@@ -122,7 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             //   context,
                             //   MaterialPageRoute(builder: (context) => const LoginScreen()),
                             // );
-                            Get.offAllNamed('/signup_screen');
+                            Get.offAllNamed('/main_screen');
                           }
                         },
                         child: Text(
@@ -153,7 +150,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           //   context,
                           //   MaterialPageRoute(builder: (context) => const LoginScreen()),
                           // );
-                           Get.offAllNamed('/login_screen');
+                           openLoginOverHome();
                         },
                         borderRadius: BorderRadius.circular(28),
                         child: Padding(

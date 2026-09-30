@@ -10,6 +10,7 @@ import 'package:jara_market/config/local_storage.dart';
 import 'package:jara_market/config/routes.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
 import 'package:jara_market/services/auth_http_client.dart';
+import 'package:jara_market/utils/guest_guard.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const API_TIMEOUT_INT_SECONDS = 60 * 5;
@@ -1821,7 +1822,7 @@ final AuthHttpClient authHttpClient = AuthHttpClient(
   onUnauthenticated: () async {
     await dataBase.clearAuthSession();
     if (Get.currentRoute != AppRoutes.loginScreen) {
-      Get.offAllNamed(AppRoutes.loginScreen);
+      openLoginOverHome();
       Get.snackbar('Session expired', 'Please log in again to continue.');
     }
   },
