@@ -2,6 +2,7 @@ import 'package:alert_info/alert_info.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart';
 import 'package:http_parser/http_parser.dart';
+import 'dart:convert';
 import 'dart:developer' as myLog;
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -224,9 +225,48 @@ class ProfileController extends GetxController {
       myLog.log('Logout API call failed: $e');
     }
     await dataBase.logOut();
+    _clearProfile();
     Get.offAllNamed(AppRoutes.mainScreen);
     Get.snackbar('Logged Out', 'You have been logged out successfully.',
         backgroundColor: const Color(0xFF22C55E), colorText: Colors.white);
+  }
+
+  /// Drops the cached profile so the next account to sign in fetches its
+  /// own instead of seeing the previous one's.
+  void _clearProfile() {
+    profileModel = ProfileModel(status: false, message: '', data: ProfileData());
+    data = ProfileData();
+    file1.value = null;
+    isToUpdate.value = false;
+  }
+
+  RxBool isDeletingAccount = false.obs;
+
+  Future<void> deleteAccount() async {
+    if (isDeletingAccount.value) return;
+    isDeletingAccount.value = true;
+    try {
+      final response = await apiService.deleteAccount();
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await dataBase.logOut();
+        _clearProfile();
+        Get.offAllNamed(AppRoutes.mainScreen);
+        Get.snackbar('Account Deleted',
+            'Your account and personal data have been deleted.',
+            backgroundColor: const Color(0xFF22C55E), colorText: Colors.white);
+      } else {
+        String message = 'Could not delete your account. Please try again.';
+        try {
+          message = jsonDecode(response.body)['message'] ?? message;
+        } catch (_) {}
+        _safeSnackbar('Error', message);
+      }
+    } catch (e) {
+      myLog.log('Delete account failed: $e');
+      _safeSnackbar('Error', 'Could not delete your account. Please try again.');
+    } finally {
+      isDeletingAccount.value = false;
+    }
   }
 
   // PIN Management Methods

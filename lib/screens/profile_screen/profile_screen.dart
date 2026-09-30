@@ -763,7 +763,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           //
                                         ],
                                       ),
-                                    )
+                                    ),
+                                    const SizedBox(height: 16),
+                                    GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: _showDeleteAccountDialog,
+                                      child: Row(
+                                        children: const [
+                                          Icon(Icons.delete_forever_outlined,
+                                              size: 20, color: Colors.red),
+                                          SizedBox(width: 5),
+                                          Text('Delete Account',
+                                              style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontFamily: 'Mont',
+                                                  color: Colors.red,
+                                                  fontWeight: FontWeight.w600)),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -775,6 +793,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   );
       }))),
+    );
+  }
+
+  /// Two-step confirmation: explain what is lost, then have them type
+  /// DELETE so it can't happen from a stray tap.
+  void _showDeleteAccountDialog() {
+    final confirmController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          final confirmed = confirmController.text.trim() == 'DELETE';
+          return AlertDialog(
+            title: const Text('Delete Account',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'This permanently deletes your Jara Market account and '
+                    'personal details, saved addresses, favorites and support '
+                    'tickets. Any wallet balance will be forfeited. This '
+                    'cannot be undone.',
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Type DELETE to confirm.',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: confirmController,
+                    autocorrect: false,
+                    textCapitalization: TextCapitalization.characters,
+                    onChanged: (_) => setDialogState(() {}),
+                    decoration: const InputDecoration(
+                      hintText: 'DELETE',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel',
+                    style: TextStyle(color: Colors.black)),
+              ),
+              Obx(() => TextButton(
+                    onPressed: confirmed && !controller.isDeletingAccount.value
+                        ? () async {
+                            await controller.deleteAccount();
+                            // On success the route stack is already reset.
+                            if (dialogContext.mounted &&
+                                Navigator.canPop(dialogContext)) {
+                              Navigator.pop(dialogContext);
+                            }
+                          }
+                        : null,
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    child: controller.isDeletingAccount.value
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.red))
+                        : const Text('Delete Account'),
+                  )),
+            ],
+          );
+        },
+      ),
     );
   }
 

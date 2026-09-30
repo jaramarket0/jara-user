@@ -1384,6 +1384,25 @@ class ApiService extends GetConnect {
     return response;
   }
 
+  /// Permanently deletes the signed-in customer's account.
+  Future<http.Response> deleteAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('$baseUrl/delete-account');
+    _logRequest('POST', url);
+    final response = await authHttpClient.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    _logResponse(response);
+    return response;
+  }
+
   getCheckoutData(Map<String, dynamic> checkoutData) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
