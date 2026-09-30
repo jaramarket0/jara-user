@@ -6,7 +6,11 @@ import '../../widgets/password_input.dart';
 //import '../login_screen/login_screen.dart';
 //import 'package:jara_market/services/api_service.dart'; // Import ApiService
 
-NewPasswordController controller = Get.put(NewPasswordController());
+// A getter, not a variable: GetX deletes this controller (disposing its text
+// fields) when the screen closes, so every visit must fetch the live one.
+NewPasswordController get controller => Get.isRegistered<NewPasswordController>()
+    ? Get.find<NewPasswordController>()
+    : Get.put(NewPasswordController());
 
 class NewPasswordScreen extends StatefulWidget {
   final String? email; // Make email optional but needed for password reset

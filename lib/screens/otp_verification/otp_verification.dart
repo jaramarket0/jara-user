@@ -8,7 +8,11 @@ import '../../widgets/countdown_timer.dart';
 import '../new_password_screen/new_password_screen.dart';
 import 'package:jara_market/services/api_service.dart';
 
-OtpVerificationController controller = Get.put(OtpVerificationController());
+// A getter, not a variable: GetX deletes this controller (disposing its text
+// fields) when the screen closes, so every visit must fetch the live one.
+OtpVerificationController get controller => Get.isRegistered<OtpVerificationController>()
+    ? Get.find<OtpVerificationController>()
+    : Get.put(OtpVerificationController());
 
 class OTPVerificationScreen extends StatefulWidget {
   final String email;

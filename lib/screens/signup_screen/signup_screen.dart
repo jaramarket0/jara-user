@@ -14,7 +14,11 @@ import '../../widgets/custom_text_field.dart';
 // import '../email_verification/email_verification.dart';
 import '../../widgets/social_auth_buttons.dart';
 
-SignupController controller = Get.put(SignupController());
+// A getter, not a variable: GetX deletes this controller (disposing its text
+// fields) when the screen closes, so every visit must fetch the live one.
+SignupController get controller => Get.isRegistered<SignupController>()
+    ? Get.find<SignupController>()
+    : Get.put(SignupController());
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);
@@ -112,16 +116,31 @@ class _SignupScreenState extends State<SignupScreen> {
     });
   }
 
+  // The instance these listeners were attached to, so dispose removes them
+  // from the same one even if GetX has already swapped it out.
+  late final SignupController _form;
+
   @override
   void initState() {
     super.initState();
-    controller.firstNameController.addListener(_validateForm);
-    controller.lastNameController.addListener(_validateForm);
-    controller.emailController.addListener(_validateForm);
-    controller.passwordController.addListener(_validateForm);
+    _form = controller;
+    _form.firstNameController.addListener(_validateForm);
+    _form.lastNameController.addListener(_validateForm);
+    _form.emailController.addListener(_validateForm);
+    _form.passwordController.addListener(_validateForm);
+  }
+
+  @override
+  void dispose() {
+    _form.firstNameController.removeListener(_validateForm);
+    _form.lastNameController.removeListener(_validateForm);
+    _form.emailController.removeListener(_validateForm);
+    _form.passwordController.removeListener(_validateForm);
+    super.dispose();
   }
 
   void _validateForm() {
+    if (!mounted) return;
     final firstName = controller.firstNameController.text;
     final lastName = controller.lastNameController.text;
     final email = controller.emailController.text;

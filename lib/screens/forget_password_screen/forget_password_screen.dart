@@ -6,7 +6,11 @@ import '../otp_verification/otp_verification.dart';
 import '../../widgets/customized_text_field.dart';
 import 'package:jara_market/services/api_service.dart'; // Import ApiService
 
-ForgetPasswordController controller = Get.put(ForgetPasswordController());
+// A getter, not a variable: GetX deletes this controller (disposing its text
+// fields) when the screen closes, so every visit must fetch the live one.
+ForgetPasswordController get controller => Get.isRegistered<ForgetPasswordController>()
+    ? Get.find<ForgetPasswordController>()
+    : Get.put(ForgetPasswordController());
 
 class ForgetPasswordScreen extends StatefulWidget {
   const ForgetPasswordScreen({Key? key}) : super(key: key);

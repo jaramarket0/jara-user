@@ -14,7 +14,11 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/social_auth_buttons.dart';
 //import 'package:jara_market/screens/email_verification/email_verification.dart'; // Import EmailVerificationScreen
 
-LoginController controller = Get.put(LoginController());
+// A getter, not a variable: GetX deletes this controller (disposing its text
+// fields) when the screen closes, so every visit must fetch the live one.
+LoginController get controller => Get.isRegistered<LoginController>()
+    ? Get.find<LoginController>()
+    : Get.put(LoginController());
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -33,14 +37,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final _formKey = GlobalKey<FormState>();
 
+  // The instance these listeners were attached to, so dispose removes them
+  // from the same one even if GetX has already swapped it out.
+  late final LoginController _form;
+
   @override
   void initState() {
     super.initState();
-    controller.emailController.addListener(_validateForm);
-    controller.passwordController.addListener(_validateForm);
+    _form = controller;
+    _form.emailController.addListener(_validateForm);
+    _form.passwordController.addListener(_validateForm);
+  }
+
+  @override
+  void dispose() {
+    _form.emailController.removeListener(_validateForm);
+    _form.passwordController.removeListener(_validateForm);
+    super.dispose();
   }
 
   void _validateForm() {
+    if (!mounted) return;
     final email = controller.emailController.text;
     final password = controller.passwordController.text;
     final emailValid = RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
