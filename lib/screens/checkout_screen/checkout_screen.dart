@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as myLog;
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/config/routes.dart';
+import 'package:jara_market/screens/add_money_screen/add_money_screen.dart';
+import 'package:jara_market/screens/profile_screen/pinScreen.dart';
+import 'package:jara_market/services/api_service.dart';
 import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart';
 import 'package:jara_market/screens/checkout_screen/controller/checkout_controller.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
@@ -395,25 +399,119 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-  void _showInsufficientBalanceDialog() {
-    Get.defaultDialog(
-      title: 'Insufficient Balance',
-      titleStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
-      content: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-        child: Text(
-          'Your wallet balance of ₦${widget.balance.toStringAsFixed(2)} is not enough to cover this order of ₦${widget.totalAmount.toStringAsFixed(2)}. Please fund your wallet to continue.',
-          textAlign: TextAlign.center,
+  void _goFundWallet() {
+    // Straight into the funding flow. Dropping the customer on the wallet
+    // screen made them hunt for the button that solves the problem they were
+    // just told about.
+    Get.to(() => const AddMoneyScreen());
+  }
+
+  final ApiService _api = ApiService(const Duration(seconds: 30));
+
+  double get _shortfall => widget.totalAmount - widget.balance;
+
+  /// A transaction PIN is required before any order can be paid for. Returns
+  /// true when the customer already has one, or has just set one.
+  Future<bool> _ensureTransactionPin() async {
+    try {
+      final res = await _api.checkPinStatus();
+      final body = jsonDecode(res.body);
+      final hasPin = body['data']?['has_pin'] == true;
+      if (hasPin) return true;
+    } catch (_) {
+      // Can't confirm either way -- let checkout proceed rather than block a
+      // paying customer on a failed status call. The server still enforces.
+      return true;
+    }
+
+    final create = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Set a Transaction PIN'),
+        content: const Text(
+          'For your security, you need a 4-digit transaction PIN before you '
+          'can pay for an order. It takes a moment to set up.',
         ),
+        actions: [
+          TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Not now')),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFFFAA00)),
+            child: const Text('Set PIN'),
+          ),
+        ],
       ),
-      textConfirm: 'Fund Wallet',
-      confirmTextColor: Colors.white,
-      buttonColor: const Color(0xFFFFAA00),
-      textCancel: 'Cancel',
-      onConfirm: () {
-        Get.back(); // close the dialog
-        Get.toNamed(AppRoutes.walletScreen);
-      },
+    );
+    if (create != true) return false;
+
+    await Get.to(() => const SetPinScreen());
+    // Re-check rather than trusting the screen's exit: they may have backed out.
+    try {
+      final res = await _api.checkPinStatus();
+      return jsonDecode(res.body)['data']?['has_pin'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Widget _buildFundWalletCta() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF8E7),
+            border: Border.all(color: const Color(0xFFFFE0A3)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.account_balance_wallet_outlined,
+                  size: 18, color: Color(0xFFB07400)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Not enough in your wallet',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFB07400))),
+                    const SizedBox(height: 2),
+                    Text(
+                      'You need ₦${_shortfall.toStringAsFixed(2)} more to place '
+                      'this order. Your balance is '
+                      '₦${widget.balance.toStringAsFixed(2)}.',
+                      style: const TextStyle(
+                          fontSize: 12, height: 1.4, color: Color(0xFF5C4300)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _goFundWallet,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFAA00),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            icon: const Icon(Icons.add_card_rounded, size: 20),
+            label: const Text('Fund Wallet',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          ),
+        ),
+      ],
     );
   }
 
@@ -605,52 +703,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   //       print(result);
                   //       myLog.log(widget.orderAddress['state'].toString());
                   //     }),
+                  // Not enough in the wallet -> the only sensible action is
+                  // to top up, so that's the button we show. A disabled
+                  // "Insufficient Balance" button names the problem and
+                  // offers no way out of it.
                   (widget.balance < widget.totalAmount)
-                      ? GestureDetector(
-                          onTap: _showInsufficientBalanceDialog,
-                          child: AbsorbPointer(
-                            child: CheckoutButtonPaystack(
-                              onLocationDetected: (location) {
-                                // Auto-fill the address text field
-                                controller.selectedAddress.value =
-                                    location.fullAddress;
-
-                                // Auto-select state if your controller has a state field:
-                                // controller.selectedState1 = location.state;
-
-                                setState(() {}); // refresh UI
-                              },
-                              onAddressChanged: _reloadAddress,
-                              address: _selectedAddressText,
-                              audio: widget.path,
-                              color: Colors.grey[400],
-                              title: 'Insufficient Balance ${widget.balance}',
-                              amount: widget.totalAmount,
-                            ),
-                          ),
-                        )
+                      ? _buildFundWalletCta()
                       : Obx(() {
                           return CheckoutButtonPaystack(
                             onLocationDetected: (location) {
-                              // Auto-fill the address text field
                               controller.selectedAddress.value =
                                   location.fullAddress;
-
-                              // Auto-select state if your controller has a state field:
-                              // controller.selectedState1 = location.state;
-
-                              setState(() {}); // refresh UI
+                              setState(() {});
                             },
                             onAddressChanged: _reloadAddress,
                             address: _selectedAddressText,
-                            // != null
-                            //        ? widget.orderAddress['contact_address']
-                            //        : '${controller.selectedAddress},${controller.selectedState},${controller.selectedCountry}',
                             audio: widget.path,
                             title: controller.isLoading.value
                                 ? 'Initializing Payment...'
                                 : 'Check Out',
                             amount: widget.totalAmount,
+                            beforeCheckout: _ensureTransactionPin,
                           );
                         }),
                   const SizedBox(height: 24),

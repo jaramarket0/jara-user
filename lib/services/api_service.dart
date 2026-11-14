@@ -1478,6 +1478,24 @@ class ApiService extends GetConnect {
     return response;
   }
 
+  /// Whether this account has a transaction PIN yet. Plain auth only -- the
+  /// PIN-token header validatePIN() sends is for proving a PIN, not for
+  /// asking whether one exists.
+  Future<http.Response> checkPinStatus() async {
+    final token = await dataBase.getToken();
+    final url = Uri.parse('$baseUrl/pin/validate');
+    _logRequest('GET', url);
+    final response = await authHttpClient.get(
+      url,
+      headers: <String, String>{
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+    _logResponse(response);
+    return response;
+  }
+
   Future<http.Response> validatePIN() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';

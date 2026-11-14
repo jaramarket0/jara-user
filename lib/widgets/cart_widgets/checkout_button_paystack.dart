@@ -26,6 +26,10 @@ class CheckoutButtonPaystack extends StatelessWidget {
   final String? audio;
   final String? address;
 
+  /// Runs before the address dialog. Returning false aborts checkout -- used
+  /// to require a transaction PIN before any money moves.
+  final Future<bool> Function()? beforeCheckout;
+
   const CheckoutButtonPaystack(
       {super.key,
       required this.title,
@@ -34,6 +38,7 @@ class CheckoutButtonPaystack extends StatelessWidget {
       required this.address,
       required this.onLocationDetected,
       this.onAddressChanged,
+      this.beforeCheckout,
       required this.audio});
 
   @override
@@ -45,6 +50,7 @@ class CheckoutButtonPaystack extends StatelessWidget {
         onPressed: () async {
           myLog.log(address.toString());
           myLog.log(amount.toString());
+          if (beforeCheckout != null && !await beforeCheckout!()) return;
           // Navigate to the CheckoutScreen
           // Navigator.push(
           //   context,

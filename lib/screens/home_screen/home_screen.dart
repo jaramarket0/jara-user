@@ -20,7 +20,9 @@
 // import 'package:jara_market/screens/grains_screen/grains_screen.dart';
 // import 'package:jara_market/screens/home_screen/controller/home_controller.dart';
 // import 'package:jara_market/screens/main_screen/main_screen.dart';
-// import 'package:jara_market/screens/wallet_screen/wallet_screen.dart';
+// import 'package:jara_market/screens/add_money_screen/add_money_screen.dart';
+import 'package:jara_market/screens/add_money_screen/add_money_screen.dart';
+import 'package:jara_market/screens/wallet_screen/wallet_screen.dart';
 // import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
 // import 'package:jara_market/screens/wallet_screen/withdraw_screen.dart';
 // import 'package:jara_market/widgets/custom_button.dart';
@@ -2054,29 +2056,40 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
         decoration: BoxDecoration(
-          color: active
-              ? const Color(0xFFFF9800).withValues(alpha: 0.1)
-              : Colors.transparent,
+          color: active ? const Color(0xFFFF9800) : Colors.transparent,
           borderRadius: BorderRadius.circular(24),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFFF9800).withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 16,
-              color: active ? const Color(0xFFFF9800) : Colors.grey[700],
+              size: 18,
+              color: active ? Colors.white : const Color(0xFF616161),
             ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: active ? const Color(0xFFFF9800) : Colors.grey[700],
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13.5,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                  color: active ? Colors.white : const Color(0xFF616161),
+                ),
               ),
             ),
           ],
@@ -2088,10 +2101,26 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildShopModeToggle() {
     return Obx(() {
       final forOther = controller.isShoppingForSomeoneElse.value;
-      return Container(
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 4, bottom: 6),
+            child: Text(
+              "Who are you shopping for?",
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF616161),
+              ),
+            ),
+          ),
+          Container(
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Colors.grey[200],
           borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: const Color(0xFFE0E0E0)),
         ),
         padding: const EdgeInsets.all(4),
         child: Row(
@@ -2114,6 +2143,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+          ),
+        ],
       );
     });
   }
@@ -2352,31 +2383,36 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           // Wallet Balance
+                          // ITEM 7 — a 10%-tint chip reads as decoration, not
+                          // an action. Solid brand fill plus a "+" so funding
+                          // is one obvious tap from the landing screen.
                           if (!Session.isGuest.value)
                           GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const WalletScreen(),
-                                ),
-                              );
-                            },
+                            onTap: () => Get.to(() => const AddMoneyScreen()),
                             child: Container(
                               margin: const EdgeInsets.only(right: 8),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
+                                  horizontal: 12, vertical: 9),
                               decoration: BoxDecoration(
                                 shape: BoxShape.rectangle,
-                                borderRadius: BorderRadius.circular(20),
-                                color: Color(0xFFFF9800).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(22),
+                                color: const Color(0xFFFF9800),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFF9800)
+                                        .withValues(alpha: 0.35),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const Icon(
-                                    Icons.wallet,
-                                    size: 18,
-                                    color: Color(0xFFFF9800),
+                                    Icons.account_balance_wallet,
+                                    size: 17,
+                                    color: Colors.white,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -2387,10 +2423,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ? '₦${walletController.walletModel.data!.balance.toString().substring(0, 3)}K'
                                         : '₦${walletController.walletModel.data!.balance}',
                                     style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFFF9800),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
                                     ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.add,
+                                        size: 11, color: Color(0xFFFF9800)),
                                   ),
                                 ],
                               ),

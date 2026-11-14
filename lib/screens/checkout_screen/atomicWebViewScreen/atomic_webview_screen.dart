@@ -22,6 +22,52 @@ class _AtomicWebViewScreenState extends State<AtomicWebViewScreen> {
   InAppWebViewController? webViewController1;
   final String callback_url = "http://127.0.0.1:8000";
 
+  /// The callback URL can settle more than once; without this the success
+  /// dialog stacks on itself.
+  bool _handledSuccess = false;
+
+  void _showFundingSuccess() {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 24),
+            SizedBox(width: 8),
+            Text('Wallet funded', style: TextStyle(fontSize: 18)),
+          ],
+        ),
+        content: const Text(
+          'Your wallet has been topped up successfully. You can carry on '
+          'shopping right away.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.back();
+              Get.offAllNamed(AppRoutes.walletScreen);
+            },
+            child: const Text('View wallet'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              // offAll, not until: nothing in the funding stack is worth
+              // going back to.
+              Get.offAllNamed(AppRoutes.mainScreen);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFAA00),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Continue shopping'),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -67,22 +113,14 @@ class _AtomicWebViewScreenState extends State<AtomicWebViewScreen> {
         onLoadStop: (controller, url) {
           print("Loaded URL: $url");
           if (url.toString().startsWith(callback_url)) {
-            // Detected redirect to callback URL
-            Get.snackbar('Success', 'Wallet Funding Successful!!!',
-                colorText: Colors.white,
-                backgroundColor: Colors.green,
-                icon: Icon(
-                  Icons.check,
-                  color: Colors.white,
-                ));
+            // Funded. Popping back up the stack lands the customer in the
+            // funding flow they just finished, which reads as "it didn't
+            // work" -- so offer an explicit way onward instead.
+            if (_handledSuccess) return;   // onLoadStop can fire more than once
+            _handledSuccess = true;
             walletController.fetchWallet();
             walletController.fetchTransactions();
-            Get.until((route) => route.settings.name == AppRoutes.walletScreen
-                || route.isFirst);
-            // Navigator.pushReplacement(
-            //   context,
-            //   MaterialPageRoute(builder: (_) => const SuccessScreen()),
-            // );
+            _showFundingSuccess();
           }
         },
       ),
