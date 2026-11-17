@@ -22,6 +22,7 @@
 // import 'package:jara_market/screens/main_screen/main_screen.dart';
 // import 'package:jara_market/screens/add_money_screen/add_money_screen.dart';
 import 'package:jara_market/screens/add_money_screen/add_money_screen.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:jara_market/screens/wallet_screen/wallet_screen.dart';
 // import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
 // import 'package:jara_market/screens/wallet_screen/withdraw_screen.dart';
@@ -1525,7 +1526,6 @@ import 'package:jara_market/screens/wallet_screen/wallet_screen.dart';
 
 import 'dart:async';
 import 'dart:developer' as myLog;
-import 'package:alert_info/alert_info.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -1536,7 +1536,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:jara_market/screens/address_google/address_google.dart';
 import 'package:jara_market/screens/address_google/controller/address_google.dart';
-import 'package:jara_market/screens/cart_screen/models/models.dart';
 import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart';
 import 'package:jara_market/screens/checkout_address_change/models/lga_model.dart'
     as lga;
@@ -1545,6 +1544,7 @@ import 'package:jara_market/screens/egusi_soup_detail_screen/egusi_soup_detail_s
 import 'package:jara_market/screens/grains_screen/grains_screen.dart';
 import 'package:jara_market/screens/home_screen/confetti.dart';
 import 'package:jara_market/screens/home_screen/controller/home_controller.dart';
+import 'package:jara_market/screens/home_screen/widgets/shopping_type_sheet.dart';
 import 'package:jara_market/screens/main_screen/main_screen.dart';
 import 'package:jara_market/screens/profile_screen/pinScreen.dart';
 import 'package:jara_market/screens/wallet_screen/wallet_screen.dart';
@@ -1553,6 +1553,7 @@ import 'package:jara_market/screens/home_screen/models/advertisement_model.dart'
 import 'package:jara_market/widgets/custom_button.dart';
 import 'package:jara_market/widgets/custom_image_view.dart';
 import 'package:jara_market/utils/guest_guard.dart';
+import 'package:jara_market/utils/app_tour.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 import '../soup_list_screen/soup_list_screen.dart';
@@ -1575,7 +1576,6 @@ class _HomeScreenState extends State<HomeScreen> {
   late Map<String, dynamic> userData;
   bool isSet = false;
   int _currentIndex = 0;
-  int _quantity = 1;
   String state = '';
 
   final RefreshController _refreshController =
@@ -2087,7 +2087,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 13.5,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                  fontWeight: FontWeight.w800,
                   color: active ? Colors.white : const Color(0xFF616161),
                 ),
               ),
@@ -2096,6 +2096,114 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  /// Shown when the catalogue is withheld. Two very different causes share
+  /// this slot -- we can't see where you are, versus we don't serve where you
+  /// are -- and they need different headings and different buttons, because
+  /// the fix is different. The body copy comes from the server so the rule
+  /// and its wording stay in one place.
+  Widget _buildComingSoon() {
+    final needsLocation = controller.needsLocation.value;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 32, 20, 40),
+      child: Column(
+        children: [
+          Container(
+            width: 84,
+            height: 84,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3E0),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+                needsLocation
+                    ? Icons.my_location_outlined
+                    : Icons.location_off_outlined,
+                size: 38,
+                color: const Color(0xFFFF9800)),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            needsLocation ? 'Share your location' : 'Not in your area yet',
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF212429),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Obx(() => Text(
+                controller.coverageMessage.value.isNotEmpty
+                    ? controller.coverageMessage.value
+                    : "Jaramarket isn't available in your area just yet. "
+                        "We've taken note of your location and we'll be there soon.",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 13.5, height: 1.55, color: Color(0xFF666666)),
+              )),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: needsLocation
+                  ? _enableLocationAndRetry
+                  : () => _openLocationPicker(context,
+                      forSomeoneElse:
+                          controller.isShoppingForSomeoneElse.value),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF9800),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: Icon(
+                  needsLocation
+                      ? Icons.location_searching
+                      : Icons.edit_location_alt_outlined,
+                  size: 19),
+              label: Text(
+                  needsLocation ? 'Enable location' : 'Change my location',
+                  style: const TextStyle(
+                      fontSize: 14.5, fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Ask for location, cache it, and reload. A permanently denied permission
+  /// can only be fixed in the OS settings, so send them there rather than
+  /// looping on a request the system will never show again.
+  Future<void> _enableLocationAndRetry() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      await Geolocator.openLocationSettings();
+      return;
+    }
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.deniedForever) {
+      await Geolocator.openAppSettings();
+      return;
+    }
+    if (permission == LocationPermission.denied) return;
+
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.low, distanceFilter: 0),
+      ).timeout(const Duration(seconds: 10));
+      await dataBase.saveShopCoords(pos.latitude, pos.longitude);
+      await controller.fetchFoodCategories(null, null, reset: true);
+    } catch (_) {
+      Get.snackbar('Location', 'We could not read your location. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   Widget _buildShopModeToggle() {
@@ -2186,23 +2294,34 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController.addListener(_onSearchChanged);
     controller1.fetchStates();
     getState();
+    AppTour.register(AppTour.home);
     // Wallet and the PIN/wallet welcome tips only apply to signed-in users.
+    // The feature tour waits for the welcome dialog to close.
     if (!Session.isGuest.value) {
       walletController.fetchWallet();
-      _maybeShowWelcomeDialog();
+      _maybeShowWelcomeDialog().then((_) => _startTour());
+    } else {
+      _startTour();
     }
     setLGA();
     carouselController = CarouselSliderController();
   }
 
+  /// First food in the grid, highlighted by the feature tour.
+  final GlobalKey _foodTourKey = GlobalKey();
+
+  void _startTour() => AppTour.startIfUnseen(this, AppTour.home, [_foodTourKey]);
+
+  /// Completes once the welcome dialog is closed (or straight away when it
+  /// was already shown before).
   Future<void> _maybeShowWelcomeDialog() async {
     final alreadyShown = await dataBase.getWelcomeShown();
     if (alreadyShown || !mounted) return;
     await dataBase.saveWelcomeShown();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showDialog(
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    await showDialog(
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) => Dialog(
@@ -2327,7 +2446,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       );
-    });
   }
 
   void _onSearchChanged() {
@@ -2337,6 +2455,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    AppTour.unregister(AppTour.home);
     _searchDebounce?.cancel();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
@@ -2681,6 +2800,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                     );
                                   }
                                   if (sectionIndex == 1) {
+                                    // Out of coverage isn't an empty shop --
+                                    // say so, or it looks broken.
+                                    if (controller.outOfCoverage.value) {
+                                      return _buildComingSoon();
+                                    }
                                     if (controller.category.isEmpty) {
                                       return SizedBox.shrink();
                                     }
@@ -3033,7 +3157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       final product = products[index];
 
-                      return GestureDetector(
+                      final tile = GestureDetector(
                         onTap: () {
                           _showProductDialog(context, products, index);
                         },
@@ -3095,6 +3219,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
+                      );
+                      // Only the very first food is a tour step.
+                      if (categoryIndex != 0 || index != 0) return tile;
+                      return AppTour.step(
+                        key: _foodTourKey,
+                        scope: AppTour.home,
+                        title: 'Pick a food',
+                        description:
+                            'Tap any food to choose Individual or Corporate shopping and see its ingredients.',
+                        child: tile,
                       );
                     },
                   ),
@@ -3160,314 +3294,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showProductDialog(BuildContext context, List category, int index) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              backgroundColor: Colors.transparent,
-              child: Container(
-                width: double.infinity,
-                height: 420,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(color: Colors.transparent),
-                      width: double.infinity,
-                      height: 150,
-                      child: Container(
-                        child: category[index].imageUrl != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(20),
-                                  topRight: Radius.circular(20),
-                                ),
-                                child: CachedNetworkImage(
-                                  imageUrl: category[index].imageUrl.toString(),
-                                  placeholder: (context, url) => const Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Center(
-                                      child: SpinKitPulse(
-                                        color: Color(0xFFFF9800),
-                                        size: 24.0,
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      const Icon(Icons.error),
-                                  width: context.width * 0.9,
-                                  height: 40,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : SvgPicture.asset(
-                                'assets/images/product_image.svg'),
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.all(8),
-                      height: 256,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(20),
-                          bottomRight: Radius.circular(20),
-                        ),
-                        color: Colors.white,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(
-                                width: context.width * 0.5,
-                                child: Text(
-                                  maxLines: 2,
-                                  '${category[index].name}',
-                                  style: TextStyle(
-                                    color: Color(0xff1F2937),
-                                    fontFamily: 'Inter',
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '${category[index].ingredients?.length ?? 0} ingredients',
-                                        style: TextStyle(
-                                          color: Color(0xff1F2937),
-                                          fontFamily: 'Inter',
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 10),
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            '\u20A6${category[index].price} Per Portion',
-                                            style: TextStyle(
-                                              color: Color(0xff1F2937),
-                                              fontFamily: 'Roboto',
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w400,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '\u20A6${double.parse(category[index].price) * _quantity} Total Price',
-                                            style: TextStyle(
-                                              color: Color(0xff1F2937),
-                                              fontFamily: 'Roboto',
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w400,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Column(
-                                children: [
-                                  Text(
-                                    'Quantity',
-                                    style: TextStyle(
-                                      color: Color(0xff1F2937),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                      fontFamily: 'Inter',
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      IconButton(
-                                        icon: SvgPicture.asset(
-                                            'assets/images/removepreview.svg'),
-                                        onPressed: () {
-                                          setState(() {
-                                            _quantity =
-                                                (_quantity - 1).clamp(1, 99);
-                                          });
-                                        },
-                                        color: Colors.black,
-                                      ),
-                                      Container(
-                                        padding: EdgeInsets.symmetric(
-                                            vertical: 5, horizontal: 10),
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          border: Border.all(
-                                              width: 0.5,
-                                              color: Color(0xffF9F9F9)),
-                                        ),
-                                        child: Text(
-                                          _quantity.toString(),
-                                          style: const TextStyle(
-                                            color: Color(0xff262626),
-                                            fontSize: 12,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: SvgPicture.asset(
-                                            'assets/images/addpreview.svg'),
-                                        onPressed: () {
-                                          setState(() {
-                                            _quantity =
-                                                (_quantity + 1).clamp(1, 99);
-                                          });
-                                        },
-                                        color: Colors.black,
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 15),
-                                ],
-                              ),
-                            ],
-                          ),
-                          Spacer(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    cartController.addToCart(CartItem(
-                                      id: category[index].id!,
-                                      name: category[index].name!,
-                                      description:
-                                          category[index].description ?? 'N/A',
-                                      price: double.tryParse(category[index]
-                                              .price!
-                                              .toString()) ??
-                                          0.0,
-                                      originalPrice: double.tryParse(
-                                              category[index]
-                                                  .price!
-                                                  .toString()) ??
-                                          0.0,
-                                      ingredients: (category[index].ingredients
-                                              as List<dynamic>)
-                                          .map((ingredient) => Ingredients(
-                                                basePrice: double.tryParse(
-                                                        ingredient.price
-                                                            .toString()) ??
-                                                    0.0,
-                                                id: ingredient.id!,
-                                                name: ingredient.name,
-                                                description:
-                                                    ingredient.description,
-                                                price: double.tryParse(
-                                                        ingredient.price
-                                                            .toString()) ??
-                                                    0.0,
-                                              ))
-                                          .toList(),
-                                    ));
-                                    AlertInfo.show(
-                                        context: context,
-                                        text: 'Item added to cart',
-                                        textColor: Colors.white);
-                                    Navigator.pop(context);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.orange,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Add to Cart',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontFamily: 'Inter',
-                                      color: Color(0xff090909),
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                    Navigator.of(context).push(
-                                        CupertinoPageRoute(
-                                            builder: (context) =>
-                                                FoodDetailScreen(
-                                                  item: category[index],
-                                                )));
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.orange,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'GET INGREDIENT',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontFamily: 'Inter',
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 40),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
+  Future<void> _showProductDialog(
+      BuildContext context, List category, int index) async {
+    final item = category[index];
+    final type = await showShoppingTypeSheet(context, item.name ?? 'this food');
+    if (type == null || !context.mounted) return;
+    Navigator.of(context).push(CupertinoPageRoute(
+        builder: (context) =>
+            FoodDetailScreen(item: item, shoppingType: type)));
   }
 }
 

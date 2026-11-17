@@ -57,6 +57,7 @@ dependencies:
   lucide_icons_flutter: ^3.1.14+2
   font_awesome_flutter: ^11.0.0
   sign_in_with_apple: ^7.0.1
+  showcaseview: ^5.1.0
   # fluttertoast: ^9.0.0
 
 dev_dependencies:
@@ -108,7 +109,7 @@ flutter:
           weight: 700
         - asset: assets/fonts/Mont-ExtraLightDEMO.otf
           weight: 200
-        - asset: assets/fonts/Mont-HeavyDEMO.otf
+        - asset: assets/fonts/Poppins-ExtraBold.ttf
           weight: 800
     - family: Roboto
       fonts:

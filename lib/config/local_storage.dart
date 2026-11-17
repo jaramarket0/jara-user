@@ -216,6 +216,26 @@ class DataBase extends GetxController {
     return true;
   }
 
+  /// Coordinates for the place the customer is shopping from. The catalogue
+  /// is gated on distance to the nearest market, so without these a customer
+  /// just outside an operating LGA is wrongly shown the "coming soon" screen.
+  saveShopCoords(double latitude, double longitude) async {
+    SharedPreferences sharedPreferences = await _pref;
+    await sharedPreferences.setDouble('shop_lat', latitude);
+    await sharedPreferences.setDouble('shop_lng', longitude);
+    return true;
+  }
+
+  Future<double?> getShopLat() async {
+    SharedPreferences sharedPreferences = await _pref;
+    return sharedPreferences.getDouble('shop_lat');
+  }
+
+  Future<double?> getShopLng() async {
+    SharedPreferences sharedPreferences = await _pref;
+    return sharedPreferences.getDouble('shop_lng');
+  }
+
   saveSateAddress(String stateId) async {
     SharedPreferences sharedPreferences = await _pref;
     await sharedPreferences.setString('stateId', stateId);

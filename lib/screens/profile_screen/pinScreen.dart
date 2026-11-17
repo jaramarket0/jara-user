@@ -16,45 +16,47 @@ class PinController extends GetxController {
   RxBool isLoading = false.obs;
   RxString pinToken = ''.obs;
 
-  /// Set a new 4-digit transaction PIN
+  /// Set a new 4-digit transaction PIN. Only reports the outcome - the
+  /// caller shows the success message and leaves the screen, so no dialog
+  /// is left open for a later Get.back() to close by mistake.
   Future<bool> setPin(String pin, String confirmPin) async {
     isLoading.value = true;
     try {
       final res = await _api.setPin(pin, confirmPin);
-      final body = jsonDecode(res.body);
+      myLog.log('Set PIN response: ${res.statusCode} ${res.body}');
       if (res.statusCode == 200 || res.statusCode == 201) {
-        // Get.snackbar(
-        //   'PIN Set',
-        //   body['message'] ?? 'Transaction PIN set successfully.',
-        //   backgroundColor: const Color(0xFF22C55E),
-        //   colorText: Colors.white,
-        //   snackPosition: SnackPosition.BOTTOM,
-        // );
-        // AlertInfo.show(
-        //     typeInfo: TypeInfo.success,
-        //     context: Get.context!,
-        //     text: body['message'] ?? 'Transaction PIN set successfully.');
-        Get.defaultDialog(
-            title: 'Pin Set',
-            content: Text(
-              body['message'] ?? 'Transaction PIN set successfully.',
-            ));
+        if (Get.isRegistered<ProfileController>()) {
+          Get.find<ProfileController>().data.hasPin = true;
+        }
         return true;
-      } else {
-        // _showError(body['message'] ?? 'Failed to set PIN.');
-        Get.defaultDialog(
-            title: 'Error',
-            content: Text(body['message'] ?? 'Failed to set PIN.'));
-        return false;
       }
+      _showError(_errorMessage(res.body, 'Failed to set PIN.'));
+      return false;
     } catch (e) {
-      //_showError('Network error. Please try again.');
-      Get.defaultDialog(
-          title: 'Failed to set PIN.', content: Text(e.toString()));
+      myLog.log('Set PIN error: $e');
+      AppFeedback.showError(e, fallback: 'Failed to set PIN. Please try again.');
       return false;
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Pulls a readable message out of an error body, which may be JSON with
+  /// `message`/`errors`, or not JSON at all (e.g. a server error page).
+  String _errorMessage(String body, String fallback) {
+    try {
+      final data = jsonDecode(body);
+      if (data is Map) {
+        final errors = data['errors'];
+        if (errors is Map && errors.isNotEmpty) {
+          final first = errors.values.first;
+          return (first is List && first.isNotEmpty ? first.first : first)
+              .toString();
+        }
+        if (data['message'] != null) return data['message'].toString();
+      }
+    } catch (_) {}
+    return fallback;
   }
 
   /// Verify PIN – returns pinToken string on success, empty string on fail
@@ -188,8 +190,11 @@ class _SetPinScreenState extends State<SetPinScreen> {
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
+    FocusScope.of(context).unfocus();
     final success = await _ctrl.setPin(_pin, _confirmPin);
-    if (success && mounted) Get.back(result: true);
+    if (!success || !mounted) return;
+    AppFeedback.showSuccess('Transaction PIN set successfully.');
+    Navigator.of(context).pop(true);
   }
 
   @override

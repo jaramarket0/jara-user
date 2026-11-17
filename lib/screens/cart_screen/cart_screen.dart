@@ -23,7 +23,12 @@ import '../../widgets/cart_widgets/cart_summary.dart';
 var controller = Get.find<CartController>();
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({super.key});
+  const CartScreen({super.key, this.onBack});
+
+  /// Used by the back button when there is no page to pop - i.e. when this
+  /// screen is showing as a bottom-nav tab - to switch back to Home.
+  final VoidCallback? onBack;
+
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -383,25 +388,43 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     bool isCartEmpty = controller.cartItems.isEmpty;
     bool isIngredientEmpty = controller.ingredientList.isEmpty;
-    bool isCheckoutEnabled = (!isCartEmpty && controller.total > 0) ||
-        (!isIngredientEmpty &&
-            controller.totalIngredientPriceForIngredient() > 0 &&
-            controller.ingredientList.isNotEmpty);
+    bool isCheckoutEnabled = ((!isCartEmpty && controller.total > 0) ||
+            (!isIngredientEmpty &&
+                controller.totalIngredientPriceForIngredient() > 0 &&
+                controller.ingredientList.isNotEmpty));
 
     return SafeArea(
       child: Scaffold(
         body: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                'Cart',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Poppins',
-                ),
-                textAlign: TextAlign.center,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.chevron_left_rounded, size: 28),
+                      onPressed: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          widget.onBack?.call();
+                        }
+                      },
+                    ),
+                  ),
+                  const Text(
+                    'Cart',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Poppins',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -639,70 +662,71 @@ class _CartScreenState extends State<CartScreen> {
                                         vertical: 16),
                                     child: Column(
                                       children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Checkbox(
-                                              activeColor: Colors.green,
-                                              checkColor: Colors.white,
-                                              side: const BorderSide(
-                                                color: Color(
-                                                    0xff868D94), // Change this to your desired stroke color
-                                                width:
-                                                    2, // Optional: stroke thickness
-                                              ),
-                                              value: controller.mealPrep.value,
-                                              onChanged: (bool? value) {
-                                                //controller.toggleSelectAll(value!);
-                                                setState(() {
-                                                  controller.mealPrep.value =
-                                                      value!;
-                                                  print(value);
-                                                  print(controller
-                                                      .mealPrep.value);
-                                                });
-                                              },
-                                            ),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Meal Preparation',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.grey[400],
-                                                    fontFamily: 'Roboto',
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Every great meal begins with ingredient prep.\nWe\'ve got you covered.',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey[400],
-                                                    fontWeight: FontWeight.w400,
-                                                    fontFamily: 'Roboto',
-                                                  ),
-                                                )
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
-                                        Divider(
-                                          height: 0.5,
-                                          color:
-                                              Color.fromARGB(57, 228, 228, 228),
-                                        ),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
+                                        // Meal Preparation option removed.
+                                        // Row(
+                                        //   mainAxisAlignment:
+                                        //       MainAxisAlignment.start,
+                                        //   crossAxisAlignment:
+                                        //       CrossAxisAlignment.start,
+                                        //   children: [
+                                        //     Checkbox(
+                                        //       activeColor: Colors.green,
+                                        //       checkColor: Colors.white,
+                                        //       side: const BorderSide(
+                                        //         color: Color(
+                                        //             0xff868D94), // Change this to your desired stroke color
+                                        //         width:
+                                        //             2, // Optional: stroke thickness
+                                        //       ),
+                                        //       value: controller.mealPrep.value,
+                                        //       onChanged: (bool? value) {
+                                        //         //controller.toggleSelectAll(value!);
+                                        //         setState(() {
+                                        //           controller.mealPrep.value =
+                                        //               value!;
+                                        //           print(value);
+                                        //           print(controller
+                                        //               .mealPrep.value);
+                                        //         });
+                                        //       },
+                                        //     ),
+                                        //     Column(
+                                        //       crossAxisAlignment:
+                                        //           CrossAxisAlignment.start,
+                                        //       children: [
+                                        //         Text(
+                                        //           'Meal Preparation',
+                                        //           style: TextStyle(
+                                        //             fontSize: 14,
+                                        //             fontWeight: FontWeight.w600,
+                                        //             color: Colors.grey[400],
+                                        //             fontFamily: 'Roboto',
+                                        //           ),
+                                        //         ),
+                                        //         Text(
+                                        //           'Every great meal begins with ingredient prep.\nWe\'ve got you covered.',
+                                        //           style: TextStyle(
+                                        //             fontSize: 12,
+                                        //             color: Colors.grey[400],
+                                        //             fontWeight: FontWeight.w400,
+                                        //             fontFamily: 'Roboto',
+                                        //           ),
+                                        //         )
+                                        //       ],
+                                        //     ),
+                                        //   ],
+                                        // ),
+                                        // SizedBox(
+                                        //   height: 10,
+                                        // ),
+                                        // Divider(
+                                        //   height: 0.5,
+                                        //   color:
+                                        //       Color.fromARGB(57, 228, 228, 228),
+                                        // ),
+                                        // SizedBox(
+                                        //   height: 10,
+                                        // ),
                                         Obx(() {
                                           return !controller
                                                   .ingredientList.isNotEmpty
@@ -1174,7 +1198,10 @@ class _CartScreenState extends State<CartScreen> {
                   const SizedBox(height: 16),
                   Obx(() {
                     return CheckoutButton(
-                      isEnabled: isCheckoutEnabled,
+                      // Read inside Obx so editing a corporate price
+                      // re-enables/disables checkout straight away.
+                      isEnabled: isCheckoutEnabled &&
+                          !controller.hasInvalidCorporatePrice,
                       totalAmount: controller.total,
                       cartItems: controller.cartItems,
                       loading: controller.isLoading.value,

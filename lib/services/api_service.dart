@@ -4,6 +4,7 @@ import 'dart:math';
 import 'dart:io';
 import 'package:get/get.dart';
 import 'package:get/get_connect/connect.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart'; // Import foundation for kDebugMode
 import 'package:jara_market/config/local_storage.dart';
@@ -659,10 +660,12 @@ class ApiService extends GetConnect {
     var stateId = stateID == '' || stateID == null
         ? await dataBase.getStateAddressId()
         : stateID;
+    final coords = await _shopCoords();
     final url = Uri.parse('$baseUrl/fetch/categories-all-products').replace(
         queryParameters: {
           'lga_id': lgaID,
           'state_id': stateId,
+          ...coords,
           'page': page.toString(),
           'per_page': '5',
           if (minPrice != null) 'min_price': minPrice.toString(),
@@ -712,12 +715,52 @@ class ApiService extends GetConnect {
     });
   }
 
+  /// Coordinates to send with catalogue requests.
+  ///
+  /// The server decides visibility by distance from the nearest market, so a
+  /// customer in a neighbouring LGA only sees the shop if we tell it where
+  /// they are. Cached first; a GPS read is the fallback and is deliberately
+  /// silent -- a permission dialog must never be triggered by a background
+  /// product fetch.
+  Future<Map<String, String>> _shopCoords() async {
+    final lat = await dataBase.getShopLat();
+    final lng = await dataBase.getShopLng();
+    if (lat != null && lng != null) {
+      return {'latitude': lat.toString(), 'longitude': lng.toString()};
+    }
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return {};
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        // Coordinates are required to browse, so asking is the only way
+        // forward -- returning empty here just yields a dead storefront.
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return {};
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.low, distanceFilter: 0),
+      ).timeout(const Duration(seconds: 8));
+      await dataBase.saveShopCoords(pos.latitude, pos.longitude);
+      return {
+        'latitude': pos.latitude.toString(),
+        'longitude': pos.longitude.toString(),
+      };
+    } catch (_) {
+      return {};
+    }
+  }
+
   // Fetch ingredients
   Future<http.Response> fetchIngredients({int page = 1, int perPage = 40,
       double? minPrice, double? maxPrice}) async {
     final url = Uri.parse('$baseUrl/fetch/ingredients').replace(queryParameters: {
       'lga_id': (await dataBase.getLGAAddressId()).toString(),
       'state_id': await dataBase.getStateAddressId(),
+      ...await _shopCoords(),
       'page': page.toString(),
       'per_page': perPage.toString(),
       if (minPrice != null) 'min_price': minPrice.toString(),
@@ -1581,6 +1624,13 @@ class ApiService extends GetConnect {
       Uri.parse('$baseUrl$path').replace(queryParameters: query);
 
   // ─── Auth / PIN ───────────────────────────────────────────────────────────
+
+  /// Admin-managed platform settings (e.g. the corporate minimum price).
+  Future<http.Response> getPlatformSettings() async {
+    return authHttpClient
+        .get(_uri('/settings'), headers: await _authHeaders())
+        .timeout(timeout);
+  }
 
   Future<http.Response> setPin(String pin, String confirmPin) async {
     return authHttpClient

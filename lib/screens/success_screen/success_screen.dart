@@ -33,35 +33,7 @@ class _SuccessScreenState extends State<SuccessScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(
-                  height: 40,
-                  width: 100,
-                  child: CustomButton(
-                    isOutlined: true,
-                    text: 'View Receipt',
-                    onPressed: () {
-                     // _re
-                    },
-                  ),
-                ),
-                // SizedBox(
-                //   height: 40,
-                //   width: 100,
-                //   child: CustomButton(
-                //     isOutlined: true,
-                //     text: 'View Receipt',
-                //     onPressed: () {},
-                //   ),
-                // ),
-              ],
-            ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 50),
             SvgPicture.asset('assets/images/check.svg'),
             const SizedBox(height: 20),
             const Text(

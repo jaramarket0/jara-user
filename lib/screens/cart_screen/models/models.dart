@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:jara_market/screens/home_screen/widgets/shopping_type_sheet.dart';
 // import 'package:jara_market/screens/home_screen/models/models.dart';
 
 class CartItems {
@@ -23,8 +24,11 @@ class CartItem {
   final double? originalPrice;
   final RxList<Ingredients> ingredients;
   RxInt quantity;
-  
-  
+
+  /// Picked on the home screen. Corporate items have custom price locked on
+  /// for every ingredient, floored at the platform's corporate minimum.
+  ShoppingType shoppingType;
+  bool get isCorporate => shoppingType == ShoppingType.corporate;
 
   CartItem({
     required this.id,
@@ -35,6 +39,7 @@ class CartItem {
 
     this.originalPrice,
     int quantity = 1,
+    this.shoppingType = ShoppingType.individual,
   }) : quantity = RxInt(quantity), ingredients = ingredients.obs;
 
   

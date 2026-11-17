@@ -12,11 +12,17 @@ import 'package:jara_market/screens/success_screen/success_screen.dart';
 import 'package:jara_market/widgets/custom_button.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 import '../../widgets/avatar_with_edit.dart';
+import 'package:jara_market/utils/app_tour.dart';
 
 ProfileController controller = Get.put(ProfileController());
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({Key? key, this.onBack}) : super(key: key);
+
+  /// Used by the back button when there is no page to pop - i.e. when this
+  /// screen is showing as a bottom-nav tab - to switch back to Home.
+  final VoidCallback? onBack;
+
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -36,6 +42,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     controller.fetchUserProfileByCondition();
+    AppTour.register(AppTour.profile);
+    AppTour.startIfUnseen(this, AppTour.profile, [_pinTourKey, _referTourKey]);
+  }
+
+  // Feature tour steps, shown the first time Profile opens.
+  final GlobalKey _pinTourKey = GlobalKey();
+  final GlobalKey _referTourKey = GlobalKey();
+
+  @override
+  void dispose() {
+    AppTour.unregister(AppTour.profile);
+    super.dispose();
   }
 
   @override
@@ -101,6 +119,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: CircleAvatar(
                             radius: 500,
                             backgroundColor: Color(0xffEBF0F0),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: IconButton(
+                            icon: const Icon(Icons.chevron_left_rounded,
+                                size: 28),
+                            onPressed: () {
+                              if (Navigator.of(context).canPop()) {
+                                Navigator.of(context).pop();
+                              } else {
+                                widget.onBack?.call();
+                              }
+                            },
                           ),
                         ),
                         Column(
@@ -427,7 +460,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 16),
-                                    GestureDetector(
+                                    AppTour.step(
+                                      key: _referTourKey,
+                                      scope: AppTour.profile,
+                                      title: 'Refer and earn',
+                                      description:
+                                          'Share your referral code. You earn a bonus each time a friend you invite places an order.',
+                                      child: GestureDetector(
                                       onTap: () {
                                         Get.toNamed(AppRoutes.referralScreen,
                                             arguments:
@@ -461,7 +500,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           //
                                         ],
                                       ),
-                                    )
+                                    ))
                                   ],
                                 ),
                               ),
@@ -653,7 +692,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                     //  const SizedBox(height: 16),
-                                    GestureDetector(
+                                    AppTour.step(
+                                      key: _pinTourKey,
+                                      scope: AppTour.profile,
+                                      title: 'Transaction PIN',
+                                      description:
+                                          'Set a 4-digit PIN to keep your wallet payments secure. You will enter it before each payment.',
+                                      child: GestureDetector(
                                       onTap: () {
                                         Get.to(() => const SetPinScreen());
                                       },
@@ -684,7 +729,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           ),
                                         ],
                                       ),
-                                    ),
+                                    )),
                                     const SizedBox(height: 16),
                                     GestureDetector(
                                       onTap: () {

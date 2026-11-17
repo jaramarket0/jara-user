@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:open_file/open_file.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:jara_market/utils/app_tour.dart';
 import 'package:jara_market/screens/cart_screen/models/models.dart';
 // lib/screens/egusi_soup_detail_screen.dart
 import 'package:flutter/material.dart';
@@ -18,6 +20,7 @@ import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart'
 import 'package:jara_market/screens/egusi_soup_detail_screen/controller/egusi_soup_detail_controller.dart';
 // import 'package:jara_market/screens/home_screen/models/food_model.dart';
 import 'package:jara_market/screens/home_screen/models/models.dart' as cart;
+import 'package:jara_market/screens/home_screen/widgets/shopping_type_sheet.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/rating_display.dart';
 
@@ -27,7 +30,11 @@ CartController cartController = Get.find<CartController>();
 class FoodDetailScreen extends StatefulWidget {
   //final Map<String, dynamic> item;
   final cart.Products item;
-  const FoodDetailScreen({Key? key, required this.item}) : super(key: key);
+
+  /// Shopping type picked on the home screen; null when opened from elsewhere.
+  final ShoppingType? shoppingType;
+  const FoodDetailScreen({Key? key, required this.item, this.shoppingType})
+      : super(key: key);
 
   @override
   _FoodDetailScreenState createState() => _FoodDetailScreenState();
@@ -35,6 +42,22 @@ class FoodDetailScreen extends StatefulWidget {
 
 class _FoodDetailScreenState extends State<FoodDetailScreen> {
   int currentImageIndex = 0;
+
+  /// "Buy Ingredients", highlighted by the feature tour on first visit.
+  final GlobalKey _addToCartTourKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    AppTour.register(AppTour.foodDetail);
+    AppTour.startIfUnseen(this, AppTour.foodDetail, [_addToCartTourKey]);
+  }
+
+  @override
+  void dispose() {
+    AppTour.unregister(AppTour.foodDetail);
+    super.dispose();
+  }
 
   final List<bool> ingredientSelected = List<bool>.filled(16, false);
   final TextEditingController ingredientController = TextEditingController();
@@ -72,8 +95,48 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   static const _accentColor = PdfColor.fromInt(0xFFFF9800);
 
   Future<void> generatePdf(String steps, String foodName) async {
-    final pdf = pw.Document();
     Get.snackbar('Downloading', 'Preparing your recipe...');
+    try {
+      final file = await _buildRecipePdf(steps, foodName);
+      await _deliverPdf(file, foodName);
+    } catch (e) {
+      Get.snackbar('Download failed', 'Could not prepare the recipe. Please try again.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  /// iOS can't open a file from the app's sandbox the way Android does, so it
+  /// gets the share sheet (Save to Files, AirDrop, Mail...). Android opens the
+  /// PDF directly and falls back to the share sheet if no viewer handles it.
+  Future<void> _deliverPdf(File file, String foodName) async {
+    if (!Platform.isIOS) {
+      final result = await OpenFile.open(file.path);
+      if (result.type == ResultType.done) {
+        Get.snackbar('Downloaded', 'Your recipe steps are ready!');
+        return;
+      }
+    }
+    if (!mounted) return;
+    // iPad presents the share sheet as a popover and needs an anchor rect.
+    final size = MediaQuery.of(context).size;
+    await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path, mimeType: 'application/pdf')],
+      subject: '$foodName recipe',
+      sharePositionOrigin:
+          Rect.fromCenter(center: size.center(Offset.zero), width: 1, height: 1),
+    ));
+  }
+
+  Future<File> _buildRecipePdf(String steps, String foodName) async {
+    // The pdf package's built-in fonts lack glyphs like ₦; Roboto has them.
+    final pdf = pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: pw.Font.ttf(await rootBundle.load('assets/fonts/RobotoRegular.ttf')),
+        bold: pw.Font.ttf(await rootBundle.load('assets/fonts/RobotoRomanBold.ttf')),
+      ),
+    );
 
     final logoBytes = await rootBundle.load('assets/images/jara_market_logo.png');
     final logo = pw.MemoryImage(logoBytes.buffer.asUint8List());
@@ -173,9 +236,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     final file = File("${outputDir.path}/${safeName}_recipe.pdf");
 
     await file.writeAsBytes(await pdf.save());
-
-    await OpenFile.open(file.path);
-    Get.snackbar('Downloaded', 'Your recipe steps are ready!');
+    return file;
   }
 
   /// The Watch Video / Buy Ingredients buttons float over the scroll view,
@@ -262,7 +323,13 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
             ),
           ),
           const SizedBox(width: 15),
-          SizedBox(
+          AppTour.step(
+            key: _addToCartTourKey,
+            scope: AppTour.foodDetail,
+            title: 'Add to cart',
+            description:
+                'Tap Buy Ingredients to add everything this recipe needs to your cart in one go.',
+            child: SizedBox(
             height: _fabHeight,
             width: 162.5,
             child: ElevatedButton(
@@ -271,6 +338,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
 
                 //?
                 cartController.addToCart(CartItem(
+                  shoppingType: widget.shoppingType ?? ShoppingType.individual,
                   id: widget.item.id!,
                   name: widget.item.name!,
                   description: widget.item.description ?? 'N/A',
@@ -312,6 +380,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),
+          ),
           ),
         ],
       ),
@@ -406,6 +475,10 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                           reviews: 10),
                     ],
                   ),
+                  if (widget.shoppingType != null) ...[
+                    const SizedBox(height: 10),
+                    ShoppingTypeTag(type: widget.shoppingType!),
+                  ],
                   const SizedBox(height: 20),
                   const Text(
                     'Ingredients',

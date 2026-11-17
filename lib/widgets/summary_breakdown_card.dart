@@ -36,14 +36,15 @@ class SummaryBreakdown extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Meal Preparation',style: TextStyle(fontSize: 12,fontWeight: FontWeight.w600,fontFamily: 'Poppins'),),
-            Text('\u20A6${mealPrep.toStringAsFixed(0)}'),
-          ],
-        ),
-        const SizedBox(height: 8),
+        // Meal Preparation row removed.
+//         Row(
+//           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//           children: [
+//             const Text('Meal Preparation',style: TextStyle(fontSize: 12,fontWeight: FontWeight.w600,fontFamily: 'Poppins'),),
+//             Text('\u20A6${mealPrep.toStringAsFixed(0)}'),
+//           ],
+//         ),
+//         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

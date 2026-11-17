@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:jara_market/screens/cart_screen/models/models.dart';
 import 'package:jara_market/services/api_service.dart';
 import 'package:jara_market/screens/grains_screen/models/models.dart';
+import 'package:jara_market/screens/home_screen/widgets/shopping_type_sheet.dart';
 
 ApiService _apiService = ApiService(Duration(seconds: 60 * 5));
 
@@ -27,11 +28,101 @@ class CartController extends GetxController {
   RxBool updatePrice = false.obs;
   RxDouble shippingCost1 = 1500.0.obs;
 
+  /// Platform setting the admin controls: the least a corporate customer may
+  /// pay for an ingredient. 0 until loaded (or if unset), in which case the
+  /// ingredient's own price is the floor, same as for individual shoppers.
+  RxDouble corporateMinPrice = 0.0.obs;
+
+  /// Settings key the backend uses for the corporate minimum price.
+  static const corporateMinPriceKey = 'corporate_min_price';
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchCorporateMinPrice();
+  }
+
+  Future<void> fetchCorporateMinPrice() async {
+    try {
+      final response = await _apiService.getPlatformSettings();
+      if (response.statusCode != 200) {
+        myLog.log(
+            'fetchCorporateMinPrice ${response.statusCode}: ${response.body}');
+        return;
+      }
+      final value =
+          _readSetting(jsonDecode(response.body), corporateMinPriceKey);
+      final parsed = double.tryParse('${value ?? ''}');
+      if (parsed == null) return;
+      corporateMinPrice.value = parsed;
+      for (final item in cartItems.where((i) => i.isCorporate)) {
+        applyCorporateDefaults(item);
+      }
+    } catch (e) {
+      myLog.log('fetchCorporateMinPrice failed: $e');
+    }
+  }
+
+  /// Finds [key] whether settings come back as a flat map
+  /// (`{data: {key: value}}`) or a list of rows (`{data: [{key, value}]}`).
+  dynamic _readSetting(dynamic body, String key) {
+    dynamic data =
+        body is Map && body.containsKey('data') ? body['data'] : body;
+    if (data is Map) {
+      if (data.containsKey(key)) return data[key];
+      if (data['data'] != null) return _readSetting(data, key);
+    }
+    if (data is List) {
+      for (final row in data) {
+        if (row is Map && (row['key'] == key || row['name'] == key)) {
+          return row['value'];
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Lowest custom price allowed for [ingredient] in [item].
+  double minCustomPrice(CartItem item, Ingredients ingredient) {
+    final base = ingredient.basePrice ?? 0;
+    if (!item.isCorporate) return base;
+    return corporateMinPrice.value > base ? corporateMinPrice.value : base;
+  }
+
+  /// Turns custom price on for every ingredient of a corporate item and
+  /// raises any price below the corporate minimum up to it.
+  void applyCorporateDefaults(CartItem item) {
+    if (!item.isCorporate) return;
+    for (final ing in item.ingredients) {
+      final min = minCustomPrice(item, ing);
+      ing.isSelected.value = true;
+      final current = double.tryParse(ing.controller.text);
+      if (current == null || current < min) {
+        ing.controller.text = min.toStringAsFixed(0);
+        ing.price = min;
+      }
+    }
+    item.ingredients.refresh();
+    recalculateTotals();
+    cartItems.refresh();
+    update();
+  }
+
+  /// True while any corporate ingredient's custom price is missing or below
+  /// the minimum - checkout stays disabled until it is fixed.
+  bool get hasInvalidCorporatePrice => cartItems
+      .where((i) => i.isCorporate)
+      .any((item) => item.ingredients.any((ing) {
+            final price = double.tryParse(ing.controller.text);
+            return price == null || price < minCustomPrice(item, ing);
+          }));
+
   /// Pull the delivery fee for a location from the backend. Called when the
   /// cart opens (uses the customer's default address) and again whenever the
   /// checkout address changes, so the displayed fee matches what the server
   /// will actually charge for that destination.
-  Future<void> loadDeliveryFee({int? stateId, int? lgaId, int? addressId}) async {
+  Future<void> loadDeliveryFee(
+      {int? stateId, int? lgaId, int? addressId}) async {
     try {
       final response = await _apiService.fetchDeliveryFee(
         stateId: stateId,
@@ -74,9 +165,15 @@ class CartController extends GetxController {
       print('Item added to cart: ${item.name}, Quantity: ${item.quantity}');
     } else {
       cartItems[index].quantity += item.quantity.value;
+      // Adding the same food as corporate upgrades the existing line.
+      if (item.isCorporate) {
+        cartItems[index].shoppingType = ShoppingType.corporate;
+      }
       print(cartItems.length);
       print(cartItems[index].quantity);
     }
+    final added = cartItems.firstWhere((cartItem) => cartItem.id == item.id);
+    if (added.isCorporate) applyCorporateDefaults(added);
     // print('Item added to cart: ${item.name}, Quantity: ${item.quantity}');
   }
 
@@ -364,6 +461,8 @@ class CartController extends GetxController {
 
   void toggleItemSelection(int itemId, int ingredientId) {
     int index = cartItems.indexWhere((item) => item.id == itemId);
+    // Custom price can't be turned off for corporate shopping.
+    if (index != -1 && cartItems[index].isCorporate) return;
     if (index != -1) {
       final ingredientIndex = cartItems[index]
           .ingredients
@@ -412,11 +511,18 @@ class CartController extends GetxController {
           cartItems[index].ingredients.indexWhere((ing) => ing.id == id2);
       if (ingredientIndex != -1) {
         double? parsedPrice = double.tryParse(p0);
-        if (parsedPrice == null) return;
-        if (cartItems[index].ingredients[ingredientIndex].basePrice != null &&
-            parsedPrice <
-                cartItems[index].ingredients[ingredientIndex].basePrice!)
+        if (parsedPrice == null) {
+          cartItems.refresh();
           return;
+        }
+        if (parsedPrice <
+            minCustomPrice(cartItems[index],
+                cartItems[index].ingredients[ingredientIndex])) {
+          // Still refresh so the cart's checkout button reacts to the
+          // now-invalid corporate price.
+          cartItems.refresh();
+          return;
+        }
         cartItems[index].ingredients[ingredientIndex].price = parsedPrice;
         recalculateTotals();
         cartItems.refresh(); // ← add this

@@ -47,27 +47,28 @@ class CartSummary extends StatelessWidget {
             })
           ],
         ),
-        //meal cost row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Meal Preparation',
-              style: TextStyle(
-                fontSize: 12,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              '\u20A6${mealCost.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+        // Meal Preparation row removed.
+//         //meal cost row
+//         Row(
+//           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//           children: [
+//             const Text(
+//               'Meal Preparation',
+//               style: TextStyle(
+//                 fontSize: 12,
+//                 fontFamily: 'Poppins',
+//                 fontWeight: FontWeight.w500,
+//               ),
+//             ),
+//             Text(
+//               '\u20A6${mealCost.toStringAsFixed(2)}',
+//               style: TextStyle(
+//                 fontSize: 12,
+//                 fontWeight: FontWeight.w500,
+//               ),
+//             ),
+//           ],
+//         ),
         // service charge row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

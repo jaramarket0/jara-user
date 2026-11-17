@@ -53,6 +53,16 @@ class HomeController extends GetxController {
   // "Shopping for someone else" mode — in-memory only, never persisted, so a
   // fresh app launch always defaults back to "Myself".
   RxBool isShoppingForSomeoneElse = false.obs;
+
+  /// Set when the server says we don't cover this location. An empty product
+  /// list on its own reads as "nothing in stock" or a broken feed, so the
+  /// screen needs the reason and the copy to show.
+  RxBool outOfCoverage = false.obs;
+  RxString coverageMessage = ''.obs;
+
+  /// True when we were blocked for want of coordinates rather than because
+  /// we don't cover the area. Different cause, different fix, different copy.
+  RxBool needsLocation = false.obs;
   RxnInt otherStateId = RxnInt();
   RxnString otherStateName = RxnString();
   RxnInt otherLgaId = RxnInt();
@@ -147,6 +157,23 @@ class HomeController extends GetxController {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        // The server answers 200 with available:false when the customer is
+        // outside our service network -- it isn't an error, it's an answer.
+        final raw = jsonDecode(response.body);
+        final payload = raw is Map<String, dynamic> ? raw['data'] : null;
+        if (payload is Map<String, dynamic> && payload['available'] == false) {
+          outOfCoverage.value = true;
+          needsLocation.value = payload['reason'] == 'location_required';
+          coverageMessage.value = raw['message']?.toString() ??
+              'Jaramarket isn\'t available in your area just yet.';
+          category = [];
+          _hasMore = false;
+          return;
+        }
+        outOfCoverage.value = false;
+        needsLocation.value = false;
+        coverageMessage.value = '';
+
         final parsed = categoriesFromJson(response.body);
         _lastPage = parsed.lastPage ?? 1;
         _hasMore  = _currentPage < _lastPage;

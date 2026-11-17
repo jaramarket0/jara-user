@@ -17,6 +17,17 @@ Map<String, dynamic> buildOrderPayload({
       "product_id": item.id,
       "quantity": item.quantity.value,
       "price": item.price, // or item.originalPrice ?? item.price
+      "shopping_type": item.shoppingType.name,
+      // Corporate orders carry each ingredient's agreed custom price so the
+      // admin sees what the business is paying.
+      if (item.isCorporate)
+        "ingredients": item.ingredients
+            .map((ing) => {
+                  "ingredient_id": ing.id,
+                  "quantity": ing.quantity?.value ?? 1,
+                  "price": ing.price ?? 0,
+                })
+            .toList(),
     };
   }).toList();
 
@@ -51,6 +62,9 @@ Map<String, dynamic> buildOrderPayload({
 
   return {
     "order_date": orderDate,
+    // Order-level flag: corporate if any food in it was bought as corporate.
+    "shopping_type":
+        cartItems.any((item) => item.isCorporate) ? "corporate" : "individual",
     "shipping_fee": shippingFee,
     "delivery_type": deliveryType,
     "address_id": addressId,

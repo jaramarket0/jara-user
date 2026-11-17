@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:jara_market/screens/cart_screen/controller/cart_controller.dart';
 import 'package:jara_market/screens/cart_screen/models/models.dart';
 import 'package:jara_market/screens/grains_screen/grains_screen.dart';
+import 'package:jara_market/screens/home_screen/widgets/shopping_type_sheet.dart';
 
 import 'package:jara_market/widgets/custom_text_field.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -163,6 +164,11 @@ class _CartItemCardState extends State<CartItemCard1> {
   }
 
   bool isSelected = false;
+
+  CartItem? get _item =>
+      controller.cartItems.firstWhereOrNull((item) => item.id == widget.id);
+  bool get _isCorporate => _item?.isCorporate ?? false;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -201,6 +207,10 @@ class _CartItemCardState extends State<CartItemCard1> {
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold),
                         ),
+                        if (_isCorporate) ...[
+                          const SizedBox(width: 6),
+                          const ShoppingTypeTag(type: ShoppingType.corporate),
+                        ],
                         SizedBox(
                           width: 15,
                         ),
@@ -407,61 +417,86 @@ class _CartItemCardState extends State<CartItemCard1> {
                                             checkColor: Colors.white,
                                             value: widget.ingredients[index]
                                                 .isSelected.value,
-                                            onChanged: (bool? value) {
-                                              widget.onCheckboxChanged(value);
-                                              setState(() {});
-                                              setState(() {
-                                                controller.toggleItemSelection(
-                                                    widget.id,
-                                                    widget
-                                                        .ingredients[index].id);
-                                              });
+                                            // Locked on for corporate shopping.
+                                            onChanged: _isCorporate
+                                                ? null
+                                                : (bool? value) {
+                                                    widget.onCheckboxChanged(
+                                                        value);
+                                                    setState(() {});
+                                                    setState(() {
+                                                      controller
+                                                          .toggleItemSelection(
+                                                              widget.id,
+                                                              widget
+                                                                  .ingredients[
+                                                                      index]
+                                                                  .id);
+                                                    });
 
-                                              // Clear custom price when unchecking
-                                              if (value == false) {
-                                                print('object');
-                                                widget.ingredients[index]
-                                                    .controller
-                                                    .clear();
-                                                controller.updateCustomPrice(
-                                                    widget.id,
-                                                    widget
-                                                        .ingredients[index].id,
-                                                    // widget.ingredients[index]
-                                                    //     .price
-                                                    //     .toString()
-                                                    widget.textController.text);
-                                              }
-                                            }),
+                                                    // Clear custom price when unchecking
+                                                    if (value == false) {
+                                                      print('object');
+                                                      widget.ingredients[index]
+                                                          .controller
+                                                          .clear();
+                                                      controller
+                                                          .updateCustomPrice(
+                                                              widget.id,
+                                                              widget
+                                                                  .ingredients[
+                                                                      index]
+                                                                  .id,
+                                                              // widget.ingredients[index]
+                                                              //     .price
+                                                              //     .toString()
+                                                              widget
+                                                                  .textController
+                                                                  .text);
+                                                    }
+                                                  }),
                                       );
                                     }),
                                     //SizedBox(width: 2,),
-                                    !widget.ingredients[index].isSelected.value
+                                    _isCorporate
                                         ? Text(
-                                            'Custom Price',
-                                            style: TextStyle(
-                                              color: Colors.grey,
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 12,
+                                            'Corporate price · min \u20A6${controller.minCustomPrice(_item!, widget.ingredients[index]).toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              color: Color(0xFF3F51B5),
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 11,
                                               fontFamily: 'Inter',
                                             ),
                                           )
-                                        : Row(
-                                            spacing: 3,
-                                            children: [
-                                              Text(
-                                                'Click Here Again To Save Price',
+                                        : !widget.ingredients[index].isSelected
+                                                .value
+                                            ? Text(
+                                                'Custom Price',
                                                 style: TextStyle(
                                                   color: Colors.grey,
                                                   fontWeight: FontWeight.w400,
-                                                  fontSize: 9,
+                                                  fontSize: 12,
                                                   fontFamily: 'Inter',
                                                 ),
-                                              ),
-                                              Icon(LucideIcons.info,
-                                                  size: 12, color: Colors.grey)
-                                            ],
-                                          )
+                                              )
+                                            : Row(
+                                                spacing: 3,
+                                                children: [
+                                                  Text(
+                                                    'Click Here Again To Save Price',
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      fontSize: 9,
+                                                      fontFamily: 'Inter',
+                                                    ),
+                                                  ),
+                                                  Icon(LucideIcons.info,
+                                                      size: 12,
+                                                      color: Colors.grey)
+                                                ],
+                                              )
                                   ],
                                 )
                               ],
@@ -497,6 +532,8 @@ class _CartItemCardState extends State<CartItemCard1> {
                                               .ingredients[index].controller,
                                           onChanged: (p0) {
                                             print(p0);
+                                            // Re-check the corporate minimum hint.
+                                            if (_isCorporate) setState(() {});
                                             //setState(() {
                                             widget.updateCustomPrice();
                                             controller.update();
@@ -595,6 +632,20 @@ class _CartItemCardState extends State<CartItemCard1> {
                                         ],
                                       ),
                               ),
+                              if (_isCorporate &&
+                                  (double.tryParse(widget.ingredients[index]
+                                              .controller.text) ??
+                                          0) <
+                                      controller.minCustomPrice(
+                                          _item!, widget.ingredients[index]))
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    'Min \u20A6${controller.minCustomPrice(_item!, widget.ingredients[index]).toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                        color: Colors.red, fontSize: 11),
+                                  ),
+                                ),
                             ],
                           ),
                         ],

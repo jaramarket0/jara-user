@@ -6,7 +6,11 @@ import 'package:jara_market/screens/orders_screen/models/order_model.dart';
 import 'package:jara_market/screens/orders_screen/order_detail_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
-  const OrdersScreen({Key? key}) : super(key: key);
+  const OrdersScreen({Key? key, this.onBack}) : super(key: key);
+
+  /// Used by the back button when there is no page to pop - i.e. when this
+  /// screen is showing as a bottom-nav tab - to switch back to Home.
+  final VoidCallback? onBack;
 
   @override
   State<OrdersScreen> createState() => _OrdersScreenState();
@@ -50,16 +54,27 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      padding: const EdgeInsets.fromLTRB(8, 16, 20, 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'My Orders',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF212429),
+          IconButton(
+            icon: const Icon(Icons.chevron_left_rounded, size: 28),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                widget.onBack?.call();
+              }
+            },
+          ),
+          const Expanded(
+            child: Text(
+              'My Orders',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF212429),
+              ),
             ),
           ),
           Obx(() => _ctrl.isLoading.value
@@ -146,7 +161,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: isSelected ? Colors.white : _statusColor(key),
+                            color:
+                                isSelected ? Colors.white : _statusColor(key),
                           ),
                         ),
                       ),
@@ -241,7 +257,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
             TextButton(
               onPressed: () => _ctrl.selectStatus('all'),
               child: const Text('View all orders',
-                  style: TextStyle(color: _primary, fontWeight: FontWeight.w600)),
+                  style:
+                      TextStyle(color: _primary, fontWeight: FontWeight.w600)),
             ),
         ],
       ),
@@ -315,8 +332,19 @@ String _formatDate(String raw) {
   try {
     final dt = DateTime.parse(raw);
     const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[dt.month]} ${dt.day}, ${dt.year}';
   } catch (_) {
@@ -401,8 +429,7 @@ class _OrderCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              _formatDate(
-                                  order.orderDate ?? order.createdAt),
+                              _formatDate(order.orderDate ?? order.createdAt),
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF888888),
