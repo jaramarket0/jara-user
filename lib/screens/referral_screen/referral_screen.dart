@@ -13,14 +13,13 @@ class ReferralScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<String> names = [
-      'Jessica Prince',
-      'Mathew Paul',
-      'Christopher Mark',
-      'Nigal Nathan',
-      'Jessica Prince',
-    ];
-    final data = Get.arguments;
+    // Get.arguments is only a head start from the profile screen; the
+    // authoritative value is the one the controller fetches.
+    final passedIn = Get.arguments is String ? Get.arguments as String : '';
+    String _code() => controller.referralCode.value.isNotEmpty
+        ? controller.referralCode.value
+        : passedIn;
+
     return Scaffold(
       backgroundColor: Colors.orange[50],
       appBar: AppBar(
@@ -73,32 +72,52 @@ class ReferralScreen extends StatelessWidget {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        child: Row(
-                          children: [
-                             Text(
-                              data ?? 'mir20220320',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontFamily: 'Mont',
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const Spacer(),
-                            TextButton(
-                              onPressed: () {
-                                Clipboard.setData(ClipboardData(text: data));
-                              },
-                              child: const Text(
-                                'Copy',
-                                style: TextStyle(
-                                    fontFamily: 'Mont',
-                                    fontWeight: FontWeight.w600,
+                        child: Obx(() {
+                          final code = _code();
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  controller.isLoadingCode.value && code.isEmpty
+                                      ? 'Loading…'
+                                      : (code.isEmpty ? 'Unavailable' : code),
+                                  style: const TextStyle(
                                     fontSize: 14,
-                                    color: Colors.black),
+                                    fontFamily: 'Mont',
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.1,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                              TextButton(
+                                // Copying null used to throw, which is why the
+                                // button appeared to do nothing at all.
+                                onPressed: code.isEmpty
+                                    ? null
+                                    : () {
+                                        Clipboard.setData(
+                                            ClipboardData(text: code));
+                                        Get.snackbar('Copied',
+                                            'Referral code $code copied',
+                                            snackPosition: SnackPosition.BOTTOM,
+                                            duration:
+                                                const Duration(seconds: 2));
+                                      },
+                                child: Text(
+                                  'Copy',
+                                  style: TextStyle(
+                                      fontFamily: 'Mont',
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: code.isEmpty
+                                          ? Colors.grey
+                                          : Colors.black),
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
                       ),
                       Spacer(),
                       SizedBox(
@@ -106,7 +125,13 @@ class ReferralScreen extends StatelessWidget {
                         width: 85,
                         child: ElevatedButton(
                           onPressed: () {
-                            final code = data ?? '';
+                            final code = _code();
+                            if (code.isEmpty) {
+                              Get.snackbar('Referral code',
+                                  'Your code is still loading. Try again in a moment.',
+                                  snackPosition: SnackPosition.BOTTOM);
+                              return;
+                            }
                             SharePlus.instance.share(ShareParams(
                               text:
                                   'Join me on JaraMarket — fresh food and groceries delivered to you! '
@@ -157,10 +182,7 @@ class ReferralScreen extends StatelessWidget {
                     physics: BouncingScrollPhysics(),
                     itemCount: controller.data.length,
                     itemBuilder: (context, index) {
-                      return _buildFriendItem(
-                        name: controller.data[index],
-                        isInvited: index > 1,
-                      );
+                      return _buildFriendItem(controller.data[index]);
                     },
                   );
                   },)
@@ -173,35 +195,53 @@ class ReferralScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFriendItem({
-    required Data name,
-    required bool isInvited,
-  }) {
+  Widget _buildFriendItem(Data friend) {
+    final name = (friend.name ?? '').trim();
+    final label = name.isNotEmpty ? name : (friend.email ?? 'A friend');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Colors.grey[300],
-          child: const Icon(Icons.person, color: Colors.grey),
+          backgroundColor: Colors.orange[100],
+          child: Text(
+            label.isNotEmpty ? label[0].toUpperCase() : '?',
+            style: const TextStyle(
+                color: Color(0xffF19A0D), fontWeight: FontWeight.w700),
+          ),
         ),
         title: Text(
-          name.name!,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+          overflow: TextOverflow.ellipsis,
         ),
-        trailing: SizedBox(height: 50,width: 70,
-          child: ElevatedButton(
-            onPressed: isInvited ? null : () {},
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              foregroundColor: isInvited ? Colors.grey : Colors.black,
-              backgroundColor: isInvited ? Colors.grey[200] : Colors.orange[100],
-            ),
-            child: Text(isInvited ? 'Invited' : 'Invite'),
+        subtitle: friend.createdAt == null
+            ? null
+            : Text('Joined ${_joinedOn(friend.createdAt!)}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F5E9),
+            borderRadius: BorderRadius.circular(20),
           ),
+          child: const Text('Joined',
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2E7D32))),
         ),
       ),
     );
+  }
+
+  String _joinedOn(String raw) {
+    try {
+      final d = DateTime.parse(raw).toLocal();
+      const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${months[d.month]} ${d.day}, ${d.year}';
+    } catch (_) {
+      return raw.length > 10 ? raw.substring(0, 10) : raw;
+    }
   }
 }
