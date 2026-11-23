@@ -379,7 +379,9 @@ class _SignupScreenState extends State<SignupScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              const SocialAuthButtons(isSignUp: true),
+              SocialAuthButtons(
+                  isSignUp: true,
+                  referralCodeController: controller.referralCodeController),
               const SizedBox(height: 40),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

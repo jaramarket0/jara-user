@@ -7,6 +7,9 @@ import 'package:jara_market/screens/add_money_screen/add_money_screen.dart';
 import 'package:jara_market/screens/wallet_screen/controller/wallet_controller.dart';
 import '../../widgets/custom_back_header.dart';
 import '../../widgets/balance_card.dart';
+import 'package:jara_market/config/routes.dart';
+import 'package:jara_market/screens/referral_screen/controller/referral_earnings_controller.dart';
+import 'package:jara_market/screens/referral_screen/widgets/referral_earnings_card.dart';
 
 WalletController controller = Get.put(WalletController());
 
@@ -33,6 +36,7 @@ class _WalletScreenState extends State<WalletScreen> {
   void onRefresh() {
     controller.fetchWallet();
     controller.fetchTransactions();
+    ReferralEarningsController.to.fetch();
   }
 
   @override
@@ -92,6 +96,13 @@ class _WalletScreenState extends State<WalletScreen> {
                                   },
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 24),
+                            // Referral commission lands in this wallet once
+                            // a friend's order is approved.
+                            ReferralEarningsCard(
+                              onTap: () =>
+                                  Get.toNamed(AppRoutes.referralScreen),
                             ),
                             const SizedBox(height: 32),
                             const Text(

@@ -44,6 +44,9 @@ class Data {
   int? referralCount;
   String? createdAt;
 
+  /// Commission already paid to you from this friend's orders.
+  double earned = 0;
+
   Data(
       {this.id,
       this.name,
@@ -70,6 +73,7 @@ class Data {
     referralCode = json['referral_code'];
     referralCount = json['referral_count'];
     createdAt = json['created_at'];
+    earned = double.tryParse('${json['earned'] ?? 0}') ?? 0;
   }
 
   Map<String, dynamic> toJson() {

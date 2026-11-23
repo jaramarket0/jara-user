@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:jara_market/screens/referral_screen/controller/referral_controller.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:jara_market/screens/referral_screen/models/models.dart';
+import 'package:jara_market/screens/referral_screen/controller/referral_earnings_controller.dart';
+import 'package:jara_market/screens/referral_screen/widgets/referral_earnings_card.dart';
 
 ReferralController controller = Get.put(ReferralController());
 
@@ -152,7 +154,10 @@ class ReferralScreen extends StatelessWidget {
                 ],
               ),
             ),
-           
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: ReferralEarningsCard(),
+            ),
             Container(
               height: 430,
               decoration: BoxDecoration(
@@ -224,7 +229,10 @@ class ReferralScreen extends StatelessWidget {
             color: const Color(0xFFE8F5E9),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Text('Joined',
+          child: Text(
+              friend.earned > 0
+                  ? '+\u20A6${friend.earned.toStringAsFixed(friend.earned.truncateToDouble() == friend.earned ? 0 : 2)}'
+                  : 'Joined',
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,

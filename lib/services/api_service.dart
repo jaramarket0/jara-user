@@ -216,6 +216,8 @@ class ApiService extends GetConnect {
   Future<http.Response> googleSignIn({
     required String idToken,
     required String role,
+    // Friend's code; the backend only applies it when it creates the account.
+    String? referralCode,
     // String? displayName,
     // String? photoUrl,
   }) async {
@@ -223,6 +225,8 @@ class ApiService extends GetConnect {
     _logRequest('POST', url, body: {
       'id_token': idToken,
       'role': role,
+      if (referralCode != null && referralCode.isNotEmpty)
+        'referral_code': referralCode,
       // if (displayName != null) 'display_name': displayName,
       // if (photoUrl != null) 'photo_url': photoUrl,
     });
@@ -235,6 +239,8 @@ class ApiService extends GetConnect {
       body: jsonEncode({
         'id_token': idToken,
         'role': role,
+        if (referralCode != null && referralCode.isNotEmpty)
+          'referral_code': referralCode,
         // if (displayName != null) 'display_name': displayName,
         // if (photoUrl != null) 'photo_url': photoUrl,
       }),
@@ -248,11 +254,14 @@ class ApiService extends GetConnect {
     required String role,
     String? firstName,
     String? lastName,
+    String? referralCode,
   }) async {
     final url = Uri.parse('$baseUrl/apple-signin');
     final body = {
       'identity_token': identityToken,
       'role': role,
+      if (referralCode != null && referralCode.isNotEmpty)
+        'referral_code': referralCode,
       if (firstName != null && firstName.isNotEmpty) 'firstname': firstName,
       if (lastName != null && lastName.isNotEmpty) 'lastname': lastName,
     };
@@ -283,6 +292,13 @@ class ApiService extends GetConnect {
     );
     _logResponse(response);
     return response;
+  }
+
+  /// Referral totals: paid so far, pending on friends' orders, friends invited.
+  Future<http.Response> fetchReferralEarnings() async {
+    return authHttpClient
+        .get(_uri('/referral-earnings'), headers: await _authHeaders())
+        .timeout(timeout);
   }
 
   Future<http.Response> fetchTransactions() async {

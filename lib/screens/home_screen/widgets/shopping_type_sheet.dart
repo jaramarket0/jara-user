@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// How the user is shopping for a food. UI-only for now: it is carried to the
-/// food detail screen as a tag but not yet sent to the backend.
+/// How the user is shopping for a food.
+///
+/// Carried from here into the CartItem and sent as `shopping_type` on each
+/// product line at checkout. The backend prices a corporate line from the
+/// customer's own per-ingredient prices (floored at `corporate_min_price`)
+/// instead of the recipe, so this choice changes what they pay.
 enum ShoppingType { individual, corporate }
 
 extension ShoppingTypeLabel on ShoppingType {
@@ -9,8 +13,13 @@ extension ShoppingTypeLabel on ShoppingType {
       this == ShoppingType.individual ? 'Individual' : 'Corporate';
 
   String get description => this == ShoppingType.individual
-      ? 'For personal or family shopping — cooking for yourself, your home or a small gathering.'
-      : 'For businesses — restaurants, hotels, caterers, offices and other bulk buyers.';
+      ? 'Everyday shopping for yourself, your home or a small gathering.'
+      : 'Bulk buying for restaurants, hotels, caterers and offices.';
+
+  /// The one-line difference that actually decides the choice.
+  String get priceNote => this == ShoppingType.individual
+      ? 'Our standard prices'
+      : 'Set your own price per ingredient';
 
   IconData get icon => this == ShoppingType.individual
       ? Icons.person_outline_rounded
@@ -18,7 +27,7 @@ extension ShoppingTypeLabel on ShoppingType {
 
   Color get color => this == ShoppingType.individual
       ? const Color(0xFFFF9800)
-      : const Color(0xFF3F51B5);
+      : const Color(0xFF2D4A66);
 }
 
 /// Asks the user whether they are shopping as an individual or a business.
@@ -36,48 +45,75 @@ Future<ShoppingType?> showShoppingTypeSheet(
     builder: (sheetContext) {
       return SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
                 child: Container(
-                  width: 40,
+                  width: 44,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
-                    borderRadius: BorderRadius.circular(2),
+                    color: const Color(0xFFE5E7EB),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 22),
               const Text(
                 'How are you shopping?',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   fontFamily: 'Inter',
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xff1F2937),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                  color: Color(0xff111827),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Choose an option to continue with $foodName.',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontFamily: 'Inter',
-                  color: Color(0xff6B7280),
+              const SizedBox(height: 6),
+              // The food name carries the weight -- it's the thing they just
+              // tapped, so it anchors the question.
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontFamily: 'Inter',
+                    height: 1.4,
+                    color: Color(0xff6B7280),
+                  ),
+                  children: [
+                    const TextSpan(text: 'This changes how '),
+                    TextSpan(
+                      text: foodName,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, color: Color(0xff374151)),
+                    ),
+                    const TextSpan(text: ' is priced.'),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-              for (final type in ShoppingType.values) ...[
+              const SizedBox(height: 22),
+              for (int i = 0; i < ShoppingType.values.length; i++) ...[
                 _ShoppingTypeOption(
-                  type: type,
-                  onTap: () => Navigator.of(sheetContext).pop(type),
+                  type: ShoppingType.values[i],
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop(ShoppingType.values[i]),
                 ),
-                const SizedBox(height: 12),
+                if (i < ShoppingType.values.length - 1)
+                  const SizedBox(height: 12),
               ],
+              const SizedBox(height: 18),
+              Center(
+                child: Text(
+                  'You can change this later in your cart.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -94,59 +130,90 @@ class _ShoppingTypeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cards stay neutral: tinting the whole card in two different hues made
+    // the sheet look like two unrelated brands. Colour is carried only by
+    // the icon chip and the price note, so the eye reads the words first.
     return Material(
-      color: type.color.withValues(alpha: 0.06),
-      borderRadius: BorderRadius.circular(14),
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.all(14),
+        borderRadius: BorderRadius.circular(16),
+        splashColor: type.color.withValues(alpha: 0.08),
+        highlightColor: type.color.withValues(alpha: 0.04),
+        child: Ink(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: type.color.withValues(alpha: 0.35)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: type.color.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: type.color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(type.icon, color: type.color, size: 23),
                 ),
-                child: Icon(type.icon, color: type.color),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${type.label} Shopping',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xff1F2937),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        type.label,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                          color: Color(0xff111827),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      type.description,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontFamily: 'Inter',
-                        height: 1.35,
-                        color: Color(0xff6B7280),
+                      const SizedBox(height: 3),
+                      Text(
+                        type.description,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontFamily: 'Inter',
+                          height: 1.4,
+                          color: Color(0xff6B7280),
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 9),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: type.color.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Text(
+                          type.priceNote,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w600,
+                            color: type.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.arrow_forward_ios, size: 14, color: type.color),
-            ],
+                const SizedBox(width: 10),
+                Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Icon(Icons.chevron_right_rounded,
+                      size: 22, color: Colors.grey.shade400),
+                ),
+              ],
+            ),
           ),
         ),
       ),

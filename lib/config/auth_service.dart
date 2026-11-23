@@ -109,7 +109,8 @@ class AuthController extends GetxController {
   }
 
   /// Unified Sign-In / Sign-Up Flow via Google
-  Future<void> loginWithGoogle() async {
+  /// [referralCode] is a friend's code; it only counts for a new account.
+  Future<void> loginWithGoogle({String? referralCode}) async {
     if (loadingProvider.value.isNotEmpty) return; // ignore double taps
     isLoading.value = true;
     loadingProvider.value = 'google';
@@ -161,6 +162,7 @@ class AuthController extends GetxController {
         // displayName: account.displayName,
         // photoUrl: account.photoUrl,
         role: 'customer',
+        referralCode: referralCode?.trim(),
       );
 
       isLoading.value = false;
@@ -187,7 +189,7 @@ class AuthController extends GetxController {
   }
 
   /// Sign-In / Sign-Up via Apple (iOS). Same backend upsert contract as Google.
-  Future<void> loginWithApple() async {
+  Future<void> loginWithApple({String? referralCode}) async {
     if (loadingProvider.value.isNotEmpty) return; // ignore double taps
     isLoading.value = true;
     loadingProvider.value = 'apple';
@@ -215,6 +217,7 @@ class AuthController extends GetxController {
         role: 'customer',
         firstName: credential.givenName,
         lastName: credential.familyName,
+        referralCode: referralCode?.trim(),
       );
 
       isLoading.value = false;
