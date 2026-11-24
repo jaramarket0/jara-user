@@ -48,52 +48,45 @@ class CustomBottomNav extends StatelessWidget {
                 'assets/images/img_nav_home_selected.svg'), //Icon(Icons.home),
             label: 'Home',
           ),
-          // Meal Plan tab is disabled for now.
-//           BottomNavigationBarItem(
-//             icon: badges.Badge(
-//               badgeContent: Container(
-//                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-//                 decoration: BoxDecoration(
-//                   color: Colors.red,
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//                 child: const Text(
-//                   'Coming Soon',
-//                   style: TextStyle(color: Colors.white, fontSize: 10),
-//                 ),
-//               ),
-//               // badgeStyle: badges.BadgeStyle(
-//               //   badgeColor: Colors.grey,
-//               //   padding: EdgeInsets.all(4),
-//               // ),
-//               child: Icon(
-//                 LucideIcons.bubbles,
-//                 weight: 0.1,
-//               ),
-//             ),
-//             activeIcon: badges.Badge(
-//               badgeContent: Container(
-//                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-//                 decoration: BoxDecoration(
-//                   color: Colors.red,
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//                 child: const Text(
-//                   'Coming Soon',
-//                   style: TextStyle(color: Colors.white, fontSize: 10),
-//                 ),
-//               ),
-//               // badgeStyle: badges.BadgeStyle(
-//               //   badgeColor: Colors.grey,
-//               //   padding: EdgeInsets.all(4),
-//               // ),
-//               child: Icon(
-//                 LucideIcons.bubbles,
-//                 weight: 0.1,
-//               ),
-//             ),
-//             label: 'Meal Plan',
-//           ),
+          // Not built yet, so the tab announces itself as such
+          // rather than being hidden -- people ask where it went.
+          BottomNavigationBarItem(
+            icon: badges.Badge(
+              badgeContent: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Coming Soon',
+                  style: TextStyle(color: Colors.white, fontSize: 10),
+                ),
+              ),
+              child: Icon(
+                LucideIcons.bubbles,
+                weight: 0.1,
+              ),
+            ),
+            activeIcon: badges.Badge(
+              badgeContent: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Coming Soon',
+                  style: TextStyle(color: Colors.white, fontSize: 10),
+                ),
+              ),
+              child: Icon(
+                LucideIcons.bubbles,
+                weight: 0.1,
+              ),
+            ),
+            label: 'Meal Plan',
+          ),
           BottomNavigationBarItem(
             icon: Obx(() {
               return badges.Badge(
