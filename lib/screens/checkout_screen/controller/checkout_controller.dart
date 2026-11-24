@@ -153,7 +153,10 @@ class CheckoutController extends GetxController {
       buildOrderPayload(
         cartItems: cartController.cartItems,
         ingredient: cartController.ingredientList,
-        orderDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+        // A full timestamp, not just the date: a date-only value is read as
+        // midnight server-side, so every order looked like it was placed at
+        // 00:00 (and 23:00 the day before once stored in UTC).
+        orderDate: DateTime.now().toUtc().toIso8601String(),
         addressId: selectedAddressId.value,
         deliveryType: 'pickup',
         // Display value only -- the backend re-resolves the delivery fee
