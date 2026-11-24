@@ -114,7 +114,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   String _formatDate(String raw) {
     if (raw.isEmpty) return '';
     try {
-      final dt = DateTime.parse(raw);
+      // DateTime.parse() yields a UTC instant, so formatting it directly
+    // prints UTC -- an hour out from Lagos. Convert to the device's
+    // zone before reading any field off it.
+    final dt = DateTime.parse(raw).toLocal();
       const months = [
         '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'

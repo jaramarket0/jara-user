@@ -361,9 +361,119 @@ class _CheckoutAddressChangeScreenState
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16.0, vertical: 10),
-                  child: CustomTextField(
-                      hint: 'Contact Address',
-                      controller: controller.contactAddressController),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CustomTextField(
+                          hint: 'Contact Address',
+                          controller: controller.contactAddressController),
+
+                      // Suggestions come from OpenStreetMap as they type.
+                      // Picking one attaches real coordinates now, instead of
+                      // us guessing them from free text at save time.
+                      Obx(() {
+                        final items = controller.suggestions.toList();
+                        if (items.isEmpty) return const SizedBox.shrink();
+                        return Container(
+                          margin: const EdgeInsets.only(top: 6),
+                          constraints:
+                              const BoxConstraints(maxHeight: 210),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Colors.black12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: items.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
+                            itemBuilder: (_, i) {
+                              final place = items[i];
+                              return ListTile(
+                                dense: true,
+                                visualDensity:
+                                    const VisualDensity(vertical: -2),
+                                leading: const Icon(Icons.place_outlined,
+                                    size: 18, color: Colors.black54),
+                                title: Text(place.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 13,
+                                        color: Colors.black87)),
+                                subtitle: Text(place.subtitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 11,
+                                        color: Colors.black54)),
+                                onTap: () =>
+                                    controller.acceptSuggestion(place),
+                              );
+                            },
+                          ),
+                        );
+                      }),
+
+                      // The pin is what the rider actually navigates to, so
+                      // its state is shown rather than left implicit.
+                      Obx(() {
+                        final picked = controller.pickedPlace.value;
+                        final busy = controller.isGeocoding.value;
+                        return InkWell(
+                          onTap: busy ? null : controller.openMapPicker,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  picked == null
+                                      ? Icons.add_location_alt_outlined
+                                      : Icons.check_circle,
+                                  size: 18,
+                                  color: picked == null
+                                      ? Colors.black54
+                                      : Colors.green,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    busy
+                                        ? 'Locating address…'
+                                        : picked == null
+                                            ? 'Set exact location on map'
+                                            : 'Pinned: ${picked.displayName.isEmpty ? 'custom location' : picked.displayName}',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 12,
+                                      fontWeight: picked == null
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: picked == null
+                                          ? Colors.black87
+                                          : Colors.black54,
+                                    ),
+                                  ),
+                                ),
+                                Text(picked == null ? '' : 'Change',
+                                    style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.orange)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(

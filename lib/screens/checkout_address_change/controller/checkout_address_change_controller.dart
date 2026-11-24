@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as myLog;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,7 +7,9 @@ import 'package:jara_market/screens/checkout_address_change/models/lga_model.dar
 import 'package:jara_market/screens/checkout_address_change/models/state_model.dart';
 import 'package:jara_market/screens/checkout_screen/location_servies/location_service.dart';
 import 'package:jara_market/screens/profile_screen/controller/profile_controller.dart';
+import 'package:jara_market/screens/address_map_picker/address_map_picker_screen.dart';
 import 'package:jara_market/services/api_service.dart';
+import 'package:jara_market/services/osm_geocoding_service.dart';
 import 'package:jara_market/utils/app_feedback.dart';
 import 'package:jara_market/utils/json_helpers.dart';
 import 'package:overlay_kit/overlay_kit.dart';
@@ -39,28 +42,212 @@ class CheckoutAddressChangeController extends GetxController {
   List<String> states = [];
   List<String> lgas = [];
 
+  /// The point the customer confirmed, either by picking a suggestion or by
+  /// dropping a pin. Null means we still have to work it out from the text.
+  final Rx<OsmPlace?> pickedPlace = Rx<OsmPlace?>(null);
+  final RxList<OsmPlace> suggestions = <OsmPlace>[].obs;
+  final RxBool isGeocoding = false.obs;
+  Timer? _suggestDebounce;
+
   @override
   void onInit() {
     super.onInit();
     myLog.log('CheckoutAddressChangeController initialized');
-    // fetchStates();
-    // fetchLgas('Lagos');
+    // Editing the text after confirming a point would otherwise ship the old
+    // coordinates with the new address -- the rider goes to the last place.
+    contactAddressController.addListener(_onAddressTextChanged);
   }
 
-  /// The backend requires latitude/longitude on every address. Since manual
-  /// entry only gives us free-text fields, forward-geocode the typed address
-  /// to resolve coordinates - falling back to a coarser LGA/state query if
-  /// the full address can't be matched.
+  @override
+  void onClose() {
+    _suggestDebounce?.cancel();
+    contactAddressController.removeListener(_onAddressTextChanged);
+    super.onClose();
+  }
+
+  String _lastSuggestQuery = '';
+
+  void _onAddressTextChanged() {
+    final text = contactAddressController.text.trim();
+    final picked = pickedPlace.value;
+    if (picked != null && text != _acceptedText) {
+      pickedPlace.value = null;
+    }
+    if (text == _lastSuggestQuery) return;
+    _lastSuggestQuery = text;
+    _suggestDebounce?.cancel();
+    if (text.length < 3) {
+      suggestions.clear();
+      return;
+    }
+    // Typing is bursty and Nominatim allows one call a second, so wait for a
+    // pause rather than racing the keyboard.
+    _suggestDebounce = Timer(const Duration(milliseconds: 650), () async {
+      final results = await OsmGeocodingService.search(
+          text, state: selectedState1, lga: selectedLGA1);
+      // A later keystroke may have superseded this lookup while it was out.
+      if (text != contactAddressController.text.trim()) return;
+      suggestions.assignAll(results);
+    });
+  }
+
+  /// The text that belongs to [pickedPlace], so edits can be detected.
+  String _acceptedText = '';
+
+  void acceptSuggestion(OsmPlace place) {
+    final label = [place.title, place.subtitle]
+        .where((p) => p.isNotEmpty)
+        .join(', ');
+    _acceptedText = label;
+    _lastSuggestQuery = label;
+    contactAddressController.text = label;
+    pickedPlace.value = place;
+    suggestions.clear();
+  }
+
+  /// Opens the map so the customer can place the pin exactly. Pre-centred on
+  /// whatever we already know, so they adjust rather than start from nothing.
+  Future<void> openMapPicker() async {
+    OsmPlace? start = pickedPlace.value;
+    if (start == null) {
+      isGeocoding.value = true;
+      start = await _geocodeFromFields();
+      isGeocoding.value = false;
+    }
+    final result = await Get.to(() => const AddressMapPickerScreen(),
+        arguments: {
+          'latitude': start?.latitude,
+          'longitude': start?.longitude,
+        });
+    if (result is OsmPlace) {
+      pickedPlace.value = result;
+      if (contactAddressController.text.trim().isEmpty) {
+        _acceptedText = result.title;
+        _lastSuggestQuery = result.title;
+        contactAddressController.text = result.title;
+      } else {
+        // Keep what they typed -- it often has a landmark or flat number that
+        // no map knows -- but treat it as matching the confirmed pin.
+        _acceptedText = contactAddressController.text;
+      }
+      suggestions.clear();
+    }
+  }
+
+  /// True when a point is specific enough to deliver to. A result with no
+  /// road is a town or LGA centroid -- it will geocode happily and send the
+  /// rider to the middle of a district.
+  static bool _isStreetLevel(OsmPlace p) =>
+      p.road.isNotEmpty || p.houseNumber.isNotEmpty;
+
+  /// Best effort at a point from the typed fields alone, in descending order
+  /// of precision. OpenStreetMap first and the platform geocoder last: the
+  /// latter is a different service on every device, so it is a safety net
+  /// rather than a source of truth.
+  Future<OsmPlace?> _geocodeFromFields() async {
+    final typed = contactAddressController.text.trim();
+
+    if (typed.isNotEmpty) {
+      final hits = await OsmGeocodingService.search(
+          typed, state: selectedState1, lga: selectedLGA1, limit: 1);
+      if (hits.isNotEmpty) return hits.first;
+
+      final structured = await OsmGeocodingService.searchStructured(
+          street: typed, county: selectedLGA1, state: selectedState1);
+      if (structured != null) return structured;
+    }
+
+    // Platform geocoder, for the addresses OSM has no record of.
+    final platform = await LocationService.forwardGeocode(
+        [typed, selectedLGA1, selectedState1, 'Nigeria']
+            .where((p) => p != null && p.toString().trim().isNotEmpty)
+            .join(', '));
+    if (platform != null) {
+      return OsmPlace(
+        latitude: platform.latitude,
+        longitude: platform.longitude,
+        displayName: typed,
+        // Unknown precision, so don't claim street level.
+      );
+    }
+
+    // Last resort: the LGA itself. Deliberately not street level, so the
+    // caller asks the customer to place the pin instead of shipping this.
+    return OsmGeocodingService.searchStructured(
+        county: selectedLGA1, state: selectedState1);
+  }
+
+  /// The backend requires latitude/longitude on every address, and the rider
+  /// needs them to be right. Order: the point the customer confirmed, then
+  /// geocoding, and a coarse hit is reported as such rather than saved.
   Future<Map<String, double>?> _resolveCoordinates() async {
-    final fullQuery =
-        '${contactAddressController.text}, $selectedLGA1, $selectedState1';
-    var location = await LocationService.forwardGeocode(fullQuery);
+    final confirmed = pickedPlace.value;
+    if (confirmed != null) {
+      return {
+        'latitude': confirmed.latitude,
+        'longitude': confirmed.longitude,
+      };
+    }
 
-    location ??=
-        await LocationService.forwardGeocode('$selectedLGA1, $selectedState1');
+    final found = await _geocodeFromFields();
+    if (found == null) return null;
 
-    if (location == null) return null;
-    return {'latitude': location.latitude, 'longitude': location.longitude};
+    if (!_isStreetLevel(found)) {
+      // Centroid-grade. Saving it silently is how an order ends up pinned to
+      // the middle of an LGA, so hand it back for confirmation on the map.
+      coarseResult.value = found;
+      return null;
+    }
+
+    pickedPlace.value = found;
+    _acceptedText = contactAddressController.text;
+    return {'latitude': found.latitude, 'longitude': found.longitude};
+  }
+
+  /// Set when geocoding could only place the address approximately. The
+  /// screen uses it to send the customer to the map instead of showing a
+  /// dead-end error.
+  final Rx<OsmPlace?> coarseResult = Rx<OsmPlace?>(null);
+
+  /// Resolve, and if the answer is too vague, let the customer pin it.
+  /// Returns true once there is a point precise enough to save.
+  Future<bool> ensurePreciseLocation() async {
+    if (pickedPlace.value != null) return true;
+    isGeocoding.value = true;
+    final coords = await _resolveCoordinates();
+    isGeocoding.value = false;
+    if (coords != null) return true;
+
+    final coarse = coarseResult.value;
+    coarseResult.value = null;
+    final confirmed = await Get.dialog<bool>(AlertDialog(
+      title: const Text('Pin your exact location',
+          style: TextStyle(fontFamily: 'Poppins', fontSize: 16)),
+      content: Text(
+        coarse == null
+            ? 'We couldn\'t find that address. Point it out on the map so '
+                'your rider knows where to come.'
+            : 'We could only narrow that address down to the general area. '
+                'Drop a pin so your rider comes to the right place.',
+        style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel')),
+        TextButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('Open map',
+                style: TextStyle(fontWeight: FontWeight.w600))),
+      ],
+    ));
+    if (confirmed != true) return false;
+
+    if (coarse != null) pickedPlace.value = coarse; // centres the map there
+    await openMapPicker();
+    // openMapPicker leaves pickedPlace as the coarse seed if the customer
+    // backed out without confirming, so require a real confirmation.
+    return pickedPlace.value != null && pickedPlace.value != coarse;
   }
 
   isValid() {
@@ -132,19 +319,18 @@ class CheckoutAddressChangeController extends GetxController {
   }
 
  Future<Map<dynamic, dynamic>> processUpdateCheckoutAddress() async {
-  OverlayLoadingProgress.start(circularProgressColor: Colors.amber);
   if (isValid()) {
-    isLoading.value = true;
+    // Settle the location first: this can open a dialog or the map, neither
+    // of which belongs underneath a blocking loading overlay.
+    if (!await ensurePreciseLocation()) return {};
+    final place = pickedPlace.value!;
+    final coordinates = {
+      'latitude': place.latitude,
+      'longitude': place.longitude,
+    };
 
-    final coordinates = await _resolveCoordinates();
-    if (coordinates == null) {
-      isLoading.value = false;
-      OverlayLoadingProgress.stop();
-      AppFeedback.showError(null,
-          fallback:
-              'We couldn\'t locate that address. Please check it and try again.');
-      return {};
-    }
+    OverlayLoadingProgress.start(circularProgressColor: Colors.amber);
+    isLoading.value = true;
 
     final Map<String, dynamic> addressData = {
       'country_id': selectedCountryId,
@@ -195,7 +381,6 @@ class CheckoutAddressChangeController extends GetxController {
       return {};
     }
   } else {
-    OverlayLoadingProgress.stop();
     AppFeedback.showError(null,
         fallback: 'Please select a state and LGA.');
     return {};
@@ -204,16 +389,14 @@ class CheckoutAddressChangeController extends GetxController {
 
 
   Future<Map<dynamic, dynamic>> storeAddress() async {
-    OverlayLoadingProgress.start(circularProgressColor: Colors.amber);
+    if (!await ensurePreciseLocation()) return {};
+    final place = pickedPlace.value!;
+    final coordinates = {
+      'latitude': place.latitude,
+      'longitude': place.longitude,
+    };
 
-    final coordinates = await _resolveCoordinates();
-    if (coordinates == null) {
-      OverlayLoadingProgress.stop();
-      AppFeedback.showError(null,
-          fallback:
-              'We couldn\'t locate that address. Please check it and try again.');
-      return {};
-    }
+    OverlayLoadingProgress.start(circularProgressColor: Colors.amber);
 
     final Map<String, dynamic> addressData = {
       'country_id': selectedCountryId,

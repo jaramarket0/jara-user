@@ -152,8 +152,12 @@ class _OrderReceiptScreenState extends State<OrderReceiptScreen> {
 
   String _formatDate(String raw) {
     try {
-      final d = DateTime.parse(raw);
-      return '${d.day}/${d.month}/${d.year}  ${d.hour}:${d.minute.toString().padLeft(2, '0')}';
+      // .toLocal(): the server sends an absolute instant, so without this
+      // the receipt prints UTC and the time reads an hour out.
+      final d = DateTime.parse(raw).toLocal();
+      return '${d.day}/${d.month}/${d.year}  '
+          '${d.hour.toString().padLeft(2, '0')}:'
+          '${d.minute.toString().padLeft(2, '0')}';
     } catch (_) {
       return raw;
     }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:jara_market/services/shop_location_override.dart';
 import 'dart:async';
 import 'dart:math';
 import 'dart:io';
@@ -712,7 +713,16 @@ class ApiService extends GetConnect {
 
   // Fetch food products
   Future<http.Response> fetchFood() async {
-    final url = Uri.parse('$baseUrl/fetch/categories-limit-products');
+    // The server gates this endpoint on location like the others, so it needs
+    // the saved address AND coordinates. Sending none of them reads to the
+    // server as "we don't know where this customer is", which hides the whole
+    // catalogue rather than narrowing it.
+    final url = Uri.parse('$baseUrl/fetch/categories-limit-products')
+        .replace(queryParameters: {
+      'lga_id': (await dataBase.getLGAAddressId()).toString(),
+      'state_id': await dataBase.getStateAddressId(),
+      ...await _shopCoords(),
+    });
     _logRequest('GET', url);
     return _retryRequest(() async {
       final response = await authHttpClient.get(
@@ -738,7 +748,18 @@ class ApiService extends GetConnect {
   /// they are. Cached first; a GPS read is the fallback and is deliberately
   /// silent -- a permission dialog must never be triggered by a background
   /// product fetch.
+  /// Public entry point for callers that build catalogue URLs themselves.
+  Future<Map<String, String>> shopCoords() => _shopCoords();
+
   Future<Map<String, String>> _shopCoords() async {
+    // Shopping for someone else measures from their location, not this
+    // phone's -- see ShopLocationOverride.
+    if (ShopLocationOverride.isSet) {
+      return {
+        'latitude': ShopLocationOverride.latitude.toString(),
+        'longitude': ShopLocationOverride.longitude.toString(),
+      };
+    }
     final lat = await dataBase.getShopLat();
     final lng = await dataBase.getShopLng();
     if (lat != null && lng != null) {

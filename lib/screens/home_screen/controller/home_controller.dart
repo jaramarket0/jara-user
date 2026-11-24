@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:jara_market/services/shop_location_override.dart';
 import 'dart:developer' as myLog;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -68,6 +69,11 @@ class HomeController extends GetxController {
   RxnInt otherLgaId = RxnInt();
   RxnString otherLgaName = RxnString();
 
+  /// Where the other person actually is. The state/LGA answer the coarse
+  /// question; these are what the server's distance-to-market rule needs.
+  RxnDouble otherLatitude = RxnDouble();
+  RxnDouble otherLongitude = RxnDouble();
+
   Future<String> getActiveStateId() async => isShoppingForSomeoneElse.value
       ? (otherStateId.value?.toString() ?? '')
       : await dataBase.getStateAddressId();
@@ -81,11 +87,22 @@ class HomeController extends GetxController {
     required String stateName,
     required int lgaId,
     required String lgaName,
+    double? latitude,
+    double? longitude,
   }) {
     otherStateId.value = stateId;
     otherStateName.value = stateName;
     otherLgaId.value = lgaId;
     otherLgaName.value = lgaName;
+    otherLatitude.value = latitude;
+    otherLongitude.value = longitude;
+    // Catalogue requests are built in the HTTP layer, which has no view of
+    // which mode we're in, so the coordinates are handed to it directly.
+    if (latitude != null && longitude != null) {
+      ShopLocationOverride.set(latitude, longitude);
+    } else {
+      ShopLocationOverride.clear();
+    }
   }
 
   void clearOtherLocation() {
@@ -93,6 +110,9 @@ class HomeController extends GetxController {
     otherStateName.value = null;
     otherLgaId.value = null;
     otherLgaName.value = null;
+    otherLatitude.value = null;
+    otherLongitude.value = null;
+    ShopLocationOverride.clear();
   }
 
   @override
@@ -219,8 +239,16 @@ class HomeController extends GetxController {
     isSearching.value = true;
     _isLoading.value  = true;
     try {
+      // Search is gated on location server-side exactly like browsing is, so
+      // it has to carry coordinates too -- otherwise every search comes back
+      // empty once a service area is configured.
       final url = Uri.parse('${apiService.baseUrl}/fetch/product').replace(
-          queryParameters: {'search': query, 'lga_id': lgaId, 'state_id': stateId});
+          queryParameters: {
+            'search': query,
+            'lga_id': lgaId,
+            'state_id': stateId,
+            ...await apiService.shopCoords(),
+          });
       var token = await dataBase.getToken();
       final response = await authHttpClient.get(
         url,

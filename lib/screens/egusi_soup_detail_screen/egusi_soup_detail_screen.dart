@@ -252,6 +252,12 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
         snackPosition: SnackPosition.TOP);
   }
 
+  /// Recipe videos aren't live yet. Flip this to true to re-enable the real
+  /// behaviour below -- it is complete and working, it is just not something
+  /// we are ready to show, so the button says so rather than opening a dead
+  /// end or claiming the dish simply has no video.
+  static const bool _recipeVideosLive = false;
+
   /// Most dishes have no `youtube_url` set yet, so the link is parsed
   /// defensively: an admin can save a bare "youtube.com/watch?v=..." with no
   /// scheme, which Uri.tryParse accepts happily but launchUrl cannot open.
@@ -269,6 +275,13 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   /// YouTube app when it's installed and falls back to the browser, which is
   /// what people expect from a "Watch Video" button.
   Future<void> _openRecipeVideo() async {
+    if (!_recipeVideosLive) {
+      _showVideoMessage('Coming soon',
+          'Recipe videos are on the way. You\'ll be able to watch how to '
+          'cook this dish here shortly.');
+      return;
+    }
+
     final uri = _recipeVideoUri();
     if (uri == null) {
       _showVideoMessage('Video not available', 'This recipe has no video yet.');

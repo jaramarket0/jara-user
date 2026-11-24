@@ -19,6 +19,10 @@
 // import 'package:jara_market/screens/egusi_soup_detail_screen/egusi_soup_detail_screen.dart';
 // import 'package:jara_market/screens/grains_screen/grains_screen.dart';
 // import 'package:jara_market/screens/home_screen/controller/home_controller.dart';
+import 'package:jara_market/utils/app_feedback.dart';
+import 'package:jara_market/services/osm_geocoding_service.dart';
+import 'package:jara_market/services/location_resolver.dart';
+import 'package:jara_market/screens/address_map_picker/address_map_picker_screen.dart';
 // import 'package:jara_market/screens/main_screen/main_screen.dart';
 // import 'package:jara_market/screens/add_money_screen/add_money_screen.dart';
 import 'package:jara_market/screens/add_money_screen/add_money_screen.dart';
@@ -1578,6 +1582,14 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   String state = '';
 
+  /// Coordinates from the map, kept even when the state/LGA couldn't be
+  /// matched automatically. The dropdowns supply the ids the API needs; this
+  /// supplies the exact point the server measures market distance from, so a
+  /// manual pick after a failed match is still precise.
+  double? _pinnedLat;
+  double? _pinnedLng;
+  bool _resolvingPin = false;
+
   final RefreshController _refreshController =
       RefreshController(initialRefresh: false);
 
@@ -1630,392 +1642,359 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _openLocationPicker(BuildContext context,
       {required bool forSomeoneElse}) async {
-                              controller1.fetchCountries();
-                              final picked = await showModalBottomSheet<bool>(
-                                  isDismissible: true,
-                                  enableDrag: true,
-                                  isScrollControlled: true,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(20),
-                                      topRight: Radius.circular(20),
+    controller1.fetchCountries();
+    final picked = await showModalBottomSheet<bool>(
+        isDismissible: true,
+        enableDrag: true,
+        isScrollControlled: true,
+        // isScrollControlled lets the sheet grow to
+        // the full screen, which put it behind the
+        // status bar. useSafeArea keeps it clear of
+        // the notch and system bars.
+        useSafeArea: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        context: context,
+        builder: (context) {
+          return Container(
+            color: Colors.white,
+            // Sized to its contents instead of
+            // double.infinity, which forced the
+            // sheet full-height whether it needed
+            // the room or not. Capped so it still
+            // reads as a sheet over the page rather
+            // than a new screen.
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.78,
+            ),
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              // Lift the content clear of the
+              // keyboard: the dropdowns have search
+              // fields inside them.
+              bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Delivery Address',
+                        style: TextStyle(fontSize: 18, fontFamily: 'Poppins'),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey[100],
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          child: IconButton(
+                            icon: Icon(Icons.close, size: 16),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                  SizedBox(height: 10),
+
+                  // Geolocation shortcut. The
+                  // dropdowns below stay the source
+                  // of the state/LGA ids the API
+                  // needs -- this just fills them in
+                  // from a real point on the map,
+                  // and supplies the coordinates the
+                  // server measures market distance
+                  // from.
+                  _DeliveryPinRow(
+                    busy: _resolvingPin,
+                    latitude: _pinnedLat,
+                    longitude: _pinnedLng,
+                    onTap: () => _pickDeliveryPin(
+                        sheetContext: context, forSomeoneElse: forSomeoneElse),
+                  ),
+
+                  const Divider(height: 24),
+
+                  // State dropdown
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 0.0),
+                    child: DropdownSearch<StateData>(
+                      onChanged: (value) async {
+                        setState(() {
+                          controller1.selectedState1 = value!.name;
+                          controller1.selectedStateId = value.id;
+                        });
+                        await controller1
+                            .fetchLgas(controller1.selectedState1!);
+                        myLog.log(
+                            'Selected state: ${controller1.selectedState1}');
+                        myLog.log(
+                            'Selected state ID: ${controller1.selectedStateId}');
+                        if (!forSomeoneElse) {
+                          await dataBase.saveSateAddress(
+                              controller1.selectedStateId.toString());
+                          await dataBase.saveState(controller1.selectedState1!);
+                        }
+                        setState(() {
+                          state = controller1.selectedState1!;
+                        });
+                      },
+                      selectedItem: controller1.selectedState,
+                      suffixProps: DropdownSuffixProps(),
+                      compareFn: (item1, item2) {
+                        return item1 == item2;
+                      },
+                      decoratorProps: DropDownDecoratorProps(
+                          baseStyle: TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Color(0xffF5F5F5),
+                              alignLabelWithHint: true,
+                              suffixIconColor: Color(0xFFFF9800),
+                              focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      style: BorderStyle.solid,
+                                      color: Color(0xFFFF9800),
+                                      width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(8))),
+                              enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      style: BorderStyle.solid,
+                                      color: Color(0xffD9D9D9),
+                                      width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12))),
+                              border: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      style: BorderStyle.solid,
+                                      color: Color(0xffD9D9D9),
+                                      width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12))))),
+                      dropdownBuilder: (context, selectedItem) {
+                        if (selectedItem != null) {
+                          return Text(selectedItem.name!);
+                        } else {
+                          return Text(
+                            'Enter Your State',
+                            style: TextStyle(
+                              color: Colors.grey[300],
+                              fontSize: 16,
+                            ),
+                          );
+                        }
+                      },
+                      items: (f, cs) => controller1.isStateLoading.value
+                          ? []
+                          : controller1.stateDataList,
+                      itemAsString: (item) {
+                        return item.name ?? '';
+                      },
+                      popupProps: PopupProps.menu(
+                          showSelectedItems: true,
+                          searchDelay: Duration(seconds: 0),
+                          emptyBuilder: (context, searchEntry) {
+                            return controller1.isStateLoading.value
+                                ? const Center(
+                                    child: CircularProgressIndicator(
+                                    color: Color(0xFFFF9800),
+                                  ))
+                                : Center(
+                                    child: Text(
+                                      'No states found',
+                                      style: TextStyle(
+                                          color: Colors.grey,
+                                          fontFamily: 'Poppins',
+                                          fontSize: 12),
                                     ),
-                                  ),
-                                  context: context,
-                                  builder: (context) {
-                                    return Container(
-                                      color: Colors.white,
-                                      height: double.infinity,
-                                      padding: EdgeInsets.all(16),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                'Delivery Address',
-                                                style: TextStyle(
-                                                    fontSize: 18,
-                                                    fontFamily: 'Poppins'),
-                                              ),
-                                              Container(
-                                                margin: const EdgeInsets.only(
-                                                    left: 8),
-                                                padding:
-                                                    const EdgeInsets.all(3),
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  color: Colors.grey[100],
-                                                ),
-                                                child: Container(
-                                                  padding:
-                                                      const EdgeInsets.all(2),
-                                                  child: IconButton(
-                                                    icon: Icon(Icons.close,
-                                                        size: 16),
-                                                    onPressed: () {
-                                                      Navigator.pop(context);
-                                                    },
-                                                  ),
-                                                ),
-                                              )
-                                            ],
-                                          ),
-                                          SizedBox(height: 10),
-                                          // State dropdown
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 10, horizontal: 0.0),
-                                            child: DropdownSearch<StateData>(
-                                              onChanged: (value) async {
-                                                setState(() {
-                                                  controller1.selectedState1 =
-                                                      value!.name;
-                                                  controller1.selectedStateId =
-                                                      value.id;
-                                                });
-                                                await controller1.fetchLgas(
-                                                    controller1
-                                                        .selectedState1!);
-                                                myLog.log(
-                                                    'Selected state: ${controller1.selectedState1}');
-                                                myLog.log(
-                                                    'Selected state ID: ${controller1.selectedStateId}');
-                                                if (!forSomeoneElse) {
-                                                  await dataBase
-                                                      .saveSateAddress(
-                                                          controller1
-                                                              .selectedStateId
-                                                              .toString());
-                                                  await dataBase.saveState(
-                                                      controller1
-                                                          .selectedState1!);
-                                                }
-                                                setState(() {
-                                                  state = controller1
-                                                      .selectedState1!;
-                                                });
-                                              },
-                                              selectedItem:
-                                                  controller1.selectedState,
-                                              suffixProps:
-                                                  DropdownSuffixProps(),
-                                              compareFn: (item1, item2) {
-                                                return item1 == item2;
-                                              },
-                                              decoratorProps: DropDownDecoratorProps(
-                                                  baseStyle: TextStyle(
-                                                      color: Colors.white),
-                                                  decoration: InputDecoration(
-                                                      filled: true,
-                                                      fillColor:
-                                                          Color(0xffF5F5F5),
-                                                      alignLabelWithHint: true,
-                                                      suffixIconColor:
-                                                          Color(0xFFFF9800),
-                                                      focusedBorder: OutlineInputBorder(
-                                                          borderSide: BorderSide(
-                                                              style: BorderStyle
-                                                                  .solid,
-                                                              color: Color(
-                                                                  0xFFFF9800),
-                                                              width: 1),
-                                                          borderRadius:
-                                                              BorderRadius.all(
-                                                                  Radius.circular(
-                                                                      8))),
-                                                      enabledBorder: OutlineInputBorder(
-                                                          borderSide: BorderSide(
-                                                              style: BorderStyle
-                                                                  .solid,
-                                                              color: Color(0xffD9D9D9),
-                                                              width: 1),
-                                                          borderRadius: BorderRadius.all(Radius.circular(12))),
-                                                      border: OutlineInputBorder(borderSide: BorderSide(style: BorderStyle.solid, color: Color(0xffD9D9D9), width: 1), borderRadius: BorderRadius.all(Radius.circular(12))))),
-                                              dropdownBuilder:
-                                                  (context, selectedItem) {
-                                                if (selectedItem != null) {
-                                                  return Text(
-                                                      selectedItem.name!);
-                                                } else {
-                                                  return Text(
-                                                    'Enter Your State',
-                                                    style: TextStyle(
-                                                      color: Colors.grey[300],
-                                                      fontSize: 16,
-                                                    ),
-                                                  );
-                                                }
-                                              },
-                                              items: (f, cs) => controller1
-                                                      .isStateLoading.value
-                                                  ? []
-                                                  : controller1.stateDataList,
-                                              itemAsString: (item) {
-                                                return item.name ?? '';
-                                              },
-                                              popupProps: PopupProps.menu(
-                                                  showSelectedItems: true,
-                                                  searchDelay:
-                                                      Duration(seconds: 0),
-                                                  emptyBuilder:
-                                                      (context, searchEntry) {
-                                                    return controller1
-                                                            .isStateLoading
-                                                            .value
-                                                        ? const Center(
-                                                            child:
-                                                                CircularProgressIndicator(
-                                                            color: Color(
-                                                                0xFFFF9800),
-                                                          ))
-                                                        : Center(
-                                                            child: Text(
-                                                              'No states found',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .grey,
-                                                                  fontFamily:
-                                                                      'Poppins',
-                                                                  fontSize: 12),
-                                                            ),
-                                                          );
-                                                  },
-                                                  title: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            8.0),
-                                                    child: Text('Search State',
-                                                        style: TextStyle(
-                                                            fontFamily:
-                                                                'Poppins',
-                                                            fontSize: 12,
-                                                            color:
-                                                                Colors.black)),
-                                                  ),
-                                                  onDismissed: () {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .showSnackBar(
-                                                      SnackBar(
-                                                          content: Text(
-                                                              "move to the next item")),
-                                                    );
-                                                    myLog.log(
-                                                        'Next items found.');
-                                                  },
-                                                  onItemsLoaded: (value) {
-                                                    myLog.log(
-                                                        'Items loaded: ${value.length} items found.');
-                                                  },
-                                                  scrollbarProps:
-                                                      ScrollbarProps(),
-                                                  showSearchBox: true,
-                                                  searchFieldProps:
-                                                      TextFieldProps(),
-                                                  disabledItemFn: (item) =>
-                                                      item == 'Item 3',
-                                                  fit: FlexFit.loose),
-                                            ),
-                                          ),
-                                          // LGA dropdown
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 10, horizontal: 0.0),
-                                            child: DropdownSearch<lga.LgaData>(
-                                              onChanged: (value) async {
-                                                setState(() {
-                                                  controller1.selectedLGA1 =
-                                                      value!.name;
-                                                  controller1.selectedLGAId =
-                                                      value.id;
-                                                });
-                                                await controller1.fetchLgas(
-                                                    controller1
-                                                        .selectedState1!);
-                                                myLog.log(
-                                                    'Selected LGA: ${controller1.selectedLGA1}');
-                                                myLog.log(
-                                                    'Selected lga ID: ${controller1.selectedLGAId}');
-                                                if (forSomeoneElse) {
-                                                  controller.setOtherLocation(
-                                                    stateId: controller1
-                                                        .selectedStateId!,
-                                                    stateName: controller1
-                                                        .selectedState1!,
-                                                    lgaId: value!.id!,
-                                                    lgaName: value.name!,
-                                                  );
-                                                } else {
-                                                  await dataBase
-                                                      .saveLGAAddressID(
-                                                          controller1
-                                                              .selectedLGAId!);
-                                                  await dataBase
-                                                      .saveLGAAddress(
-                                                          controller1
-                                                              .selectedLGA1!);
-                                                }
-                                                setState(() {
-                                                  state =
-                                                      controller1.selectedLGA1!;
-                                                  lgax =
-                                                      controller1.selectedLGA1!;
-                                                });
-                                                controller.fetchFoodCategories(
-                                                    controller1.selectedLGAId
-                                                        .toString(),
-                                                    controller1.selectedStateId
-                                                        .toString());
-                                                Navigator.pop(context, true);
-                                              },
-                                              selectedItem:
-                                                  controller1.selectedLGA,
-                                              suffixProps:
-                                                  DropdownSuffixProps(),
-                                              compareFn: (item1, item2) {
-                                                return item1 == item2;
-                                              },
-                                              decoratorProps: DropDownDecoratorProps(
-                                                  baseStyle: TextStyle(
-                                                      color: Colors.white),
-                                                  decoration: InputDecoration(
-                                                      filled: true,
-                                                      fillColor:
-                                                          Color(0xffF5F5F5),
-                                                      alignLabelWithHint: true,
-                                                      suffixIconColor:
-                                                          Color(0xFFFF9800),
-                                                      focusedBorder: OutlineInputBorder(
-                                                          borderSide: BorderSide(
-                                                              style: BorderStyle
-                                                                  .solid,
-                                                              color: Color(
-                                                                  0xFFFF9800),
-                                                              width: 1),
-                                                          borderRadius:
-                                                              BorderRadius.all(
-                                                                  Radius.circular(
-                                                                      8))),
-                                                      enabledBorder: OutlineInputBorder(
-                                                          borderSide: BorderSide(
-                                                              style: BorderStyle
-                                                                  .solid,
-                                                              color: Color(0xffD9D9D9),
-                                                              width: 1),
-                                                          borderRadius: BorderRadius.all(Radius.circular(12))),
-                                                      border: OutlineInputBorder(borderSide: BorderSide(style: BorderStyle.solid, color: Color(0xffD9D9D9), width: 1), borderRadius: BorderRadius.all(Radius.circular(12))))),
-                                              dropdownBuilder:
-                                                  (context, selectedItem) {
-                                                if (selectedItem != null) {
-                                                  return Text(
-                                                      selectedItem.name!);
-                                                } else {
-                                                  return Text(
-                                                    'Enter Your LGA',
-                                                    style: TextStyle(
-                                                      color: Colors.grey[300],
-                                                      fontSize: 16,
-                                                    ),
-                                                  );
-                                                }
-                                              },
-                                              items: (f, cs) =>
-                                                  controller1.isLgaLoading.value
-                                                      ? []
-                                                      : controller1.lgaDataList,
-                                              itemAsString: (item) {
-                                                return item.name ?? '';
-                                              },
-                                              popupProps: PopupProps.menu(
-                                                  showSelectedItems: true,
-                                                  searchDelay:
-                                                      Duration(seconds: 0),
-                                                  emptyBuilder:
-                                                      (context, searchEntry) {
-                                                    return controller1
-                                                            .isLgaLoading.value
-                                                        ? const Center(
-                                                            child:
-                                                                CircularProgressIndicator(
-                                                            color: Color(
-                                                                0xFFFF9800),
-                                                          ))
-                                                        : Center(
-                                                            child: Text(
-                                                              'No LGA found',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .grey,
-                                                                  fontFamily:
-                                                                      'Poppins',
-                                                                  fontSize: 12),
-                                                            ),
-                                                          );
-                                                  },
-                                                  title: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            8.0),
-                                                    child: Text('Search LGA',
-                                                        style: TextStyle(
-                                                            fontFamily:
-                                                                'Poppins',
-                                                            fontSize: 12,
-                                                            color:
-                                                                Colors.black)),
-                                                  ),
-                                                  onDismissed: () {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .showSnackBar(
-                                                      SnackBar(
-                                                          content: Text(
-                                                              "move to the next item")),
-                                                    );
-                                                    myLog.log(
-                                                        'Next items found.');
-                                                  },
-                                                  onItemsLoaded: (value) {
-                                                    myLog.log(
-                                                        'Items loaded: ${value.length} items found.');
-                                                  },
-                                                  scrollbarProps:
-                                                      ScrollbarProps(),
-                                                  showSearchBox: true,
-                                                  searchFieldProps:
-                                                      TextFieldProps(),
-                                                  disabledItemFn: (item) =>
-                                                      item == 'Item 3',
-                                                  fit: FlexFit.loose),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  });
+                                  );
+                          },
+                          title: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text('Search State',
+                                style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12,
+                                    color: Colors.black)),
+                          ),
+                          onDismissed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("move to the next item")),
+                            );
+                            myLog.log('Next items found.');
+                          },
+                          onItemsLoaded: (value) {
+                            myLog.log(
+                                'Items loaded: ${value.length} items found.');
+                          },
+                          scrollbarProps: ScrollbarProps(),
+                          showSearchBox: true,
+                          searchFieldProps: TextFieldProps(),
+                          disabledItemFn: (item) => item == 'Item 3',
+                          fit: FlexFit.loose),
+                    ),
+                  ),
+                  // LGA dropdown
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 0.0),
+                    child: DropdownSearch<lga.LgaData>(
+                      onChanged: (value) async {
+                        setState(() {
+                          controller1.selectedLGA1 = value!.name;
+                          controller1.selectedLGAId = value.id;
+                        });
+                        await controller1
+                            .fetchLgas(controller1.selectedState1!);
+                        myLog.log('Selected LGA: ${controller1.selectedLGA1}');
+                        myLog.log(
+                            'Selected lga ID: ${controller1.selectedLGAId}');
+                        if (forSomeoneElse) {
+                          controller.setOtherLocation(
+                            stateId: controller1.selectedStateId!,
+                            stateName: controller1.selectedState1!,
+                            lgaId: value!.id!,
+                            lgaName: value.name!,
+                            // Null unless they also
+                            // dropped a pin; the
+                            // server then falls back
+                            // to state/LGA alone.
+                            latitude: _pinnedLat,
+                            longitude: _pinnedLng,
+                          );
+                        } else {
+                          await dataBase
+                              .saveLGAAddressID(controller1.selectedLGAId!);
+                          await dataBase
+                              .saveLGAAddress(controller1.selectedLGA1!);
+                        }
+                        setState(() {
+                          state = controller1.selectedLGA1!;
+                          lgax = controller1.selectedLGA1!;
+                        });
+                        controller.fetchFoodCategories(
+                            controller1.selectedLGAId.toString(),
+                            controller1.selectedStateId.toString());
+                        Navigator.pop(context, true);
+                      },
+                      selectedItem: controller1.selectedLGA,
+                      suffixProps: DropdownSuffixProps(),
+                      compareFn: (item1, item2) {
+                        return item1 == item2;
+                      },
+                      decoratorProps: DropDownDecoratorProps(
+                          baseStyle: TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Color(0xffF5F5F5),
+                              alignLabelWithHint: true,
+                              suffixIconColor: Color(0xFFFF9800),
+                              focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      style: BorderStyle.solid,
+                                      color: Color(0xFFFF9800),
+                                      width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(8))),
+                              enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      style: BorderStyle.solid,
+                                      color: Color(0xffD9D9D9),
+                                      width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12))),
+                              border: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      style: BorderStyle.solid,
+                                      color: Color(0xffD9D9D9),
+                                      width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12))))),
+                      dropdownBuilder: (context, selectedItem) {
+                        if (selectedItem != null) {
+                          return Text(selectedItem.name!);
+                        } else {
+                          return Text(
+                            'Enter Your LGA',
+                            style: TextStyle(
+                              color: Colors.grey[300],
+                              fontSize: 16,
+                            ),
+                          );
+                        }
+                      },
+                      items: (f, cs) => controller1.isLgaLoading.value
+                          ? []
+                          : controller1.lgaDataList,
+                      itemAsString: (item) {
+                        return item.name ?? '';
+                      },
+                      popupProps: PopupProps.menu(
+                          showSelectedItems: true,
+                          searchDelay: Duration(seconds: 0),
+                          emptyBuilder: (context, searchEntry) {
+                            return controller1.isLgaLoading.value
+                                ? const Center(
+                                    child: CircularProgressIndicator(
+                                    color: Color(0xFFFF9800),
+                                  ))
+                                : Center(
+                                    child: Text(
+                                      'No LGA found',
+                                      style: TextStyle(
+                                          color: Colors.grey,
+                                          fontFamily: 'Poppins',
+                                          fontSize: 12),
+                                    ),
+                                  );
+                          },
+                          title: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text('Search LGA',
+                                style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12,
+                                    color: Colors.black)),
+                          ),
+                          onDismissed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("move to the next item")),
+                            );
+                            myLog.log('Next items found.');
+                          },
+                          onItemsLoaded: (value) {
+                            myLog.log(
+                                'Items loaded: ${value.length} items found.');
+                          },
+                          scrollbarProps: ScrollbarProps(),
+                          showSearchBox: true,
+                          searchFieldProps: TextFieldProps(),
+                          disabledItemFn: (item) => item == 'Item 3',
+                          fit: FlexFit.loose),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
     if (forSomeoneElse &&
         picked != true &&
         controller.otherLgaId.value == null) {
@@ -2023,6 +2002,72 @@ class _HomeScreenState extends State<HomeScreen> {
       // avoid leaving the app in "Someone Else" mode with no valid location.
       controller.isShoppingForSomeoneElse.value = false;
     }
+  }
+
+  /// Opens the map, then matches the dropped pin to one of our state/LGA
+  /// rows so the rest of the app keeps working off ids.
+  ///
+  /// A failed match is NOT treated as a dead end: the coordinates are kept
+  /// and the sheet stays open so the dropdowns can finish the job. OSM's
+  /// spelling of Nigerian LGAs is inconsistent enough that insisting on an
+  /// automatic match would strand people who had pinned the right spot.
+  Future<void> _pickDeliveryPin({
+    required BuildContext sheetContext,
+    required bool forSomeoneElse,
+  }) async {
+    final result = await Get.to(() => const AddressMapPickerScreen(),
+        arguments: {'latitude': _pinnedLat, 'longitude': _pinnedLng});
+    if (result is! OsmPlace) return;
+
+    setState(() {
+      _pinnedLat = result.latitude;
+      _pinnedLng = result.longitude;
+      _resolvingPin = true;
+    });
+
+    final area = await LocationResolver.resolve(result);
+
+    if (!mounted) return;
+    setState(() => _resolvingPin = false);
+
+    if (area == null) {
+      // Coordinates are already kept above, so finishing by hand stays exact.
+      AppFeedback.showError(null,
+          fallback: LocationResolver.lastFailure.isEmpty
+              ? 'We couldn\'t match that spot to a delivery area. Please '
+                  'choose the state and LGA below.'
+              : LocationResolver.lastFailure);
+      return;
+    }
+
+    if (forSomeoneElse) {
+      controller.setOtherLocation(
+        stateId: area.stateId,
+        stateName: area.stateName,
+        lgaId: area.lgaId,
+        lgaName: area.lgaName,
+        latitude: area.latitude,
+        longitude: area.longitude,
+      );
+    } else {
+      await dataBase.saveLGAAddressID(area.lgaId);
+      await dataBase.saveLGAAddress(area.lgaName);
+      // Named saveSateAddress in local_storage.dart (typo is pre-existing).
+      await dataBase.saveSateAddress(area.stateId.toString());
+      // Own-location coordinates are persisted; see ApiService._shopCoords.
+      await dataBase.saveShopCoords(area.latitude, area.longitude);
+    }
+
+    if (!mounted) return;
+    setState(() {
+      state = area.lgaName;
+      lgax = area.lgaName;
+    });
+    controller.fetchFoodCategories(
+        area.lgaId.toString(), area.stateId.toString());
+    AppFeedback.showSuccess(
+        'Delivering to ${area.lgaName}, ${area.stateName}.');
+    if (Navigator.canPop(sheetContext)) Navigator.pop(sheetContext, true);
   }
 
   Future<void> _switchToSomeoneElse() async {
@@ -2201,7 +2246,8 @@ class _HomeScreenState extends State<HomeScreen> {
       await dataBase.saveShopCoords(pos.latitude, pos.longitude);
       await controller.fetchFoodCategories(null, null, reset: true);
     } catch (_) {
-      Get.snackbar('Location', 'We could not read your location. Please try again.',
+      Get.snackbar(
+          'Location', 'We could not read your location. Please try again.',
           snackPosition: SnackPosition.BOTTOM);
     }
   }
@@ -2225,32 +2271,32 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
-        ),
-        padding: const EdgeInsets.all(4),
-        child: Row(
-          children: [
-            Expanded(
-              child: _modeSegment(
-                label: 'Myself',
-                icon: Icons.person_outline,
-                active: !forOther,
-                onTap: _switchToMyself,
-              ),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
             ),
-            Expanded(
-              child: _modeSegment(
-                label: 'Someone Else',
-                icon: Icons.people_outline,
-                active: forOther,
-                onTap: _switchToSomeoneElse,
-              ),
+            padding: const EdgeInsets.all(4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _modeSegment(
+                    label: 'Myself',
+                    icon: Icons.person_outline,
+                    active: !forOther,
+                    onTap: _switchToMyself,
+                  ),
+                ),
+                Expanded(
+                  child: _modeSegment(
+                    label: 'Someone Else',
+                    icon: Icons.people_outline,
+                    active: forOther,
+                    onTap: _switchToSomeoneElse,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
           ),
         ],
       );
@@ -2310,7 +2356,8 @@ class _HomeScreenState extends State<HomeScreen> {
   /// First food in the grid, highlighted by the feature tour.
   final GlobalKey _foodTourKey = GlobalKey();
 
-  void _startTour() => AppTour.startIfUnseen(this, AppTour.home, [_foodTourKey]);
+  void _startTour() =>
+      AppTour.startIfUnseen(this, AppTour.home, [_foodTourKey]);
 
   /// Completes once the welcome dialog is closed (or straight away when it
   /// was already shown before).
@@ -2322,130 +2369,128 @@ class _HomeScreenState extends State<HomeScreen> {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFF3E0),
-                    shape: BoxShape.circle,
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFF3E0),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.celebration_rounded,
+                    size: 32, color: Color(0xFFFFAA00)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Welcome to JaraMarket${name != null && name!.isNotEmpty ? ', $name' : ''}! 🎉',
+                textAlign: TextAlign.center,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Here\'s how to get started:',
+                style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+              ),
+              const SizedBox(height: 16),
+              const _WelcomeStep(
+                number: '1',
+                title: 'Fund your wallet',
+                subtitle:
+                    'Go to Wallet → Add Money, enter an amount and pay securely with Paystack.',
+              ),
+              const SizedBox(height: 12),
+              const _WelcomeStep(
+                number: '2',
+                title: 'Set your transaction PIN',
+                subtitle:
+                    'Your 4-digit PIN keeps every payment and withdrawal secure.',
+              ),
+              const SizedBox(height: 12),
+              const _WelcomeStep(
+                number: '3',
+                title: 'Shop & checkout',
+                subtitle:
+                    'Add items to your cart and pay straight from your wallet.',
+              ),
+              const SizedBox(height: 12),
+              const _WelcomeStep(
+                number: '4',
+                title: 'Track your Order',
+                subtitle: 'You can track your order status at any time.',
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SetPinScreen()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFAA00),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Icon(Icons.celebration_rounded,
-                      size: 32, color: Color(0xFFFFAA00)),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Welcome to JaraMarket${name != null && name!.isNotEmpty ? ', $name' : ''}! 🎉',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Here\'s how to get started:',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
-                ),
-                const SizedBox(height: 16),
-                const _WelcomeStep(
-                  number: '1',
-                  title: 'Fund your wallet',
-                  subtitle:
-                      'Go to Wallet → Add Money, enter an amount and pay securely with Paystack.',
-                ),
-                const SizedBox(height: 12),
-                const _WelcomeStep(
-                  number: '2',
-                  title: 'Set your transaction PIN',
-                  subtitle:
-                      'Your 4-digit PIN keeps every payment and withdrawal secure.',
-                ),
-                const SizedBox(height: 12),
-                const _WelcomeStep(
-                  number: '3',
-                  title: 'Shop & checkout',
-                  subtitle:
-                      'Add items to your cart and pay straight from your wallet.',
-                ),
-                const SizedBox(height: 12),
-                const _WelcomeStep(
-                  number: '4',
-                  title: 'Track your Order',
-                  subtitle:
-                      'You can track your order status at any time.',
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SetPinScreen()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFAA00),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      'Set Transaction PIN',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700),
-                    ),
+                  child: const Text(
+                    'Set Transaction PIN',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700),
                   ),
                 ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const WalletScreen()),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFFFAA00)),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      'Fund My Wallet',
-                      style: TextStyle(
-                          color: Color(0xFFFFAA00),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700),
-                    ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const WalletScreen()),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFFFAA00)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text(
+                    'Fund My Wallet',
+                    style: TextStyle(
+                        color: Color(0xFFFFAA00),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700),
                   ),
                 ),
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Maybe later',
-                      style: TextStyle(color: Colors.grey, fontSize: 13)),
-                ),
-              ],
-            ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Maybe later',
+                    style: TextStyle(color: Colors.grey, fontSize: 13)),
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   void _onSearchChanged() {
@@ -2482,23 +2527,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           Flexible(
                             child: Padding(
                               padding: const EdgeInsets.all(16),
-                              child: 
-                              // GestureDetector(
-                              //   onTap: () {
-                              //     Get.to(() => GiftAnimationScreen());
-                              //   },
-                              //   child: 
-                                Text(
-                                  Session.isGuest.value
-                                      ? 'Hello Guest,'
-                                      : 'Hello ${name ?? "User"},',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                              child:
+                                  // GestureDetector(
+                                  //   onTap: () {
+                                  //     Get.to(() => GiftAnimationScreen());
+                                  //   },
+                                  //   child:
+                                  Text(
+                                Session.isGuest.value
+                                    ? 'Hello Guest,'
+                                    : 'Hello ${name ?? "User"},',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                             // ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              // ),
                             ),
                           ),
                           // Wallet Balance
@@ -2506,65 +2551,66 @@ class _HomeScreenState extends State<HomeScreen> {
                           // an action. Solid brand fill plus a "+" so funding
                           // is one obvious tap from the landing screen.
                           if (!Session.isGuest.value)
-                          GestureDetector(
-                            onTap: () => Get.to(() => const AddMoneyScreen()),
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 9),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.rectangle,
-                                borderRadius: BorderRadius.circular(22),
-                                color: const Color(0xFFFF9800),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFFF9800)
-                                        .withValues(alpha: 0.35),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.account_balance_wallet,
-                                    size: 17,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    walletController.walletModel.data!.balance
-                                                .toString()
-                                                .length >
-                                            3
-                                        ? '₦${walletController.walletModel.data!.balance.toString().substring(0, 3)}K'
-                                        : '₦${walletController.walletModel.data!.balance}',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
+                            GestureDetector(
+                              onTap: () => Get.to(() => const AddMoneyScreen()),
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 9),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.rectangle,
+                                  borderRadius: BorderRadius.circular(22),
+                                  color: const Color(0xFFFF9800),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFFF9800)
+                                          .withValues(alpha: 0.35),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.account_balance_wallet,
+                                      size: 17,
                                       color: Colors.white,
                                     ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      walletController.walletModel.data!.balance
+                                                  .toString()
+                                                  .length >
+                                              3
+                                          ? '₦${walletController.walletModel.data!.balance.toString().substring(0, 3)}K'
+                                          : '₦${walletController.walletModel.data!.balance}',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                    child: const Icon(Icons.add,
-                                        size: 11, color: Color(0xFFFF9800)),
-                                  ),
-                                ],
+                                    const SizedBox(width: 5),
+                                    Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.add,
+                                          size: 11, color: Color(0xFFFF9800)),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
                           // Location picker
                           GestureDetector(
                             onTap: () => _openLocationPicker(context,
-                                forSomeoneElse: controller.isShoppingForSomeoneElse.value),
+                                forSomeoneElse:
+                                    controller.isShoppingForSomeoneElse.value),
                             child: Container(
                               margin: const EdgeInsets.only(right: 16),
                               padding: const EdgeInsets.all(8),
@@ -2849,8 +2895,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 enlargeCenterPage: true,
                                                 scrollDirection:
                                                     Axis.horizontal,
-                                                onPageChanged:
-                                                    (index, reason) {
+                                                onPageChanged: (index, reason) {
                                                   setState(() {
                                                     _currentIndex = index;
                                                   });
@@ -2884,7 +2929,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   height: 7.0,
                                                   margin: const EdgeInsets
                                                       .symmetric(
-                                                          horizontal: 4.0),
+                                                      horizontal: 4.0),
                                                   decoration: BoxDecoration(
                                                     borderRadius:
                                                         BorderRadius.circular(
@@ -2894,8 +2939,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                             ? Colors.blue
                                                             : Colors.grey
                                                                 .withValues(
-                                                                    alpha:
-                                                                        0.5),
+                                                                    alpha: 0.5),
                                                   ),
                                                 ),
                                               ),
@@ -3032,7 +3076,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: OutlinedButton(
                       onPressed: () async {
                         Navigator.pop(sheetContext);
-                        await controller.applyPriceFilter(minPrice: null, maxPrice: null);
+                        await controller.applyPriceFilter(
+                            minPrice: null, maxPrice: null);
                         if (mounted) setState(() {});
                       },
                       child: const Text('Clear'),
@@ -3045,7 +3090,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         final min = double.tryParse(minController.text.trim());
                         final max = double.tryParse(maxController.text.trim());
                         Navigator.pop(sheetContext);
-                        await controller.applyPriceFilter(minPrice: min, maxPrice: max);
+                        await controller.applyPriceFilter(
+                            minPrice: min, maxPrice: max);
                         if (mounted) setState(() {});
                       },
                       child: const Text('Apply'),
@@ -3240,9 +3286,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCarouselItem(Advertisement ad, BuildContext context) {
     final hasImage = ad.image != null && ad.image!.isNotEmpty;
-    final adText = (ad.type == 'discount' || ad.type == 'off') && ad.value != null
-        ? 'MIN ${ad.value}${ad.type == 'discount' ? '%' : ''}\nOFF'
-        : 'Special Offer';
+    final adText =
+        (ad.type == 'discount' || ad.type == 'off') && ad.value != null
+            ? 'MIN ${ad.value}${ad.type == 'discount' ? '%' : ''}\nOFF'
+            : 'Special Offer';
     return ClipRRect(
       borderRadius: BorderRadius.circular(15),
       child: Container(
@@ -3351,6 +3398,85 @@ class _WelcomeStep extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The "set it on the map" row inside the Delivery Address sheet.
+class _DeliveryPinRow extends StatelessWidget {
+  const _DeliveryPinRow({
+    required this.busy,
+    required this.latitude,
+    required this.longitude,
+    required this.onTap,
+  });
+
+  final bool busy;
+  final double? latitude;
+  final double? longitude;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPin = latitude != null && longitude != null;
+    return InkWell(
+      onTap: busy ? null : onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: hasPin ? const Color(0xFFFFF8E1) : Colors.grey.shade50,
+          border: Border.all(
+              color: hasPin ? const Color(0xFFFFB300) : Colors.black12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              busy
+                  ? Icons.hourglass_top
+                  : hasPin
+                      ? Icons.check_circle
+                      : Icons.my_location,
+              size: 20,
+              color: hasPin ? Colors.green : const Color(0xFFFF9800),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    busy
+                        ? 'Finding the delivery area…'
+                        : hasPin
+                            ? 'Location pinned'
+                            : 'Use my location',
+                    style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasPin
+                        ? '${latitude!.toStringAsFixed(5)}, '
+                            '${longitude!.toStringAsFixed(5)} — tap to adjust'
+                        : 'Pin the exact spot on the map and we\'ll fill in '
+                            'the state and LGA',
+                    style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
+          ],
+        ),
+      ),
     );
   }
 }
