@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../widgets/back_header.dart';
 import '../../widgets/custom_button.dart';
+import 'privacy_policy_content.dart';
 
+/// Renders the privacy policy from [PrivacyPolicyContent].
+///
+/// The text is held as data rather than as a widget tree because the same
+/// document is published on the website and in the vendor app. Generated into
+/// all three from one source, so a legal document cannot end up saying
+/// different things in different places.
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({Key? key}) : super(key: key);
 
@@ -17,9 +24,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const BackHeader(title: 'Privacy Policy'),
-                  const Text(
-                    'Last updated on 5/12/2022',
-                    style: TextStyle(color: Colors.grey),
+                  Text(
+                    'Effective ${PrivacyPolicyContent.effectiveDate} · '
+                    'Updated ${PrivacyPolicyContent.lastUpdated}',
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                  Text(
+                    'Jurisdiction: ${PrivacyPolicyContent.jurisdiction}',
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),
@@ -31,69 +43,41 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildClause(
-                      'Welcome to JaraMarket!',
-                      'We value your privacy. This Privacy Policy outlines how we gather, utilize, disclose, and safeguard your personal information when you engage with our platform and services. By using JaraMarket, you consent to the terms of this policy.',
+                    Text(
+                      PrivacyPolicyContent.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 24),
-                    _buildClause(
-                      '1. Information We Collect',
-                      'We gather various types of information to enhance our services, including:',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildClause(
-                      'a. Personal Information',
-                      'When you register, place an order, or interact with our services, we may collect:\n\n- Name\n- Email address\n- Phone number\n- Delivery address\n- Payment details (processed securely through third-party providers)',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildClause(
-                      'b. Usage and Device Information',
-                      'We may collect:\n\n- IP address\n- Browser type\n- Device information\n- Location data (with your permission)\n- Usage patterns and interactions with our platform',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildClause(
-                      'c. Transactional Information',
-                      '- Order details\n- Payment history\n- Communication records with customer support',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildClause(
-                      '2. How We Use Your Information',
-                      'We utilize the information collected to:\n\n- Process orders and deliver food ingredients to you\n- Provide customer support and respond to inquiries\n- Enhance our services and user experience\n- Send promotional offers, updates, and notifications (you can opt-out anytime)\n- Prevent fraud and ensure the security of our platform\n- Comply with legal obligations',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildClause(
-                      '3. How We Share Your Information',
-                      'We do not sell or rent your personal information. However, we may share your data with:\n\n- Delivery Partners: To facilitate order deliveries via Ryda dispatch.\n- Payment Providers: To process secure transactions.\n- Service Providers: For analytics, marketing, and customer support.\n- Legal Authorities: If required by law or to protect our rights and users.',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildClause(
-                      '4. Data Security',
-                      'We take reasonable steps to protect your personal information from unauthorized access, loss, or misuse. However, no system is completely secure, so we encourage you to use strong passwords and be cautious when sharing your account details.',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildClause(
-                      '5. Your Rights and Choices',
-                      'You have the right to:\n\n- Access, update, or delete your personal information.\n- Opt out of marketing communications.\n- Disable location tracking through your device settings.\n- Request a copy of your data by reaching out to us.',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildClause(
-                      '6. Cookies and Tracking Technologies',
-                      'JaraMarket utilizes cookies and similar tracking technologies to improve your experience. You can adjust your cookie preferences through your browser settings.',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildClause(
-                      '7. Third-Party Links',
-                      'Our platform may include links to external websites. We are not responsible for their privacy practices, so we recommend reviewing their policies before engaging with them.',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildClause(
-                      '8. Updates to This Policy',
-                      'We may revise this Privacy Policy periodically. Any changes will be posted on this page, and we may inform you via email or app notifications. Your continued use of JaraMarket indicates your acceptance of the updated policy.',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildClause(
-                      '9. Contact Us',
-                      'If you have any questions or concerns regarding this Privacy Policy, please reach out to us at:\n\nJaraMarket Customer Support\n[Your Contact Email]\n[Your Business Address]\n[Your Phone Number]',
+                    for (final section in PrivacyPolicyContent.sections) ...[
+                      // Section 24 is the contact block. It is not in the
+                      // generated list because its details come from
+                      // configuration rather than from the document, so it is
+                      // spliced in ahead of 25 to keep the numbering in order.
+                      if (section.title.startsWith('25.')) ...[
+                        _contactSection(),
+                        const SizedBox(height: 20),
+                      ],
+                      _sectionTitle(section.title),
+                      for (final block in section.blocks) _block(block),
+                      const SizedBox(height: 20),
+                    ],
+                    const SizedBox(height: 8),
+                    const Center(
+                      child: Column(
+                        children: [
+                          Text('JARAMARKET',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 14)),
+                          SizedBox(height: 4),
+                          Text('Market at Your Door.',
+                              style: TextStyle(
+                                  color: Colors.grey, fontSize: 12)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -112,26 +96,129 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildClause(String title, String content) {
+  Widget _sectionTitle(String title) => Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 10),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Colors.orange,
+            height: 1.3,
+          ),
+        ),
+      );
+
+  Widget _block(PolicyBlock block) {
+    switch (block.kind) {
+      case 'h3':
+        return Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 6),
+          child: Text(
+            block.text,
+            style: const TextStyle(
+                fontSize: 14, fontWeight: FontWeight.w600, height: 1.4),
+          ),
+        );
+      case 'ul':
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final item in block.items) _bullet('•', item),
+            ],
+          ),
+        );
+      case 'ol':
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < block.items.length; i++)
+                _bullet('${i + 1}.', block.items[i]),
+            ],
+          ),
+        );
+      default:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Text(
+            block.text,
+            style: const TextStyle(fontSize: 14, height: 1.55),
+          ),
+        );
+    }
+  }
+
+  /// Marker and text in a Row so wrapped lines align under the text rather
+  /// than under the bullet.
+  Widget _bullet(String marker, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 5, left: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 22,
+              child: Text(marker,
+                  style: const TextStyle(fontSize: 14, height: 1.55)),
+            ),
+            Expanded(
+              child: Text(text,
+                  style: const TextStyle(fontSize: 14, height: 1.55)),
+            ),
+          ],
+        ),
+      );
+
+  /// Section 24. Rows with an empty value are skipped: an absent detail must
+  /// disappear, never render as "[Insert support email]".
+  Widget _contactSection() {
+    final rows = PrivacyPolicyContent.contactRows
+        .where((r) => r[1].trim().isNotEmpty)
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.orange,
+        _sectionTitle('24. CONTACT AND PRIVACY COMPLAINTS'),
+        Text(PrivacyPolicyContent.contactIntro,
+            style: const TextStyle(fontSize: 14, height: 1.55)),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            border: Border.all(color: Colors.black12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final row in rows)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(row[0].toUpperCase(),
+                          style: const TextStyle(
+                              fontSize: 10,
+                              letterSpacing: 0.6,
+                              color: Colors.grey)),
+                      const SizedBox(height: 2),
+                      Text(row[1],
+                          style: const TextStyle(fontSize: 13, height: 1.4)),
+                    ],
+                  ),
+                ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          content,
-          style: const TextStyle(
-            fontSize: 16,
-            height: 1.5,
-          ),
-        ),
+        const SizedBox(height: 12),
+        Text(PrivacyPolicyContent.contactOutro,
+            style: const TextStyle(fontSize: 14, height: 1.55)),
       ],
     );
   }
