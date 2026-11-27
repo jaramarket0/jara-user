@@ -138,7 +138,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
       ),
     );
 
-    final logoBytes = await rootBundle.load('assets/images/jara_market_logo.png');
+    final logoBytes = await rootBundle.load('assets/icons/JARA-MARKET-04_1.png');
     final logo = pw.MemoryImage(logoBytes.buffer.asUint8List());
 
     final lines = steps
@@ -256,7 +256,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   /// behaviour below -- it is complete and working, it is just not something
   /// we are ready to show, so the button says so rather than opening a dead
   /// end or claiming the dish simply has no video.
-  static const bool _recipeVideosLive = false;
+  static const bool _recipeVideosLive = true;
 
   /// Most dishes have no `youtube_url` set yet, so the link is parsed
   /// defensively: an admin can save a bare "youtube.com/watch?v=..." with no

@@ -276,8 +276,8 @@ class CheckoutAddressChangeController extends GetxController {
       myLog.log('Countries: ${countries.join(', ')}');
     } else {
       isCountryLoading.value = false;
-      AppFeedback.showError(null,
-          fallback: 'Failed to load countries: ${response.body}');
+      AppFeedback.showApiError(response,
+          fallback: 'We couldn\'t load the country list. Please try again.');
     }
   }
 
@@ -294,8 +294,8 @@ class CheckoutAddressChangeController extends GetxController {
       myLog.log('States: ${states.join(', ')}');
     } else {
       isStateLoading.value = false;
-      AppFeedback.showError(null,
-          fallback: 'Failed to load states: ${response.body}');
+      AppFeedback.showApiError(response,
+          fallback: 'We couldn\'t load the state list. Please try again.');
     }
   }
 
@@ -312,8 +312,8 @@ class CheckoutAddressChangeController extends GetxController {
       myLog.log('LGAs: ${lgas.join(', ')}');
     } else {
       isLgaLoading.value = false;
-      AppFeedback.showError(null,
-          fallback: 'Failed to load LGAs: ${response.body}');
+      AppFeedback.showApiError(response,
+          fallback: 'We couldn\'t load the LGA list. Please try again.');
       myLog.log('Failed to load LGAs: ${response.body}');
     }
   }
@@ -370,14 +370,16 @@ class CheckoutAddressChangeController extends GetxController {
         return result;
       } else {
         OverlayLoadingProgress.stop();
-        AppFeedback.showError(null,
-            fallback: 'Failed to update address: ${response.body}');
+        AppFeedback.showApiError(response,
+            fallback: 'We couldn\'t save that address. Please check the '
+                'details and try again.');
         return {};
       }
     } catch (error) {
       OverlayLoadingProgress.stop();
       isLoading.value = false;
-      AppFeedback.showError(error, fallback: 'An error occurred: $error');
+      AppFeedback.showError(error,
+          fallback: 'We couldn\'t save that address. Please try again.');
       return {};
     }
   } else {
@@ -437,14 +439,15 @@ class CheckoutAddressChangeController extends GetxController {
       } else {
         debugPrint(
             'Failed to store address (${response.statusCode}): ${response.body}');
-        AppFeedback.showError(null,
-            fallback: 'Failed to store address: ${response.body}');
+        AppFeedback.showApiError(response,
+            fallback: 'We couldn\'t save that address. Please check the '
+                'details and try again.');
         return {};
       }
     } catch (error) {
       OverlayLoadingProgress.stop();
       AppFeedback.showError(error,
-          fallback: 'An error occurred while storing address: $error');
+          fallback: 'We couldn\'t save that address. Please try again.');
       return {};
     }
   }

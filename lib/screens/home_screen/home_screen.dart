@@ -2652,6 +2652,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _buildShopModeToggle(),
                       ),
 
+                      Text('Discover what to cook...'),
                       // Search Bar
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2708,23 +2709,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: (controller.minPrice != null ||
-                                        controller.maxPrice != null)
-                                    ? Colors.orange
-                                    : Colors.grey[100],
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: IconButton(
-                                icon: Icon(Icons.tune,
-                                    color: (controller.minPrice != null ||
-                                            controller.maxPrice != null)
-                                        ? Colors.white
-                                        : Colors.black87),
-                                onPressed: _openPriceFilter,
-                              ),
-                            ),
+                            // Container(
+                            //   decoration: BoxDecoration(
+                            //     color: (controller.minPrice != null ||
+                            //             controller.maxPrice != null)
+                            //         ? Colors.orange
+                            //         : Colors.grey[100],
+                            //     borderRadius: BorderRadius.circular(12),
+                            //   ),
+                            //   child: IconButton(
+                            //     icon: Icon(Icons.tune,
+                            //         color: (controller.minPrice != null ||
+                            //                 controller.maxPrice != null)
+                            //             ? Colors.white
+                            //             : Colors.black87),
+                            //     onPressed: _openPriceFilter,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
